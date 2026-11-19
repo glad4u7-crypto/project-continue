@@ -3,7 +3,7 @@
 **Repository:** `glad4u7-crypto/project-continue`  
 **Canonical branch:** `main`  
 **Audit date:** 2026-11-19  
-**Target main commit at audit:** `7a2b577a935f51bbd6c1ebb490ded8d25c830b78`
+**Target main commit at audit:** `7306cc638a7cf55d7ad61c22b381332045931455`
 
 ## Scope and current disposition
 
@@ -35,7 +35,7 @@ git fetch origin
 git switch main
 git pull --ff-only origin main
 
-echo "EXPECTED: 7a2b577a935f51bbd6c1ebb490ded8d25c830b78"
+echo "EXPECTED: 7306cc638a7cf55d7ad61c22b381332045931455"
 echo "ACTUAL:   $(git rev-parse HEAD)"
 test "$(git rev-parse HEAD)" = "7a2b577a935f51bbd6c1ebb490ded8d25c830b78"
 
