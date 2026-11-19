@@ -7,7 +7,7 @@ Project Continue is a project-workflow assistant designed to organize multiple p
 **Phase:** Foundation  
 **Status:** Initial scaffold
 
-The repository is being built in small, verifiable checkpoints. Existing user files are preserved.
+The repository is being built in small, verifiable checkpoints. Existing user files are preserved. `main` is the authoritative branch; see [Branching Policy](docs/BRANCHING.md).
 
 ## Planned capabilities
 
@@ -39,27 +39,32 @@ Never commit `.env`, access tokens, passwords, or private keys.
 
 ## Project structure
 
-### Current repository structure
-
 ```
 project-continue/
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+├── core/
+│   └── __init__.py
+├── database/
+│   └── __init__.py
+├── docs/
+│   ├── BRANCHING.md
+│   ├── DEVELOPMENT.md
+│   └── USER_GUIDE.md
+├── integrations/
+│   └── __init__.py
+├── tests/
+│   └── test_config.py
 ├── app.py
 ├── config.py
+├── pytest.ini
 ├── requirements.txt
 ├── .env.example
-├── .gitignore
-├── tests/
-└── docs/
+└── .gitignore
 ```
 
-### Planned directories
-
-The following directories are planned for upcoming phases and are not part of the current repository structure yet. Each will be added when its first implementation files are introduced.
-
-- `core/`
-- `database/`
-- `dashboard/`
-- `integrations/`
+The `core/`, `database/`, and `integrations/` packages are currently placeholders; their implementation will be introduced in later checkpoints.
 
 ## Safety principles
 
@@ -68,6 +73,8 @@ The following directories are planned for upcoming phases and are not part of th
 - Treat repository changes as unverified until relevant checks pass.
 - Record what was checked and what evidence supports completion.
 
-## Development
+## Documentation
 
-See [Development Guide](docs/DEVELOPMENT.md) for the initial workflow.
+- [Development Guide](docs/DEVELOPMENT.md)
+- [User Guide](docs/USER_GUIDE.md)
+- [Branching Policy](docs/BRANCHING.md)
