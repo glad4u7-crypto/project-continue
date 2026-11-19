@@ -3,7 +3,7 @@
 **Repository:** `glad4u7-crypto/project-continue`  
 **Canonical branch:** `main`  
 **Audit date:** 2026-11-19  
-**Target main commit:** `7306cc638a7cf55d7ad61c22b381332045931455`
+**Target main commit:** `419f81e75b79431ff31b5ad4589fab99e8327a88`
 
 ## Scope and current disposition
 
@@ -13,9 +13,9 @@ This checkpoint records the repository-side integration review and the remaining
 |---|---|---|
 | Canonical branch | PASS | `main` is authoritative per `docs/BRANCHING.md`. |
 | Foundation audit evidence | PASS | Phase 01 audit record is merged into `main` through PR #2. |
-| Current main revision identified | PASS | `7306cc638a7cf55d7ad61c22b381332045931455`. |
+| Current main revision identified | PASS | `419f81e75b79431ff31b5ad4589fab99e8327a88`. |
 | Divergent Foundation branch handled safely | PASS WITH KNOWN DIVERGENCE | The Foundation branch remains preserved; it must not be blindly merged or force-pushed. |
-| CI on target main commit | PASS | GitHub Actions run [44549732477](https://github.com/glad4u7-crypto/project-continue/actions/runs/44549732477) passed dependency installation, compileall, and the full pytest suite. |
+| CI on target main commit | PASS | GitHub Actions run [44550425000](https://github.com/glad4u7-crypto/project-continue/actions/runs/44550425000) passed dependency installation, compileall, and the full pytest suite. |
 | Fresh Colab fast-forward sync | BLOCKED — USER RUNTIME REQUIRED | The current Colab runtime cannot be controlled from this repository connection. |
 | Colab compile, pytest, and entry-point smoke test | BLOCKED — USER RUNTIME REQUIRED | Must be executed after syncing the exact target SHA. |
 
@@ -32,7 +32,7 @@ from pathlib import Path
 
 REPO = "https://github.com/glad4u7-crypto/project-continue.git"
 ROOT = Path("/content/project-continue")
-EXPECTED_SHA = "7306cc638a7cf55d7ad61c22b381332045931455"
+EXPECTED_SHA = "419f81e75b79431ff31b5ad4589fab99e8327a88"
 
 env = os.environ.copy()
 token = getpass.getpass("GitHub token (hidden input; only used for this Git operation): ")
