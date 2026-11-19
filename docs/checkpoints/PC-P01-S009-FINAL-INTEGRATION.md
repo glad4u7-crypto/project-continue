@@ -62,6 +62,10 @@ run("git", "fetch", "origin")
 run("git", "switch", "main")
 run("git", "pull", "--ff-only", "origin", "main")
 
+# Do not pass the GitHub credential to Python, pip, or the test process.
+for key in ("GIT_CONFIG_COUNT", "GIT_CONFIG_KEY_0", "GIT_CONFIG_VALUE_0"):
+    env.pop(key, None)
+
 actual = subprocess.run(
     ["git", "rev-parse", "HEAD"], cwd=ROOT, env=env,
     capture_output=True, text=True, check=True
