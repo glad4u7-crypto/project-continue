@@ -4,8 +4,8 @@ Project Continue is a project-workflow assistant designed to organize multiple p
 
 ## Current status
 
-**Phase:** Foundation  
-**Status:** Initial scaffold
+**Phase:** Core Architecture implementation  
+**Status:** Foundation scaffold plus initial core architecture components
 
 The repository is being built in small, verifiable checkpoints. Existing user files are preserved. `main` is the authoritative branch; see [Branching Policy](docs/BRANCHING.md).
 
@@ -33,7 +33,8 @@ The repository is being built in small, verifiable checkpoints. Existing user fi
 1. Create and activate a Python virtual environment.
 2. Install dependencies: `pip install -r requirements.txt`
 3. Copy `.env.example` to `.env` and fill in only the values you need.
-4. Run: `streamlit run app.py`
+4. Run the dashboard: `streamlit run app.py`
+5. Run the core bootstrap: `python -m app`
 
 Never commit `.env`, access tokens, passwords, or private keys.
 
@@ -41,30 +42,39 @@ Never commit `.env`, access tokens, passwords, or private keys.
 
 ```
 project-continue/
-├── .github/
-│   └── workflows/
-│       └── ci.yml
+├── .github/workflows/ci.yml
+├── app/
+│   ├── __init__.py
+│   ├── __main__.py
+│   ├── lifecycle.py
+│   └── main.py
 ├── core/
-│   └── __init__.py
+│   ├── __init__.py
+│   ├── errors.py
+│   ├── logging.py
+│   └── validation.py
 ├── database/
+│   └── __init__.py
+├── integrations/
 │   └── __init__.py
 ├── docs/
 │   ├── BRANCHING.md
+│   ├── CORE-ARCHITECTURE.md
 │   ├── DEVELOPMENT.md
-│   └── USER_GUIDE.md
-├── integrations/
-│   └── __init__.py
+│   ├── USER_GUIDE.md
+│   └── checkpoints/
 ├── tests/
-│   └── test_config.py
+│   ├── test_app_entrypoint.py
+│   ├── test_config.py
+│   ├── test_core_architecture.py
+│   └── test_phase03_integration.py
 ├── app.py
 ├── config.py
 ├── pytest.ini
-├── requirements.txt
-├── .env.example
-└── .gitignore
+└── requirements.txt
 ```
 
-The `core/`, `database/`, and `integrations/` packages are currently placeholders; their implementation will be introduced in later checkpoints.
+The `database/` and `integrations/` packages remain placeholders. Product features such as persistence, GitHub API operations, scheduling, and background execution are not claimed as implemented.
 
 ## Safety principles
 
@@ -76,5 +86,6 @@ The `core/`, `database/`, and `integrations/` packages are currently placeholder
 ## Documentation
 
 - [Development Guide](docs/DEVELOPMENT.md)
+- [Core Architecture](docs/CORE-ARCHITECTURE.md)
 - [User Guide](docs/USER_GUIDE.md)
 - [Branching Policy](docs/BRANCHING.md)
