@@ -1,11 +1,6 @@
 """Application-wide exception types and safe error handling."""
 
-from __future__ import annotations
-
 import logging
-from typing import TypeVar
-
-T = TypeVar("T")
 
 
 class ProjectContinueError(Exception):
