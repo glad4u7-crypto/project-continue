@@ -39,6 +39,8 @@ Never commit `.env`, access tokens, passwords, or private keys.
 
 ## Project structure
 
+### Current repository structure
+
 ```
 project-continue/
 ├── app.py
@@ -46,15 +48,18 @@ project-continue/
 ├── requirements.txt
 ├── .env.example
 ├── .gitignore
-├── core/
-├── database/
-├── dashboard/
-├── integrations/
 ├── tests/
 └── docs/
 ```
 
-Directories for upcoming phases will be added with their first implementation files.
+### Planned directories
+
+The following directories are planned for upcoming phases and are not part of the current repository structure yet. Each will be added when its first implementation files are introduced.
+
+- `core/`
+- `database/`
+- `dashboard/`
+- `integrations/`
 
 ## Safety principles
 
