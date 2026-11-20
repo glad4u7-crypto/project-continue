@@ -1,6 +1,6 @@
 # PC-P10-S003 — Secrets and Repository Hygiene
 
-**Status:** IN PROGRESS  
+**Status:** PASS  
 **Phase:** 10 — Production Readiness & Security
 
 ## Implemented controls
@@ -24,7 +24,8 @@ The CI workflow grants read-only repository contents access plus the security-ev
 
 ## CI evidence
 
-- Gitleaks and regression-test workflow runs triggered after these changes; final results pending.
+- GitHub Actions run #213: **SUCCESS** — Gitleaks scan, focused tests, full suite, coverage and report upload all passed.
+- GitHub Actions run #212: **SUCCESS** — Gitleaks scan and full CI also passed.
 
 ## Next
 
