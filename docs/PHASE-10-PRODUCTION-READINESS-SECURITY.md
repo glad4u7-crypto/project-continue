@@ -23,8 +23,8 @@ Harden Project Continue for safer deployment and operation without changing its 
 | PC-P10-S004 | Safe logging and error handling | Redaction tests for tokens, exception messages and sensitive headers | PASS |
 | PC-P10-S005 | Database operational safety | SQLite durability/backup guidance and safe backup verification | PASS |
 | PC-P10-S006 | Input and integration hardening | Boundary tests for untrusted values, URLs, timeouts and API failures | PASS |
-| PC-P10-S007 | Dependency and CI security checks | Reproducible dependency audit and CI security gate | IN PROGRESS |
-| PC-P10-S008 | Production readiness acceptance | Full suite, security checklist, documented limitations and final report | IN PROGRESS |
+| PC-P10-S007 | Dependency and CI security checks | Reproducible dependency audit and CI security gate | PASS |
+| PC-P10-S008 | Production readiness acceptance | Full suite, security checklist, documented limitations and final report | PASS |
 
 ## Initial repository baseline
 
@@ -44,3 +44,13 @@ A checkpoint is PASS only after implementation, focused tests, full relevant reg
 
 Use the checkpoint IDs above. Resume from the first checkpoint not marked PASS. Each checkpoint document under `docs/checkpoints/` records its scope, exact actions, commands, evidence and next checkpoint.
 
+
+
+## Final acceptance record
+
+- All eight checkpoints: **PASS**.
+- Pull request #21: OPEN, mergeable, not merged.
+- Latest pull-request CI run #256: **SUCCESS** on the latest PR head.
+- Gitleaks: no leaks found; pip-audit: no known vulnerabilities found.
+- Automated suite: **161 passed**; statement coverage **95%** (821 statements; 39 uncovered).
+- Main branch remains unchanged pending explicit merge approval.
