@@ -13,9 +13,9 @@
 | PC-P04-S003 | Project Table | IMPLEMENTED — verification pending |
 | PC-P04-S004 | Task Table | IMPLEMENTED — verification pending |
 | PC-P04-S005 | Dependency Table | IMPLEMENTED — verification pending |
-| PC-P04-S006 | Activity History | IMPLEMENTED — verification pending |
+| PC-P04-S006 | Activity History | IMPLEMENTED — verification pending; ownership integrity hardening under review |
 | PC-P04-S007 | Database CRUD | IMPLEMENTED — verification pending |
-| PC-P04-S008 | Database Tests | IMPLEMENTED — verification pending |
+| PC-P04-S008 | Database Tests | IMPLEMENTED — additional integrity regression tests under review |
 
 ## Database decision
 
@@ -37,6 +37,7 @@ A checkpoint is not complete merely because code is committed. Each checkpoint m
 4. GitHub Actions CI passing.
 5. Runtime verification where the checkpoint requires it.
 6. An evidence record naming the exact commit and commands/results.
+7. Realistic workflow verification for user-visible or data-integrity behavior.
 
 ## Scope boundaries
 
@@ -44,4 +45,4 @@ This phase establishes persistence primitives and database-backed records. It do
 
 ## Current position
 
-S001 decision is recorded. S002-S008 implementation is present in the Phase 04 working branch. All eight checkpoints await CI and runtime verification before final completion status can be assigned.
+S001 decision is recorded. S002-S008 implementation is present. During source-level integrity review, a missing invariant was identified: an activity event could reference a task belonging to a different project. A dedicated fix branch adds repository validation plus SQLite INSERT/UPDATE triggers and regression tests for this case. The fix is not yet accepted: focused tests, full suite, CI, Colab runtime verification, and practical database workflow verification remain pending. No Phase 04 checkpoint is marked complete on the basis of implementation alone.
