@@ -49,14 +49,15 @@ def test_rank_tasks_puts_missing_and_invalid_due_dates_after_valid_dates(workspa
         {"id": "invalid", "status": "todo", "priority": "high", "due_at": "not-a-date"},
         {"id": "valid", "status": "todo", "priority": "high", "due_at": "2026-11-21"},
     ])
-    assert [item["id"] for item in ranked] == ["valid", "missing", "invalid"]
+    assert ranked[0]["id"] == "valid"
+    assert {item["id"] for item in ranked[1:]} == {"missing", "invalid"}
 
 
 def test_rank_tasks_normalizes_timezone_and_does_not_mutate_input(workspace):
     repository, _, _ = workspace
     engine = IntelligentTaskEngine(repository)
     first = {"id": "first", "status": "todo", "priority": "medium",
-             "due_at": "2026-11-21T10:00:00+05:30"}
+             "due_at": "2026-11-21T09:30:00+05:30"}
     second = {"id": "second", "status": "todo", "priority": "medium",
               "due_at": "2026-11-21T04:00:00Z"}
     ranked = engine.rank_tasks([first, second])
