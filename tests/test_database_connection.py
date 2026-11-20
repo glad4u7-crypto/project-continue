@@ -2,11 +2,12 @@ import sqlite3
 
 import pytest
 
-from database.connection import Database
+from database import Database, ProjectRepository
+from database.connection import Database as ConnectionDatabase
 
 
 def test_health_check_and_row_factory(tmp_path):
-    database = Database(tmp_path / "nested" / "project.db")
+    database = ConnectionDatabase(tmp_path / "nested" / "project.db")
     assert database.health_check() is True
     with database.connection() as connection:
         row = connection.execute("SELECT 7 AS value").fetchone()
@@ -15,15 +16,28 @@ def test_health_check_and_row_factory(tmp_path):
 
 
 def test_connection_is_closed_after_context():
-    database = Database(":memory:")
+    database = ConnectionDatabase(":memory:")
     with database.connection() as connection:
         connection.execute("CREATE TABLE sample (id INTEGER)")
     with pytest.raises(sqlite3.ProgrammingError):
         connection.execute("SELECT 1")
+    database.close()
+
+
+def test_shared_memory_database_persists_across_repository_connections():
+    database = Database(":memory:")
+    try:
+        repository = ProjectRepository(database)
+        repository.initialize()
+        repository.create_project("p-memory", "In-memory project")
+        assert repository.get_project("p-memory")["name"] == "In-memory project"
+        assert database.health_check() is True
+    finally:
+        database.close()
 
 
 def test_transaction_commits_on_success(tmp_path):
-    database = Database(tmp_path / "commit.db")
+    database = ConnectionDatabase(tmp_path / "commit.db")
     with database.connection() as connection:
         connection.execute("CREATE TABLE sample (value TEXT)")
     with database.transaction() as connection:
@@ -33,7 +47,7 @@ def test_transaction_commits_on_success(tmp_path):
 
 
 def test_transaction_rolls_back_on_error(tmp_path):
-    database = Database(tmp_path / "rollback.db")
+    database = ConnectionDatabase(tmp_path / "rollback.db")
     with database.connection() as connection:
         connection.execute("CREATE TABLE sample (value TEXT)")
     with pytest.raises(RuntimeError):
@@ -46,4 +60,4 @@ def test_transaction_rolls_back_on_error(tmp_path):
 
 def test_timeout_must_be_positive():
     with pytest.raises(ValueError):
-        Database(":memory:", timeout=0)
+        ConnectionDatabase(":memory:", timeout=0)
