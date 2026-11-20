@@ -4,7 +4,7 @@
 **Prepared:** 2026-11-20  
 **Repository:** `glad4u7-crypto/project-continue`  
 **Canonical branch:** `main`  
-**Verified main SHA:** `50ef2216e872122a61504da944a5bc877a616947`
+**Verified main SHA:** `074660302228fcc492e11cd635c7c3342aacb961`
 
 ## Purpose and operating rules
 
@@ -75,10 +75,21 @@ Required sequence:
 
 ## Open repository follow-ups observed
 
-- PR #11 is this handoff document; update it to this checkpoint and merge only after its PR CI passes.
-- PR #3 is an obsolete Phase 01 draft whose pending wording conflicts with the PASS-with-evidence-note record already in main; close it as superseded after confirming no unique content is lost.
+- PR #11 (durable handoff) is merged; its PR CI #275 passed.
+- PR #22 (Phase 04 aggregate acceptance evidence) is merged; its PR CI #276 passed.
+- PR #3 was closed as superseded because its pending wording conflicted with the PASS-with-evidence-note record already in main.
+- PR #23 synchronizes individual Phase 04 checkpoint records; merge only after its PR CI passes.
 - Phase 04 is the first incomplete acceptance gate. Do not claim it is closed before the Colab retest.
 
 ## Resume instruction
 
 “Continue Project Continue from PC-HANDOFF-2026-11-20-V2. Verify the latest main SHA first. Phase 01–03 and Phase 05–10 are accepted as recorded. Resume at PC-P04 database Colab retest. Preserve all existing files and user data, use Colab only for runtime verification, record exact SHA and complete outputs, then audit UI end-to-end behavior and all open repository follow-ups. Do not skip checkpoints or claim unverified acceptance.”
+
+
+## Repository housekeeping update — 2026-11-20
+
+- Current main before PR #23 merge: 074660302228fcc492e11cd635c7c3342aacb961.
+- PR #11 merged; durable handoff is now in main.
+- PR #22 merged; Phase 04 aggregate database CI evidence is in main.
+- PR #3 closed as superseded; no pending Phase 01 gate remains beyond the evidence note already documented on main.
+- PR #23 is updating the seven individual Phase 04 S002-S008 checkpoint records to distinguish GitHub CI PASS from the required Colab retest.
