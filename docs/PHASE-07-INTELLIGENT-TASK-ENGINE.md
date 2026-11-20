@@ -1,45 +1,40 @@
 # PHASE 07 — Intelligent Task Engine
 
-**Objective:** rank tasks, calculate priority, analyze dependencies, select the next actionable task, detect blocked work, recommend actions, verify completion, and test the complete decision engine.
+**Objective:** provide deterministic task ranking, explainable priority scoring, dependency analysis, next-task selection, blocked-task detection, recommendations, completion verification, and automated tests.
 
 ## Checkpoint register
 
-| Checkpoint | Scope | Status |
+| Checkpoint | Scope | Implementation status |
 |---|---|---|
-| PC-P07-S001 | Task Ranking | IMPLEMENTED — focused tests added; GitHub CI PASS; Colab verification pending |
-| PC-P07-S002 | Priority Calculation | NOT STARTED |
-| PC-P07-S003 | Dependency Analysis | NOT STARTED |
-| PC-P07-S004 | Next Task Selection | NOT STARTED |
-| PC-P07-S005 | Blocked Task Detection | NOT STARTED |
-| PC-P07-S006 | Recommendation Engine | NOT STARTED |
-| PC-P07-S007 | Completion Verification | NOT STARTED |
-| PC-P07-S008 | Intelligent Engine Tests | NOT STARTED |
+| PC-P07-S001 | Task Ranking | Implemented; focused and full CI tests passed; Colab runtime acceptance pending |
+| PC-P07-S002 | Priority Calculation | Implemented; deterministic 0–100 explainable score and fixed-date tests |
+| PC-P07-S003 | Dependency Analysis | Implemented; direct/transitive prerequisites, pending items, readiness and defensive cycle detection |
+| PC-P07-S004 | Next Task Selection | Implemented; selects highest-scoring ready todo/in-progress task; returns none when unavailable |
+| PC-P07-S005 | Blocked Task Detection | Implemented; explicit blocked state and unfinished/cyclic prerequisite detection |
+| PC-P07-S006 | Recommendation Engine | Implemented; start/continue/unblock actions with deterministic score ordering and limit |
+| PC-P07-S007 | Completion Verification | Implemented; verifies done status and all prerequisite completion |
+| PC-P07-S008 | Intelligent Engine Tests | Implemented; focused regression tests and full CI verification |
 
-## PC-P07-S001 — Task Ranking
+## Public API
 
-The first ranking implementation is deterministic and read-only.
+All functionality is exposed through `services.IntelligentTaskEngine`:
 
-1. Status group: `in_progress`, `todo`, `blocked`, then `done`.
-2. Within each status group: `critical`, `high`, `medium`, then `low`.
-3. Earlier valid due dates rank before later dates; missing or invalid dates sort last.
-4. Earlier creation timestamps rank first.
-5. Task ID is the final stable tie-breaker.
+- `rank_tasks(tasks)` and `rank_project_tasks(project_id)`
+- `calculate_priority(task, as_of=None)` and `calculate_project_priorities(project_id, as_of=None)`
+- `analyze_dependencies(task_id)`
+- `select_next_task(project_id, as_of=None)`
+- `detect_blocked_tasks(project_id)`
+- `recommend_actions(project_id, as_of=None, limit=5)`
+- `verify_completion(task_id)`
 
-The engine returns copied task dictionaries with a 1-based `rank` and human-readable `ranking_reason`; it does not modify database records. `rank_project_tasks` reads tasks from one existing project and raises `KeyError` for an unknown project.
+## Decision rules
 
-Date parsing accepts ISO date and timestamp values, normalizes timezone-aware timestamps to UTC, treats naive timestamps as UTC, and safely places invalid values after valid dates.
+Priority scoring is a deterministic 0–100 score: base priority points (critical 40, high 30, medium 20, low 10), workflow-state adjustment (in progress +15, todo +10, blocked −20, done = 0), and due-date urgency (overdue +30; due within 1/3/7/14 days +25/+20/+12/+6). Scores are clamped to 0–100 and include human-readable reasons. Callers can supply `as_of` for reproducible decisions.
 
-## Architecture
+Dependency analysis walks the prerequisite graph and reports transitive prerequisites. A task is ready only when every prerequisite is done and no cycle is found. Next-task selection considers only ready `todo` and `in_progress` tasks. Recommendations distinguish `start`, `continue`, and `unblock`. Completion verification independently checks task status and prerequisites.
 
-- Ranking logic: `services/intelligent_task_engine.py`.
-- Public service export: `services.IntelligentTaskEngine`.
-- Persistence remains in the existing `ProjectRepository`; this checkpoint introduces no schema migration or runtime dependency.
-- Focused tests: `tests/test_intelligent_task_engine.py`.
+The engine is read-only: it does not update task records, add schema changes, or introduce runtime dependencies. Existing repository safeguards reject dependency cycles and cross-project dependency links.
 
-## Verification record
+## Verification policy
 
-- Feature branch: `feature/phase-07-intelligent-task-engine`.
-- GitHub Actions run #118: SUCCESS on commit `e8fa468b12064e9eaeb446bc4fcaf210d4ce4bbe`; Python 3.11.18; `compileall` passed; full suite: 78 passed in 2.27s. [Run #118](https://github.com/glad4u7-crypto/project-continue/actions/runs/44719234814).
-- Colab exact-SHA acceptance is pending; the final documentation commit will establish the next verification target.
-- Do not mark PC-P07-S001 PASS until focused tests, full test suite, CI, and required runtime verification have been reviewed.
-- Do not mark any later Phase 07 checkpoint complete based only on the existence of this ranking implementation.
+GitHub CI is required to pass Python compilation and the complete pytest suite before merge. The implementation's CI result does not substitute for the separate Colab runtime acceptance at the exact merged `main` SHA. Do not report Phase 07 as fully accepted until that runtime check is also complete.
