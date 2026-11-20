@@ -63,4 +63,27 @@ BEGIN
       THEN RAISE(ABORT, 'task dependencies must belong to the same project')
     END;
 END;
+
+-- Keep activity events attached only to tasks owned by the same project.
+CREATE TRIGGER IF NOT EXISTS trg_activity_task_same_project_insert
+BEFORE INSERT ON activity_history
+WHEN NEW.task_id IS NOT NULL
+BEGIN
+    SELECT CASE
+      WHEN (SELECT project_id FROM tasks WHERE id = NEW.task_id) IS NULL
+        OR (SELECT project_id FROM tasks WHERE id = NEW.task_id) <> NEW.project_id
+      THEN RAISE(ABORT, 'activity task must belong to the same project')
+    END;
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_activity_task_same_project_update
+BEFORE UPDATE OF project_id, task_id ON activity_history
+WHEN NEW.task_id IS NOT NULL
+BEGIN
+    SELECT CASE
+      WHEN (SELECT project_id FROM tasks WHERE id = NEW.task_id) IS NULL
+        OR (SELECT project_id FROM tasks WHERE id = NEW.task_id) <> NEW.project_id
+      THEN RAISE(ABORT, 'activity task must belong to the same project')
+    END;
+END;
 """
