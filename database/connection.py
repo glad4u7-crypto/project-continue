@@ -1,12 +1,14 @@
-"""Small, explicit SQLite connection and transaction manager."""
+"""Small, explicit SQLite connection, transaction and backup manager."""
 
 from __future__ import annotations
 
+import os
 import sqlite3
 import uuid
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
+from urllib.parse import quote
 
 
 class Database:
@@ -80,6 +82,52 @@ class Database:
         with self.connection() as connection:
             row = connection.execute("SELECT 1 AS ok").fetchone()
             return row is not None and row["ok"] == 1
+
+    def backup(self, destination: str | Path) -> Path:
+        """Create a new, integrity-checked backup without overwriting any file.
+
+        The backup is created with owner-only permissions where supported.
+        Existing destinations are rejected to avoid accidental data loss.
+        """
+        target = Path(destination).expanduser()
+        if not str(target).strip():
+            raise ValueError("backup destination must not be empty")
+        if not self._use_uri and Path(self.path).expanduser().resolve() == target.resolve():
+            raise ValueError("backup destination must differ from the source database")
+        target.parent.mkdir(parents=True, exist_ok=True)
+
+        descriptor = os.open(target, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+        os.close(descriptor)
+        try:
+            with self.connection() as source:
+                backup_connection = sqlite3.connect(str(target), timeout=self.timeout)
+                try:
+                    source.backup(backup_connection)
+                    result = backup_connection.execute("PRAGMA integrity_check").fetchone()
+                    if result is None or result[0] != "ok":
+                        raise sqlite3.DatabaseError("SQLite backup integrity check failed")
+                finally:
+                    backup_connection.close()
+            os.chmod(target, 0o600)
+            return target
+        except BaseException:
+            target.unlink(missing_ok=True)
+            raise
+
+    @staticmethod
+    def verify_backup(path: str | Path) -> bool:
+        """Verify SQLite integrity and foreign-key consistency in read-only mode."""
+        target = Path(path).expanduser()
+        if not target.is_file():
+            raise FileNotFoundError(target)
+        uri = f"file:{quote(str(target.resolve()), safe='/:')}?mode=ro"
+        connection = sqlite3.connect(uri, uri=True)
+        try:
+            integrity = connection.execute("PRAGMA integrity_check").fetchone()
+            foreign_key_errors = connection.execute("PRAGMA foreign_key_check").fetchall()
+            return integrity is not None and integrity[0] == "ok" and not foreign_key_errors
+        finally:
+            connection.close()
 
     def close(self) -> None:
         """Release the anchor connection used by shared in-memory databases."""
