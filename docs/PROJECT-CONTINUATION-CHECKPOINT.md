@@ -1,115 +1,84 @@
-# Project Continue — Continuation Checkpoint
+# Project Continue — Durable Continuation Checkpoint
 
-**Checkpoint ID:** PC-HANDOFF-2026-11-20  
+**Checkpoint ID:** PC-HANDOFF-2026-11-20-V2  
 **Prepared:** 2026-11-20  
-**Repository:** glad4u7-crypto/project-continue  
-**Default branch:** main  
-**Verified main commit at handoff creation:** 8100496c8e736cb6d03ef54e9593c9546fb303ad
+**Repository:** `glad4u7-crypto/project-continue`  
+**Canonical branch:** `main`  
+**Verified main SHA:** `50ef2216e872122a61504da944a5bc877a616947`
 
-## Purpose
+## Purpose and operating rules
 
-This is the restart point for a new ChatGPT conversation/page. Continue from this checkpoint without restarting completed work, skipping unfinished work, or treating implementation as verified completion.
+This document is the no-skip restart point for a new ChatGPT conversation.
 
-## Repository and workflow rules
+1. GitHub `main` is the canonical source of truth; use feature branches and PRs for changes.
+2. Use Colab for runtime verification, not primary source editing.
+3. Never mark a checkpoint PASS from implementation alone. Record code, focused tests, full tests, CI, Colab/runtime evidence, documentation and exact SHA separately.
+4. Do not overwrite user data, credentials, local databases or existing project files.
+5. Do not silently skip negative-path tests, migration/rollback checks, UI workflows, security, accessibility, documentation or acceptance steps.
+6. Continue from the first genuinely incomplete checkpoint; do not redo verified work.
 
-1. GitHub repository is the canonical development workspace.
-2. Make source changes on a feature branch and merge through a pull request after CI passes.
-3. Use Google Colab for runtime verification, not as the primary source-editing workspace.
-4. Never claim a checkpoint complete solely because code exists or a PR was merged.
-5. Preserve all existing project files and architecture. Audit before changing or replacing anything.
-6. For each checkpoint, track implementation, tests, CI, runtime verification, documentation, evidence, and final status separately.
-7. Do not skip subtasks, negative-path tests, integration checks, security/reliability checks, or documentation.
+## Verified phase status on 2026-11-20
 
-## Phase status at handoff
-
-| Phase | Status | Notes |
+| Phase | Status | Evidence / remaining gate |
 |---|---|---|
-| Phase 01 — Foundation | Final integration audit passed with an evidence note | Do not silently remove the evidence qualification. |
-| Phase 02 — Environment Setup | 8/8 Colab checkpoints passed; evidence recorded through PR #9 | User-provided Colab evidence included synchronized Git SHA and successful integration checks. |
-| Phase 03 — Core Architecture | 8/8 verified complete | Merged implementation and checkpoint evidence are in main. |
-| Phase 04 — Database System | Implementation merged; runtime verification and final audit remain | Do not mark Phase 04 complete yet. |
+| 01 — Foundation | PASS WITH EVIDENCE NOTE | `docs/checkpoints/PC-P01-S009-FINAL-INTEGRATION.md`; abbreviated transcript omitted exact pytest count and git-status text. |
+| 02 — Environment Setup | 8/8 PASS | Prior Colab evidence and PR #9. |
+| 03 — Core Architecture | 8/8 PASS | Merged implementation and checkpoint evidence. |
+| 04 — Database System | IMPLEMENTED; GitHub CI PASS; Colab retest pending | PR #10 and PR #12 merged. Latest main CI #270: 161 passed; database marker group 21 passed; 95% statement coverage. Re-run exact latest SHA in Colab before marking final acceptance. |
+| 05 — Project Management | 8/8 PASS | PR #13. |
+| 06 — Task Management | PASS | PR #14. |
+| 07 — Intelligent Task Engine | Runtime acceptance PASS | Runtime evidence in project history. |
+| 08 — GitHub Integration | PASS | PR #19. |
+| 09 — Automated Testing | 8/8 PASS | PR #20; 112 tests at Phase 09 acceptance. |
+| 10 — Production Readiness & Security | 8/8 PASS; MERGED | PR #21 merged; main CI #270 PASS; Gitleaks no leaks; pip-audit no known vulnerabilities; 161 tests; 95% coverage. |
 
-## Phase 04 — current implementation
+## Latest verified repository state
 
-**Decision:** SQLite using Python standard-library sqlite3.
+- Main SHA: `50ef2216e872122a61504da944a5bc877a616947`.
+- Phase 10 merge commit: `9d75d0c47fd6d4494336fc3528c9762cb9cb01c6`.
+- PR #21: merged.
+- Main post-merge CI run #270: SUCCESS on merge commit `9d75d0c47fd6d4494336fc3528c9762cb9cb01c6`.
+- Final documentation CI run #274: SUCCESS.
+- CI details: Gitleaks reports no leaks; pip-audit reports no known vulnerabilities; compile passes; focused groups pass (unit 68, integration 28, API 21, database 21); full suite 161 passed; statement coverage 95% (821 statements, 39 uncovered); reports uploaded.
+- Phase 10 limitations remain explicit: no authentication/authorization, no distributed multi-tenancy, backup scheduling/retention/off-site replication and encryption-at-rest remain deployment responsibilities; no production deployment or external penetration test is claimed.
 
-Files present on main at the verified handoff commit:
-- database/__init__.py
-- database/connection.py
-- database/schema.py
-- database/repository.py
-- tests/test_database_connection.py
-- tests/test_database_repository.py
-- docs/PHASE-04-DATABASE-SYSTEM.md
-- docs/checkpoints/PC-P04-S001-DATABASE-SELECTION.md
-- docs/checkpoints/PC-P04-S002-DATABASE-CONNECTION.md
-- docs/checkpoints/PC-P04-S003-PROJECT-TABLE.md
-- docs/checkpoints/PC-P04-S004-TASK-TABLE.md
-- docs/checkpoints/PC-P04-S005-DEPENDENCY-TABLE.md
-- docs/checkpoints/PC-P04-S006-ACTIVITY-HISTORY.md
-- docs/checkpoints/PC-P04-S007-DATABASE-CRUD.md
-- docs/checkpoints/PC-P04-S008-DATABASE-TESTS.md
+## Current first incomplete checkpoint
 
-### Phase 04 checkpoint truth table
+### PC-P04 — Database System: final Colab runtime retest
 
-| Checkpoint | Implementation status | Verification status |
-|---|---|---|
-| PC-P04-S001 Database Selection | Decision recorded | Documentation decision recorded |
-| PC-P04-S002 Database Connection | Implemented | Feature-branch CI passed; Colab runtime evidence pending |
-| PC-P04-S003 Project Table | Implemented | Feature-branch CI passed; Colab runtime evidence pending |
-| PC-P04-S004 Task Table | Implemented | Feature-branch CI passed; Colab runtime evidence pending |
-| PC-P04-S005 Dependency Table | Implemented | Feature-branch CI passed; Colab runtime evidence pending |
-| PC-P04-S006 Activity History | Implemented | Feature-branch CI passed; Colab runtime evidence pending |
-| PC-P04-S007 Database CRUD | Implemented | Feature-branch CI passed; Colab runtime evidence pending |
-| PC-P04-S008 Database Tests | Tests implemented | Feature-branch CI passed; Colab runtime evidence pending |
+The implementation and latest GitHub CI are in `main`. PR #10 and PR #12 are merged. Do not change checkpoint statuses to PASS until the latest Colab runtime has synced to the exact current main SHA and the database acceptance checks pass.
 
-## Verified GitHub evidence
+Required sequence:
 
-- PR #9 — Phase 02 evidence and Phase 04 plan: merged.
-- PR #10 — SQLite selection, connection, schema, repository, and tests: merged.
-- PR #10 feature-branch CI run: 44653571280, conclusion success.
-- Main commit after PR #10 merge: 8100496c8e736cb6d03ef54e9593c9546fb303ad.
-- Main-branch CI run: 44653646572, conclusion success.
-- Main CI URL: https://github.com/glad4u7-crypto/project-continue/actions/runs/44653646572
-
-## Exact next actions — do not skip
-
-### A. Reconfirm repository state in a new session
-1. Fetch latest main SHA; it may have advanced since this handoff.
-2. Confirm PR #10 is merged and Phase 04 files still exist.
-3. Inspect the current README, requirements, configuration, app entry point, and CI workflow before integration changes.
-
-### B. Run Colab verification against the latest main SHA
-1. Clone or sync the repository in a clean Colab runtime.
-2. Record Python version and exact checked-out Git SHA.
-3. Install dependencies from the repository manifest.
-4. Run:
+1. In Colab, inspect `/content/project-continue` and preserve any uncommitted user work. Do not reset or overwrite a dirty tree.
+2. Fast-forward sync to main and print `git rev-parse HEAD`; it must equal `50ef2216e872122a61504da944a5bc877a616947` (if main has advanced, update the expected SHA from GitHub before testing).
+3. Record Python version.
+4. Install `requirements.txt`.
+5. Run:
    ```bash
    python -m compileall -q database tests
+   python -m pytest -m database -q
    python -m pytest -q tests/test_database_connection.py tests/test_database_repository.py
    python -m pytest -q
    ```
-5. Capture complete output, including pytest pass/fail/skip counts, exit codes, and `git rev-parse HEAD`.
-6. Confirm the tested SHA equals the intended main SHA.
-7. Add a runtime evidence record in GitHub via PR. Do not invent omitted output or counts.
+6. Run the documented file-backed SQLite workflow: initialize, create/read/update/delete project and task data, dependency same-project/cycle guards (including direct SQL INSERT/UPDATE), activity-history ownership, transaction rollback, reopen persistence, cascade behavior, independent-project isolation, `PRAGMA integrity_check`, backup and restore verification.
+7. Capture exact commands, outputs, exit codes, test counts, Python version and tested SHA. Do not fabricate missing output.
+8. If all pass, update Phase 04 checkpoint docs through a PR and run CI on that exact final commit.
 
-### C. Audit and harden before Phase 04 closure
-- Review schema constraints, migration/version behavior, transaction boundaries, connection lifecycle, and SQLite concurrency assumptions.
-- Verify all project/task/dependency/activity-history relationships and cascade behavior.
-- Add missing negative-path, boundary, and integration tests.
-- Check repository CRUD behavior against existing core validators and application configuration.
-- Ensure database initialization is safe and repeatable; review the schema version strategy rather than assuming the current marker is a complete migration framework.
-- Verify secrets, filesystem paths, default database location, and Colab's ephemeral-storage limitation.
-- Integrate database configuration and repository usage into the application only after auditing current app lifecycle and UI architecture.
-- Update documentation and checkpoint evidence for every change.
-- Re-run full CI and Colab checks on the exact final commit.
+### After Phase 04
 
-### D. Phase 04 closure gate
-Do not start Phase 05 until all eight checkpoints have implementation, focused tests, full integration tests, passing GitHub CI, required Colab verification, exact-SHA evidence, updated docs, and a final repository audit.
+- Audit all Phase 04 docs/checkpoint files for stale status and exact evidence.
+- Run end-to-end Streamlit UI workflows in the intended Colab environment: project create/search/edit/archive; task create/edit/assign/status/priority; dependencies and blocked-completion behavior; GitHub read-only panel; error/empty/loading states.
+- Verify app startup/shutdown, persistent database path, backup/restore, restart persistence, and no unintended data mutation.
+- Review all open issues/PRs, stale branches, documentation links, CI workflows, dependency security and final acceptance matrix.
+- Only then declare the complete product release-ready. Phase 10 security hardening alone is not a public multi-user production certification.
 
-## New conversation resume instruction
+## Open repository follow-ups observed
 
-When opening a new ChatGPT page, attach or paste this checkpoint and say:
+- PR #11 is this handoff document; update it to this checkpoint and merge only after its PR CI passes.
+- PR #3 is an obsolete Phase 01 draft whose pending wording conflicts with the PASS-with-evidence-note record already in main; close it as superseded after confirming no unique content is lost.
+- Phase 04 is the first incomplete acceptance gate. Do not claim it is closed before the Colab retest.
 
-“Continue Project Continue from PC-HANDOFF-2026-11-20. First verify the latest GitHub main SHA and repository state. Do not redo completed work. Resume at Phase 04 Colab runtime verification and the remaining database audit/hardening tasks. Keep GitHub as the source of truth, use Colab only for runtime verification, and do not close Phase 04 or start Phase 05 until every checkpoint and acceptance gate is satisfied.”
+## Resume instruction
 
+“Continue Project Continue from PC-HANDOFF-2026-11-20-V2. Verify the latest main SHA first. Phase 01–03 and Phase 05–10 are accepted as recorded. Resume at PC-P04 database Colab retest. Preserve all existing files and user data, use Colab only for runtime verification, record exact SHA and complete outputs, then audit UI end-to-end behavior and all open repository follow-ups. Do not skip checkpoints or claim unverified acceptance.”
