@@ -63,11 +63,16 @@ The details panel also displays project identifiers and timestamps, task status 
 
 It verifies registration, task-derived progress, metadata/activity updates, archive/filter/restore, database reopen persistence, and SQLite integrity_check. The same workflow is covered by an automated pytest test.
 
-### Latest exact-head CI evidence before this expansion
+### Latest exact-head CI evidence
 
-- Commit: c9c32f64b522f6dc414ac238b1dcbab584389a6b
-- GitHub Actions runs #84 (push) and #85 (pull_request): PASS
-- Compile: PASS
-- Full test suite: 53 passed in 1.20s (run #84) and 53 passed in 1.29s (run #85)
-- These results apply to c9c32f64... only. The current expanded commit must receive its own CI run.
-- Colab/browser runtime acceptance: pending.
+- Commit: c1be4b9baac91ecaf693d20ee2fadc80a9c64c73
+- GitHub Actions run #86 (push): PASS; compileall passed; full suite 54 passed in 2.88s.
+- GitHub Actions run #87 (pull_request): PASS; compileall passed; full suite 54 passed in 0.95s.
+- Both runs checked the exact commit above.
+- The automated file-backed acceptance test is included in the 54-test suite.
+- Colab/browser runtime acceptance: pending; the executable command is python scripts/phase05_acceptance.py.
+
+
+## Checkpoint disposition at commit c1be4b9
+
+The working decomposition PC-P05-S001 through PC-P05-S008 has implementation coverage in this PR, but none is marked complete yet. Final completion requires Colab execution of the file-backed acceptance script, manual browser workflow verification, reconciliation with the canonical master checkpoint names, and review/merge of the stacked Phase 04 and Phase 05 pull requests.

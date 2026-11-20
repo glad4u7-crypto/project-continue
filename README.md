@@ -6,7 +6,7 @@ Project Continue is a project-workflow assistant designed to organize multiple p
 
 **Phase:** Phase 04 database foundation plus Phase 05 Project Management implementation in review.  
 **Dashboard:** persistent project registration, registry search/filter, project details, metadata editing, archive/restore, progress summaries, and activity history are implemented on the Phase 05 feature branch.  
-**Verification:** GitHub Actions passed 50 tests on initial Phase 05 commit 2d05016b444c45c3bcc723dc75b42738037d0e8b. Later changes require a fresh exact-head run. Colab/browser runtime acceptance remains pending.
+**Verification:** GitHub Actions passed 54 tests on Phase 05 commit c1be4b9baac91ecaf693d20ee2fadc80a9c64c73 (runs #86 and #87). Colab/browser runtime acceptance remains pending.
 
 The repository is built in verifiable checkpoints. main is the authoritative branch; see docs/BRANCHING.md. Phase 05 implementation is currently proposed through PR #13, stacked on the Phase 04 working branch.
 
