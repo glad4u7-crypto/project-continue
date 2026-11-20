@@ -199,11 +199,20 @@ class ProjectRepository:
             raise ValueError("event_type must be non-empty text")
         payload_json = json.dumps(payload or {}, sort_keys=True, separators=(",", ":"))
         with self.database.transaction() as connection:
+            if task_id is not None:
+                task_id = validate_identifier(task_id)
+                task = connection.execute(
+                    "SELECT project_id FROM tasks WHERE id = ?",
+                    (task_id,),
+                ).fetchone()
+                if task is None:
+                    raise KeyError(task_id)
+                if task["project_id"] != project_id:
+                    raise ValueError("Activity task must belong to the same project")
             cursor = connection.execute(
                 """INSERT INTO activity_history(project_id, task_id, event_type, payload_json, created_at)
                    VALUES (?, ?, ?, ?, ?)""",
-                (project_id, validate_identifier(task_id) if task_id else None,
-                 event_type.strip(), payload_json, _now()),
+                (project_id, task_id, event_type.strip(), payload_json, _now()),
             )
             return int(cursor.lastrowid)
 
