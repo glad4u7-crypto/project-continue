@@ -2,24 +2,20 @@
 
 **Phase objective:** introduce a tested persistence layer for Project Continue's project, task, dependency, and activity-history data.
 
-**Implementation policy:** all source changes are developed in GitHub working branches and merged to main through pull requests. Colab is used for runtime verification, not as the primary source-editing workspace.
+**Implementation policy:** source changes are developed in GitHub feature branches and merged through pull requests. Colab is used for runtime verification, not as the primary source-editing workspace.
 
 ## Checkpoint sequence
 
-| Checkpoint | Name | Current status |
-|---|---|---|
-| PC-P04-S001 | Database Selection | DECISION RECORDED — SQLite |
-| PC-P04-S002 | Database Connection | IMPLEMENTED — file-backed tests previously passed; shared in-memory persistence hardening added; latest retest pending |
-| PC-P04-S003 | Project Table | IMPLEMENTED — CRUD, foreign-key, persistence, and cascade behavior previously verified; final retest/review pending |
-| PC-P04-S004 | Task Table | IMPLEMENTED — CRUD, ownership, persistence, and deletion behavior previously verified; final retest/review pending |
-| PC-P04-S005 | Dependency Table | IMPLEMENTED — repository checks previously passed; SQLite UPDATE ownership and INSERT/UPDATE cycle triggers added; latest retest pending |
-| PC-P04-S006 | Activity History | IMPLEMENTED — JSON persistence, project/task ownership validation, SQL INSERT/UPDATE triggers, and deletion behavior previously verified; final retest/review pending |
-| PC-P04-S007 | Database CRUD | IMPLEMENTED — repository and file-backed workflow previously verified; latest retest/review pending |
-| PC-P04-S008 | Database Tests | IMPLEMENTED — prior 12/12 focused and 38/38 full-suite tests passed; latest regression suite and CI pending |
-
-## Database decision
-
-SQLite through Python's standard-library sqlite3 module is selected for the initial persistence layer. The rationale, limitations, and upgrade conditions are recorded in checkpoints/PC-P04-S001-DATABASE-SELECTION.md.
+| Checkpoint | Name | Implementation | Latest verification |
+|---|---|---|---|
+| PC-P04-S001 | Database Selection | SQLite decision recorded | PASS — decision documented |
+| PC-P04-S002 | Database Connection | Implemented | GitHub CI PASS; final Colab retest pending |
+| PC-P04-S003 | Project Table | Implemented | GitHub CI PASS; final Colab retest pending |
+| PC-P04-S004 | Task Table | Implemented | GitHub CI PASS; final Colab retest pending |
+| PC-P04-S005 | Dependency Table | Implemented | GitHub CI PASS; final Colab retest pending |
+| PC-P04-S006 | Activity History | Implemented | GitHub CI PASS; final Colab retest pending |
+| PC-P04-S007 | Database CRUD | Implemented | GitHub CI PASS; final Colab retest pending |
+| PC-P04-S008 | Database Tests | Implemented | GitHub CI PASS; final Colab retest pending |
 
 ## Implementation map
 
@@ -29,45 +25,40 @@ SQLite through Python's standard-library sqlite3 module is selected for the init
 - Automated acceptance coverage: tests/test_database_connection.py and tests/test_database_repository.py
 - S002-S008 acceptance criteria: checkpoints/PC-P04-S002-TO-S008-DATABASE-ACCEPTANCE.md
 
-## Checkpoint completion rules
+## Integrity hardening merged
 
-A checkpoint is not complete merely because code is committed. Each checkpoint must have:
-1. A defined scope and acceptance criteria before implementation.
-2. A focused implementation in the repository.
-3. Automated tests for behavior and rejection/error paths.
-4. GitHub Actions CI passing on the exact current PR head.
-5. Runtime verification where the checkpoint requires it.
-6. An evidence record naming the exact commit and commands/results.
-7. Realistic workflow verification for user-visible or data-integrity behavior.
+- SQLite BEFORE INSERT and BEFORE UPDATE triggers enforce same-project dependency ownership and reject cycles even when repository validation is bypassed.
+- Shared in-memory SQLite uses a private shared-memory URI and anchor connection so repository operations share state across short-lived connections; close() releases it.
+- Activity-history task references are validated to belong to the same project by repository checks and SQLite triggers.
+- Regression tests cover dependency UPDATE ownership, cycle rejection on INSERT/UPDATE, shared in-memory persistence, and cross-project activity references.
 
-## Historical verification evidence — 2026-11-20
+## Latest GitHub verification — 2026-11-20
 
-The following earlier results apply to code commit dd87af7708b9b5c4ac982dd21b788b311ddaf731, not to the latest audit-hardening commits:
+- PR #10 (initial database implementation): merged.
+- PR #12 (database integrity hardening): merged at `44166feafc7af16ad7b3358dd186c7cd68c1421d`.
+- Main post-Phase-10 CI run #270: **SUCCESS** on merge commit `9d75d0c47fd6d4494336fc3528c9762cb9cb01c6`.
+- Python: 3.11.18.
+- Gitleaks: no leaks found; pip-audit: no known vulnerabilities.
+- Focused groups: unit 68, integration 28, API 21, database 21 passed.
+- Full suite: **161 passed**.
+- Statement coverage: **95%** (821 statements; 39 uncovered).
+- Compile, focused tests, full suite and report upload passed.
 
-| Verification | Result | Evidence |
-|---|---|---|
-| Colab focused database tests | PASS — 12/12 | User-provided Colab output; exit code 0 |
-| Colab full test suite | PASS — 38/38 | User-provided Colab output; exit code 0 |
-| Real SQLite file-backed workflow | PASS — 10/10 checks | User-provided Colab output; temporary SQLite file |
-| GitHub Actions CI | PASS | Workflow run #73; job test; compile and test steps completed successfully |
+## Remaining acceptance gate
 
-The file-backed workflow verified initialization, multiple projects/tasks, dependency and activity persistence, data survival after reopening through new database/repository instances, transaction rollback, foreign-key enforcement, PRAGMA integrity_check = ok, task deletion behavior, project cascade deletion, and isolation of an independent project.
+**PC-P04-S002 through PC-P04-S008 remain IN PROGRESS until fresh Colab verification is captured against the exact current main SHA.** GitHub CI alone is not a substitute.
 
-## Audit hardening added after the historical verification
+In Colab, sync to latest main and record exact SHA/Python version, then run:
 
-A second source-level review identified two gaps and added regression coverage on the PR branch:
+```bash
+python -m compileall -q database tests
+python -m pytest -m database -q
+python -m pytest -q tests/test_database_connection.py tests/test_database_repository.py
+python -m pytest -q
+```
 
-1. Dependency integrity: the repository API already rejected cross-project dependencies and cycles, but direct SQL UPDATE could bypass same-project ownership, and direct SQL could bypass cycle prevention. SQLite BEFORE INSERT and BEFORE UPDATE triggers now enforce both invariants.
-2. Shared in-memory database: Database(':memory:') previously created a fresh independent database for each short-lived connection, so repository operations could not share schema/data. A private shared-memory URI and anchor connection now preserve state across connection contexts, with an explicit close() method.
-
-New tests were added for dependency UPDATE ownership, dependency cycle rejection on INSERT/UPDATE, and repository persistence using the shared in-memory database.
-
-The updated database-focused suite is expected to contain 15 tests and the full suite 41 tests. These are expected counts only; they are not marked passed until the latest Colab output confirms them. The earlier CI run does not cover these new commits.
+Also run the real file-backed SQLite workflow: initialization; project/task CRUD; dependency same-project and cycle checks including direct SQL INSERT/UPDATE; activity-history ownership; transaction rollback; close/reopen persistence; cascade behavior; independent-project isolation; `PRAGMA integrity_check`; backup and restore. Capture full outputs, exit codes and tested SHA. Do not invent omitted results.
 
 ## Scope boundaries
 
-This phase establishes persistence primitives and database-backed records. It does not by itself claim that the project-management UI, task-management workflows, intelligent task engine, GitHub integration, or deployment are complete.
-
-## Current position
-
-S001's SQLite decision is recorded. S002-S008 implementation is present and now has explicit checkpoint-by-checkpoint acceptance criteria. The latest audit fixes are committed to PR #12, but the latest focused tests, full suite, CI, and Colab retest are pending. PR #12 remains open and unmerged. No Phase 04 checkpoint is marked complete based only on implementation. No claim is made that the application UI or end-to-end user-facing project workflow is complete.
+This phase establishes persistence primitives and database-backed records. It does not by itself claim that every Streamlit UI workflow or hosted deployment is complete. After database runtime acceptance, run the separate end-to-end UI audit in the durable continuation checkpoint.
