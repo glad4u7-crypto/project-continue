@@ -1,5 +1,7 @@
 import pytest
 
+pytestmark = pytest.mark.integration
+
 from database import Database, ProjectRepository
 from services import IntelligentTaskEngine, ProjectManagementService, TaskManagementService
 

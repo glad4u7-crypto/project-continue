@@ -2,6 +2,8 @@ import sqlite3
 
 import pytest
 
+pytestmark = pytest.mark.database
+
 from database import Database, ProjectRepository
 
 

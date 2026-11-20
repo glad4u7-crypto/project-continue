@@ -8,7 +8,8 @@ Project Continue organizes projects, tasks and dependencies, recommends actionab
 **Phase 05:** Project Management merged through PR #13; all eight Phase 05 checkpoints are accepted.  
 **Phase 06:** Task Management merged into main through PR #14.  
 **Phase 07:** Intelligent Task Engine runtime acceptance passed, including ranking, explainable priority, dependency analysis, actionable-task selection, blocked-task detection and dependency-aware completion verification.  
-**Phase 08:** GitHub read-only integration merged; runtime configuration, dashboard connection check and automated tests included.
+**Phase 08:** GitHub read-only integration merged; runtime configuration and dashboard connection check included.  
+**Phase 09:** Automated testing implemented; PR #20 CI passed with 112 tests and 96% statement coverage. Checkpoints and test reports are documented in docs/PHASE-09-AUTOMATED-TESTING.md.
 
 ## Technology
 

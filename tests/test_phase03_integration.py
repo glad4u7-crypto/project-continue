@@ -4,6 +4,8 @@ import io
 
 import pytest
 
+pytestmark = pytest.mark.integration
+
 from app.lifecycle import ApplicationLifecycle, LifecycleState
 from config import get_settings
 from core.errors import ConfigurationError, ValidationError

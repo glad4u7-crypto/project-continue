@@ -1,6 +1,8 @@
 import pytest
 import requests
 
+pytestmark = pytest.mark.api
+
 from integrations.github_client import GitHubAPIError, GitHubClient
 from services.github_integration import GitHubIntegrationService
 
@@ -117,3 +119,27 @@ def test_service_facade_uses_configured_repository():
 def test_service_rejects_missing_repository():
     with pytest.raises(ValueError):
         GitHubIntegrationService(GitHubClient("token"), "")
+
+
+def test_service_facade_delegates_all_read_operations_and_auth_state():
+    payload = [{"name": "sample"}]
+    session = FakeSession(FakeResponse(payload=payload))
+    client = GitHubClient("token", session=session)
+    service = GitHubIntegrationService(client, "owner/repo")
+
+    assert service.authenticated is True
+    assert service.branches() == payload
+    assert service.commits(branch="main", per_page=5) == payload
+    assert service.verify_file("README.md", ref="main") == payload
+    assert service.pull_requests(state="closed", per_page=7) == payload
+    assert len(session.calls) == 4
+    assert session.calls[0][0].endswith("/repos/owner/repo/branches")
+    assert session.calls[1][1] == {"per_page": 5, "sha": "main"}
+    assert session.calls[2][1] == {"ref": "main"}
+    assert session.calls[3][1] == {"state": "closed", "per_page": 7}
+
+
+def test_service_repository_can_be_loaded_from_environment(monkeypatch):
+    monkeypatch.setenv("GITHUB_REPOSITORY", " owner/repo ")
+    service = GitHubIntegrationService(GitHubClient(session=FakeSession()))
+    assert service.repository == "owner/repo"
