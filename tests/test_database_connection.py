@@ -63,3 +63,62 @@ def test_transaction_rolls_back_on_error(tmp_path):
 def test_timeout_must_be_positive():
     with pytest.raises(ValueError):
         ConnectionDatabase(":memory:", timeout=0)
+
+
+def test_backup_preserves_database_and_passes_integrity_check(tmp_path):
+    source_path = tmp_path / "source" / "project.db"
+    backup_path = tmp_path / "backups" / "project-backup.db"
+    database = ConnectionDatabase(source_path)
+    with database.connection() as connection:
+        connection.execute("CREATE TABLE sample (id INTEGER PRIMARY KEY, value TEXT)")
+        connection.execute("INSERT INTO sample(value) VALUES (?)", ("preserved",))
+
+    created = database.backup(backup_path)
+
+    assert created == backup_path
+    assert ConnectionDatabase.verify_backup(backup_path) is True
+    with sqlite3.connect(backup_path) as connection:
+        assert connection.execute("SELECT value FROM sample").fetchone()[0] == "preserved"
+
+
+def test_backup_does_not_overwrite_existing_destination(tmp_path):
+    database = ConnectionDatabase(tmp_path / "source.db")
+    destination = tmp_path / "existing-backup.db"
+    destination.write_text("keep this file", encoding="utf-8")
+
+    with pytest.raises(FileExistsError):
+        database.backup(destination)
+
+    assert destination.read_text(encoding="utf-8") == "keep this file"
+
+
+def test_backup_rejects_source_as_destination(tmp_path):
+    source = tmp_path / "source.db"
+    database = ConnectionDatabase(source)
+    with database.connection() as connection:
+        connection.execute("CREATE TABLE sample (id INTEGER)")
+
+    with pytest.raises(ValueError, match="differ"):
+        database.backup(source)
+
+
+def test_backup_file_permissions_are_owner_only_on_posix(tmp_path):
+    import os
+    import stat
+
+    if os.name != "posix":
+        pytest.skip("POSIX file permissions are not available")
+    database = ConnectionDatabase(tmp_path / "source.db")
+    backup = database.backup(tmp_path / "backup.db")
+    assert stat.S_IMODE(backup.stat().st_mode) == 0o600
+
+
+def test_verify_backup_rejects_missing_file(tmp_path):
+    with pytest.raises(FileNotFoundError):
+        ConnectionDatabase.verify_backup(tmp_path / "missing.db")
+
+
+def test_backup_rejects_empty_destination(tmp_path):
+    database = ConnectionDatabase(tmp_path / "source.db")
+    with pytest.raises(ValueError, match="must not be empty"):
+        database.backup("")

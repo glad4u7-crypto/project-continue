@@ -5,8 +5,18 @@ import sys
 from typing import TextIO
 
 from core.errors import ConfigurationError
+from core.security import redact_secrets
 
 _HANDLER_MARKER = "_project_continue_handler"
+
+
+class SecretRedactionFilter(logging.Filter):
+    """Mask common credentials in log messages before handlers emit them."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        record.msg = redact_secrets(record.getMessage())
+        record.args = ()
+        return True
 
 
 def setup_logging(
@@ -35,4 +45,6 @@ def setup_logging(
     for handler in logger.handlers:
         if getattr(handler, _HANDLER_MARKER, False):
             handler.setLevel(numeric_level)
+            if not any(isinstance(item, SecretRedactionFilter) for item in handler.filters):
+                handler.addFilter(SecretRedactionFilter())
     return logger
