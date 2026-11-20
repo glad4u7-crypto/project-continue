@@ -6,8 +6,8 @@ Provide repeatable, isolated automated verification for Project Continue. Tests 
 
 ## Checkpoint map
 
-| Checkpoint | Scope | Evidence |
-| --- | --- | --- |
+| Checkpoint | Scope | Evidence | Status |
+| --- | --- | --- | --- |
 | PC-P09-S001 | Pytest configuration | strict discovery, registered markers, collection | PASS |
 | PC-P09-S002 | Unit tests | isolated configuration, validation, service and engine tests | PASS |
 | PC-P09-S003 | Integration tests | cross-module and workflow tests | PASS |
