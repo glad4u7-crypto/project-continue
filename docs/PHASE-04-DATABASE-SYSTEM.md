@@ -36,11 +36,12 @@
 
 - PR #10 (initial database implementation): merged.
 - PR #12 (database integrity hardening): merged at `44166feafc7af16ad7b3358dd186c7cd68c1421d`.
-- Main post-Phase-10 CI run #270: **SUCCESS** on merge commit `9d75d0c47fd6d4494336fc3528c9762cb9cb01c6`.
+- Main post-Phase-10 CI run #270: **SUCCESS** on merge commit `9d75d0c47fd6d4494336fc3528c9762cb9cb01c6`.  
+- Latest main CI run #283: **SUCCESS** on main commit `8f688ef7c687032dbd86c05f86614e78e231f7b4`, including the new file-backed reopen and backup-restore tests.
 - Python: 3.11.18.
 - Gitleaks: no leaks found; pip-audit: no known vulnerabilities.
-- Focused groups: unit 68, integration 28, API 21, database 21 passed.
-- Full suite: **161 passed**.
+- Focused groups: unit 68, integration 28, API 21, database 23 passed.
+- Full suite: **163 passed**.
 - Statement coverage: **95%** (821 statements; 39 uncovered).
 - Compile, focused tests, full suite and report upload passed.
 

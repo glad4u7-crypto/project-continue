@@ -158,5 +158,14 @@ Maintain automated tests for connection behavior, schema constraints, repository
 - PR #10 and PR #12 are merged into main.
 - Main CI run #270: SUCCESS; Python 3.11.18; Gitleaks no leaks; pip-audit no known vulnerabilities; compile passed.
 - Focused groups: unit 68, integration 28, API 21, database 21 passed.
-- Full suite: 161 passed; statement coverage 95% (821 statements; 39 uncovered).
+- Full suite: 163 passed; statement coverage 95% (821 statements; 39 uncovered).
 - Colab exact-SHA retest and real file-backed workflow verification remain required for final Phase 04 acceptance.
+
+
+## Latest post-restore-test verification — 2026-11-20
+
+- PR #24 merged: file-backed persistence after close/reopen and backup restore into a working repository.
+- Main CI run #283: SUCCESS on main SHA 8f688ef7c687032dbd86c05f86614e78e231f7b4.
+- Database-marked group: 23 passed; full suite: 163 passed; statement coverage: 95% (821 statements, 39 uncovered).
+- Gitleaks: no leaks; pip-audit: no known vulnerabilities; compile and artifact upload passed.
+- Final Colab exact-SHA runtime acceptance remains pending.
