@@ -50,7 +50,7 @@ Use the checkpoint IDs above. Resume from the first checkpoint not marked PASS. 
 
 - All eight checkpoints: **PASS**.
 - Pull request #21: OPEN, mergeable, not merged.
-- Latest pull-request CI run #256: **SUCCESS** on the latest PR head.
+- Latest pull-request CI run #264: **SUCCESS** on the latest PR head.
 - Gitleaks: no leaks found; pip-audit: no known vulnerabilities found.
 - Automated suite: **161 passed**; statement coverage **95%** (821 statements; 39 uncovered).
 - Main branch remains unchanged pending explicit merge approval.
