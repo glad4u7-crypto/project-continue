@@ -18,8 +18,8 @@ Harden Project Continue for safer deployment and operation without changing its 
 | Checkpoint | Scope | Evidence required | Status |
 | --- | --- | --- | --- |
 | PC-P10-S001 | Security baseline and threat model | Repository inventory, trust boundaries, prioritized risks | PASS |
-| PC-P10-S002 | Production configuration validation | Strict production settings and deterministic tests | IN PROGRESS |
-| PC-P10-S003 | Secrets and repository hygiene | Secret-safe templates, ignore rules, automated leak checks | PENDING |
+| PC-P10-S002 | Production configuration validation | Strict production settings and deterministic tests | PASS |
+| PC-P10-S003 | Secrets and repository hygiene | Secret-safe templates, ignore rules, automated leak checks | IN PROGRESS |
 | PC-P10-S004 | Safe logging and error handling | Redaction tests for tokens, exception messages and sensitive headers | PENDING |
 | PC-P10-S005 | Database operational safety | SQLite durability/backup guidance and safe backup verification | PENDING |
 | PC-P10-S006 | Input and integration hardening | Boundary tests for untrusted values, URLs, timeouts and API failures | PENDING |
