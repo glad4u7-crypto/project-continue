@@ -24,7 +24,7 @@ This document is the no-skip restart point for a new ChatGPT conversation.
 | 01 — Foundation | PASS WITH EVIDENCE NOTE | `docs/checkpoints/PC-P01-S009-FINAL-INTEGRATION.md`; abbreviated transcript omitted exact pytest count and git-status text. |
 | 02 — Environment Setup | 8/8 PASS | Prior Colab evidence and PR #9. |
 | 03 — Core Architecture | 8/8 PASS | Merged implementation and checkpoint evidence. |
-| 04 — Database System | IMPLEMENTED; GitHub CI PASS; Colab retest pending | PR #10 and PR #12 merged. Latest main CI #270: 161 passed; database marker group 21 passed; 95% statement coverage. Re-run exact latest SHA in Colab before marking final acceptance. |
+| 04 — Database System | IMPLEMENTED; GitHub CI PASS; Colab retest pending | PR #10 and PR #12 merged. Latest main CI #270: 161 passed; database marker group 23 passed; full suite 163 passed; 95% statement coverage. PR #24 added file-backed reopen and backup-restore tests. Re-run exact latest SHA in Colab before marking final acceptance. |
 | 05 — Project Management | 8/8 PASS | PR #13. |
 | 06 — Task Management | PASS | PR #14. |
 | 07 — Intelligent Task Engine | Runtime acceptance PASS | Runtime evidence in project history. |
@@ -34,7 +34,7 @@ This document is the no-skip restart point for a new ChatGPT conversation.
 
 ## Latest verified repository state
 
-- Main SHA: `50ef2216e872122a61504da944a5bc877a616947`.
+- Main SHA: `8f688ef7c687032dbd86c05f86614e78e231f7b4`.
 - Phase 10 merge commit: `9d75d0c47fd6d4494336fc3528c9762cb9cb01c6`.
 - PR #21: merged.
 - Main post-merge CI run #270: SUCCESS on merge commit `9d75d0c47fd6d4494336fc3528c9762cb9cb01c6`.
@@ -76,9 +76,9 @@ Required sequence:
 ## Open repository follow-ups observed
 
 - PR #11 (durable handoff) is merged; its PR CI #275 passed.
-- PR #22 (Phase 04 aggregate acceptance evidence) is merged; its PR CI #276 passed.
+- PR #22 (Phase 04 aggregate acceptance evidence) is merged; its PR CI #276 passed. PR #23 and PR #24 are also merged; latest main CI #283 passed.
 - PR #3 was closed as superseded because its pending wording conflicted with the PASS-with-evidence-note record already in main.
-- PR #23 synchronizes individual Phase 04 checkpoint records; merge only after its PR CI passes.
+- PR #23 (individual Phase 04 checkpoint evidence) merged; PR #24 (file-backed persistence and backup-restore regression tests) merged; both PR CI passed.
 - Phase 04 is the first incomplete acceptance gate. Do not claim it is closed before the Colab retest.
 
 ## Resume instruction
@@ -88,8 +88,8 @@ Required sequence:
 
 ## Repository housekeeping update — 2026-11-20
 
-- Current main before PR #23 merge: 074660302228fcc492e11cd635c7c3342aacb961.
+- Current main after PR #24 merge: 8f688ef7c687032dbd86c05f86614e78e231f7b4.
 - PR #11 merged; durable handoff is now in main.
 - PR #22 merged; Phase 04 aggregate database CI evidence is in main.
 - PR #3 closed as superseded; no pending Phase 01 gate remains beyond the evidence note already documented on main.
-- PR #23 is updating the seven individual Phase 04 S002-S008 checkpoint records to distinguish GitHub CI PASS from the required Colab retest.
+- PR #23 synchronized the seven individual Phase 04 S002-S008 checkpoint records. PR #24 added file-backed reopen and backup-restore regression tests.
