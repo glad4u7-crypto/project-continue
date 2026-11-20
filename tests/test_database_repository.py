@@ -161,3 +161,61 @@ def test_delete_project_cascades_related_records(repository):
     repository.record_activity("p-1", "project.created")
     assert repository.delete_project("p-1") is True
     assert repository.list_projects() == []
+
+
+def test_file_backed_repository_persists_after_reopen(tmp_path):
+    database_path = tmp_path / "durable" / "project.db"
+
+    first_database = Database(database_path)
+    first_repository = ProjectRepository(first_database)
+    first_repository.initialize()
+    first_repository.create_project("persist-project", "Persistent project")
+    first_repository.create_task("persist-task-1", "persist-project", "First task")
+    first_repository.create_task("persist-task-2", "persist-project", "Second task")
+    first_repository.add_dependency("persist-task-2", "persist-task-1")
+    first_repository.record_activity(
+        "persist-project", "task.created", task_id="persist-task-1",
+        payload={"source": "file-backed-reopen"},
+    )
+    first_database.close()
+
+    reopened_database = Database(database_path)
+    reopened_repository = ProjectRepository(reopened_database)
+    try:
+        reopened_repository.initialize()
+        assert reopened_repository.get_project("persist-project")["name"] == "Persistent project"
+        assert reopened_repository.get_task("persist-task-1")["title"] == "First task"
+        assert reopened_repository.list_dependencies("persist-task-2") == ["persist-task-1"]
+        events = reopened_repository.list_activity("persist-project")
+        assert events[0]["payload"] == {"source": "file-backed-reopen"}
+    finally:
+        reopened_database.close()
+
+
+def test_database_backup_can_be_restored_as_a_working_repository(tmp_path):
+    source_path = tmp_path / "source" / "project.db"
+    backup_path = tmp_path / "backup" / "project-backup.db"
+
+    source_database = Database(source_path)
+    source_repository = ProjectRepository(source_database)
+    source_repository.initialize()
+    source_repository.create_project("backup-project", "Backup project")
+    source_repository.create_task("backup-task", "backup-project", "Restore me")
+    source_repository.record_activity(
+        "backup-project", "backup.created", task_id="backup-task",
+        payload={"verified": True},
+    )
+
+    source_database.backup(backup_path)
+    assert Database.verify_backup(backup_path) is True
+    source_database.close()
+
+    restored_database = Database(backup_path)
+    restored_repository = ProjectRepository(restored_database)
+    try:
+        restored_repository.initialize()
+        assert restored_repository.get_project("backup-project")["name"] == "Backup project"
+        assert restored_repository.get_task("backup-task")["title"] == "Restore me"
+        assert restored_repository.list_activity("backup-project")[0]["payload"] == {"verified": True}
+    finally:
+        restored_database.close()
