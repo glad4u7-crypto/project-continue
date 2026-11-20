@@ -2,6 +2,8 @@
 
 import logging
 
+from core.security import redact_secrets
+
 
 class ProjectContinueError(Exception):
     """Base class for expected application errors."""
@@ -25,6 +27,7 @@ def handle_application_error(
     *,
     context: str = "Application operation failed",
 ) -> int:
-    """Log an application error without exposing sensitive details to users."""
-    logger.error("%s: %s", context, error.__class__.__name__)
+    """Log an application error without exposing exception details or credentials."""
+    safe_context = redact_secrets(context)
+    logger.error("%s: %s", safe_context, error.__class__.__name__)
     return 1
