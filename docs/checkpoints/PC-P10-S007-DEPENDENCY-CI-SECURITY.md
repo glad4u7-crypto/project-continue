@@ -1,6 +1,6 @@
 # PC-P10-S007 — Dependency and CI Security
 
-**Status:** IN PROGRESS  
+**Status:** PASS  
 **Phase:** 10 — Production Readiness & Security
 
 ## Implemented controls
@@ -19,7 +19,10 @@
 
 ## CI evidence
 
-- Dependency audit result pending.
+- Gitleaks: **PASS** — no leaks found.
+- pip-audit 2.10.1: **PASS** — no known vulnerabilities found after upgrading pytest to 9.2.0 (patched range ≥9.0.3).
+- GitHub Actions run #245: **SUCCESS** — pinned actions, dependency audit, compile, focused tests, full suite and report upload passed.
+- Full suite: **161 passed**; statement coverage **95%** (821 statements; 39 uncovered).
 
 ## Next
 
