@@ -77,7 +77,11 @@ A checkpoint is PASS only when its focused tests and required evidence have been
 - Full automated suite: **112 passed in 3.41s**.
 - Statement coverage: **96% (730 statements; 32 uncovered)**.
 - JUnit, coverage XML and HTML reports uploaded as artifact `phase-09-test-reports` (artifact ID `14631377954`).
-- Pull request: #20, awaiting review/merge.
-- The Phase 09 feature branch is isolated; `main` was not modified.
+- Pull request #20: MERGED into `main` on 2026-11-20.
+- Merge commit: `62d70f1cea3a9207ff10e0bd859ddecd3e75f01e`.
+- Branch synchronization commit: `c565a3d1d35a1266bb840dbffc9cd6d259f14601`.
+- Post-synchronization GitHub Actions runs #194 (push) and #195 (pull request): PASS.
+- Post-merge `main` CI run #196 was queued at the time of this record; final main-branch CI confirmation is tracked separately.
+- Test report artifact from synchronized run #195: `phase-09-test-reports` (artifact ID `14631664115`).
 
-**Implementation and CI acceptance: COMPLETE.**
+**Implementation, review integration, and pre-merge CI acceptance: COMPLETE.**
