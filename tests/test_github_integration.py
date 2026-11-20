@@ -28,13 +28,16 @@ class FakeSession:
         return self.response
 
 
-def test_token_required_and_never_in_repr(monkeypatch):
+def test_token_optional_for_public_repositories_and_repr_is_safe(monkeypatch):
     monkeypatch.delenv("GITHUB_TOKEN", raising=False)
-    with pytest.raises(ValueError, match="GITHUB_TOKEN"):
-        GitHubClient()
-    client = GitHubClient("secret-token")
-    assert "secret-token" not in repr(client)
-    assert "[REDACTED]" in repr(client)
+    client = GitHubClient()
+    assert client.authenticated is False
+    assert "not-configured" in repr(client)
+    assert "Authorization" not in client.session.headers
+    authenticated = GitHubClient("secret-token")
+    assert authenticated.authenticated is True
+    assert "secret-token" not in repr(authenticated)
+    assert "Bearer secret-token" not in repr(authenticated.session.headers)
 
 
 def test_auth_headers_and_timeout():
@@ -110,3 +113,8 @@ def test_service_facade_uses_configured_repository():
     service = GitHubIntegrationService(client, "owner/repo")
     service.repository_overview()
     assert session.calls[0][0].endswith("/repos/owner/repo")
+
+
+def test_service_rejects_missing_repository():
+    with pytest.raises(ValueError):
+        GitHubIntegrationService(GitHubClient("token"), "")
