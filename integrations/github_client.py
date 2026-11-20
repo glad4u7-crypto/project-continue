@@ -39,7 +39,13 @@ class GitHubClient:
 
     @staticmethod
     def _repository(repository: str) -> str:
-        if not isinstance(repository, str) or not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repository):
+        if not isinstance(repository, str):
+            raise ValueError("repository must use owner/name format")
+        parts = repository.split("/")
+        if len(parts) != 2 or any(
+            not part or part in {".", ".."} or not re.fullmatch(r"[A-Za-z0-9_.-]+", part)
+            for part in parts
+        ):
             raise ValueError("repository must use owner/name format")
         return repository
 
