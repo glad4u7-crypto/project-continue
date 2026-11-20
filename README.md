@@ -6,10 +6,11 @@ Project Continue is a project-workflow assistant designed to organize multiple p
 
 **Phase 04:** database foundation merged into `main`.
 **Phase 05:** Project Management implementation merged into `main` through [PR #13](https://github.com/glad4u7-crypto/project-continue/pull/13).
-**Phase 05 checkpoints:** PC-P05-S001 through PC-P05-S008 are implemented; see docs/PHASE-05-PROJECT-MANAGEMENT.md for evidence and the final post-merge verification gate.
-**Latest merge commit:** 7cc74016fdd35dc86367951b2198fa4ba390d73f.
-**Automated tests:** GitHub Actions run #93 passed 55 tests on the previous PR merge-ref. Post-merge CI on the final main commit is not yet evidenced.
-**Runtime acceptance:** the user reported successful Colab and dashboard acceptance on implementation SHA 00521ff2da8bf4948482f9fb71da881350a4b411. Re-run Colab acceptance against the final main SHA above to close the final gate.
+**Phase 05 checkpoints:** PC-P05-S001 through PC-P05-S008 are PASS. See docs/PHASE-05-PROJECT-MANAGEMENT.md for the evidence register.
+**Latest verified main commit:** 71ad78131046d5f4ed03d43bd83aa7d962d61db5.
+**Final Colab verification:** exact SHA matched; Python 3.13.18; compile check passed; 55 tests passed; file-backed SQLite acceptance 5/5 passed; working tree clean.
+**Dashboard acceptance:** project registration, listing/dashboard, details, search, edit, archive and restore workflows manually confirmed by the user.
+**GitHub Actions:** run #93 passed 55 tests on the previous PR merge ref. A post-merge Actions run on the latest main commit has not been evidenced; the full suite was rerun successfully in Colab on the latest main commit.
 
 The repository is built in verifiable checkpoints. `main` is the authoritative branch; see docs/BRANCHING.md.
 
