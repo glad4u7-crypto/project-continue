@@ -1,7 +1,7 @@
 # PC-P04-S002 to PC-P04-S008 — Database Acceptance Specification
 
 **Phase:** 04 — Database System  
-**Branch:** fix/p04-activity-project-task-integrity  
+**Merged implementation:** PR #10 and PR #12 into main  
 **Purpose:** define independently auditable acceptance gates for every database implementation checkpoint.  
 **Rule:** implementation is not completion; each checkpoint must be supported by focused tests, CI, runtime evidence where applicable, and a recorded commit.
 
@@ -149,5 +149,14 @@ Maintain automated tests for connection behavior, schema constraints, repository
 - Audit found and fixed additional SQLite-level gaps on the working branch: dependency ownership and cycle checks on INSERT/UPDATE, plus shared in-memory persistence across short-lived connections.
 - Regression tests have been added for those fixes. The updated focused suite is expected to contain 15 tests and the full suite 41 tests; these counts are targets until rerun output confirms them.
 - Previous 12/12 focused, 38/38 full-suite, 10/10 file-backed workflow, and CI run #73 results apply to the earlier code commit only. They do not verify the latest audit fixes.
-- Latest code verification, latest CI, and Colab rerun are pending. PR #12 remains open and unmerged.
+- PR #12 merged at 44166feafc7af16ad7b3358dd186c7cd68c1421d. Main CI run #270 passed: database marker group 21 passed; full suite 161 passed; statement coverage 95%; Gitleaks and pip-audit passed. Final Colab rerun is still pending.
 - The Streamlit UI is outside the current database-persistence checkpoint scope; this specification does not claim a completed user-facing project/task workflow.
+
+
+## Current verification record — 2026-11-20
+
+- PR #10 and PR #12 are merged into main.
+- Main CI run #270: SUCCESS; Python 3.11.18; Gitleaks no leaks; pip-audit no known vulnerabilities; compile passed.
+- Focused groups: unit 68, integration 28, API 21, database 21 passed.
+- Full suite: 161 passed; statement coverage 95% (821 statements; 39 uncovered).
+- Colab exact-SHA retest and real file-backed workflow verification remain required for final Phase 04 acceptance.
