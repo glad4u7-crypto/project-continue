@@ -53,6 +53,54 @@ def test_dependencies_cannot_cross_projects(repository):
         repository.add_dependency("t-1", "t-2")
 
 
+def test_database_triggers_enforce_dependency_integrity_on_update(repository):
+    repository.create_project("p-1", "One")
+    repository.create_project("p-2", "Two")
+    repository.create_task("t-1", "p-1", "One")
+    repository.create_task("t-2", "p-1", "Two")
+    repository.create_task("t-3", "p-2", "Three")
+    repository.add_dependency("t-2", "t-1")
+
+    with repository.database.connection() as connection:
+        with pytest.raises(sqlite3.IntegrityError, match="same project"):
+            connection.execute(
+                "UPDATE task_dependencies SET depends_on_task_id = ? WHERE task_id = ?",
+                ("t-3", "t-2"),
+            )
+        with pytest.raises(sqlite3.IntegrityError, match="same project"):
+            connection.execute(
+                "UPDATE task_dependencies SET task_id = ? WHERE task_id = ?",
+                ("t-3", "t-2"),
+            )
+
+    assert repository.list_dependencies("t-2") == ["t-1"]
+
+
+def test_database_triggers_reject_dependency_cycles_on_insert_and_update(repository):
+    repository.create_project("p-1", "One")
+    for task_id in ("t-1", "t-2", "t-3"):
+        repository.create_task(task_id, "p-1", task_id)
+
+    repository.add_dependency("t-2", "t-1")
+    repository.add_dependency("t-3", "t-2")
+
+    with repository.database.connection() as connection:
+        with pytest.raises(sqlite3.IntegrityError, match="cycle"):
+            connection.execute(
+                "INSERT INTO task_dependencies(task_id, depends_on_task_id, created_at) "
+                "VALUES (?, ?, ?)",
+                ("t-1", "t-3", "2026-11-20T00:00:00+00:00"),
+            )
+        with pytest.raises(sqlite3.IntegrityError, match="cycle"):
+            connection.execute(
+                "UPDATE task_dependencies SET depends_on_task_id = ? WHERE task_id = ?",
+                ("t-3", "t-2"),
+            )
+
+    assert repository.list_dependencies("t-2") == ["t-1"]
+    assert repository.list_dependencies("t-3") == ["t-2"]
+
+
 def test_activity_history_records_json_payload(repository):
     repository.create_project("p-1", "Demo")
     repository.create_task("t-1", "p-1", "Task")
