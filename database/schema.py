@@ -54,13 +54,58 @@ CREATE INDEX IF NOT EXISTS idx_tasks_project_priority ON tasks(project_id, prior
 CREATE INDEX IF NOT EXISTS idx_dependencies_target ON task_dependencies(depends_on_task_id);
 CREATE INDEX IF NOT EXISTS idx_activity_project_created ON activity_history(project_id, created_at);
 
-CREATE TRIGGER IF NOT EXISTS trg_dependency_same_project
+-- Enforce same-project dependencies even when SQL bypasses the repository API.
+CREATE TRIGGER IF NOT EXISTS trg_dependency_same_project_insert
 BEFORE INSERT ON task_dependencies
 BEGIN
     SELECT CASE
-      WHEN (SELECT project_id FROM tasks WHERE id = NEW.task_id)
-        <> (SELECT project_id FROM tasks WHERE id = NEW.depends_on_task_id)
+      WHEN (SELECT project_id FROM tasks WHERE id = NEW.task_id) IS NULL
+        OR (SELECT project_id FROM tasks WHERE id = NEW.depends_on_task_id) IS NULL
+        OR (SELECT project_id FROM tasks WHERE id = NEW.task_id)
+           <> (SELECT project_id FROM tasks WHERE id = NEW.depends_on_task_id)
       THEN RAISE(ABORT, 'task dependencies must belong to the same project')
+    END;
+    SELECT CASE
+      WHEN EXISTS (
+        WITH RECURSIVE reachable(task_id) AS (
+          SELECT NEW.depends_on_task_id
+          UNION
+          SELECT d.depends_on_task_id
+          FROM task_dependencies d
+          JOIN reachable r ON d.task_id = r.task_id
+        )
+        SELECT 1 FROM reachable WHERE task_id = NEW.task_id
+      )
+      THEN RAISE(ABORT, 'task dependency would create a cycle')
+    END;
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_dependency_same_project_update
+BEFORE UPDATE OF task_id, depends_on_task_id ON task_dependencies
+BEGIN
+    SELECT CASE
+      WHEN (SELECT project_id FROM tasks WHERE id = NEW.task_id) IS NULL
+        OR (SELECT project_id FROM tasks WHERE id = NEW.depends_on_task_id) IS NULL
+        OR (SELECT project_id FROM tasks WHERE id = NEW.task_id)
+           <> (SELECT project_id FROM tasks WHERE id = NEW.depends_on_task_id)
+      THEN RAISE(ABORT, 'task dependencies must belong to the same project')
+    END;
+    SELECT CASE
+      WHEN EXISTS (
+        WITH RECURSIVE reachable(task_id) AS (
+          SELECT NEW.depends_on_task_id
+          UNION
+          SELECT d.depends_on_task_id
+          FROM task_dependencies d
+          JOIN reachable r ON d.task_id = r.task_id
+          WHERE NOT (
+            d.task_id = OLD.task_id
+            AND d.depends_on_task_id = OLD.depends_on_task_id
+          )
+        )
+        SELECT 1 FROM reachable WHERE task_id = NEW.task_id
+      )
+      THEN RAISE(ABORT, 'task dependency would create a cycle')
     END;
 END;
 
