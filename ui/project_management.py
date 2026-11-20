@@ -1,10 +1,9 @@
 """Streamlit project and task dashboard."""
 from __future__ import annotations
-import os
-from pathlib import Path
-import streamlit as st
 from database import Database,ProjectRepository
 from services import ProjectManagementService,TaskManagementService
+from config import get_settings
+import streamlit as st
 
 @st.cache_resource(show_spinner=False)
 def _services(path:str):
@@ -99,7 +98,7 @@ def _render_details(projects,tasks,pid):
  for e in p["activity"][:10]:st.caption(f'{e["created_at"]} · {e["event_type"].replace("."," ").title()}')
 
 def render_project_management():
- path=os.getenv("PROJECT_CONTINUE_DB",str(Path(".data/project_continue.sqlite3")));projects,tasks=_services(path)
+ path=get_settings().database_path;projects,tasks=_services(path)
  st.title("🧭 Project Continue");st.caption("Project workspace · task planning · progress · activity");_render_create(projects)
  a,b=st.columns([2,1]);query=a.text_input("Search projects");status=b.selectbox("Project status",["active","all","archived"],index=0)
  items=projects.list_projects(status=status,query=query);st.markdown("### Project registry")
