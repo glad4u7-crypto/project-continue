@@ -1,6 +1,6 @@
 # PC-P10-S007 — Dependency and CI Security
 
-**Status:** IN PROGRESS  
+**Status:** PASS  
 **Phase:** 10 — Production Readiness & Security
 
 ## Implemented controls
@@ -22,7 +22,8 @@
 - Gitleaks: **PASS** — no leaks found.
 - pip-audit 2.10.1: **PASS** — no known vulnerabilities found after upgrading pytest to 9.2.0 (patched range ≥9.0.3).
 - GitHub Actions run #245: **SUCCESS** — pinned actions, dependency audit, compile, focused tests, full suite and report upload passed.
-- Pull request CI #251 exposed a shallow-checkout limitation in Gitleaks range scanning (no leak reported; scan incomplete). The checkout now fetches full Git history; PR scan must pass before this checkpoint is re-accepted.
+- Pull request CI #251 exposed a shallow-checkout limitation in Gitleaks range scanning. The workflow now fetches full Git history.
+- Pull request CI run #256: **SUCCESS** on the latest PR head; Gitleaks full-range scan, pip-audit, compilation, focused tests, full suite and coverage upload passed.
 - Full suite: **161 passed**; statement coverage **95%** (821 statements; 39 uncovered).
 
 ## Next
