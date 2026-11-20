@@ -1,6 +1,8 @@
 import pytest
 import requests
 
+pytestmark = pytest.mark.api
+
 from integrations.github_client import GitHubAPIError, GitHubClient
 from services.github_integration import GitHubIntegrationService
 
