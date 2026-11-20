@@ -21,6 +21,8 @@ class Settings:
     app_name: str = "Project Continue"
     app_env: str = "development"
     log_level: str = "INFO"
+    github_repository: str = ""
+    github_token_configured: bool = False
 
     @classmethod
     def from_env(cls, environ: Mapping[str, str] | None = None) -> "Settings":
@@ -29,6 +31,8 @@ class Settings:
         app_name = source.get("APP_NAME", "Project Continue").strip()
         app_env = source.get("APP_ENV", "development").strip().lower()
         log_level = source.get("LOG_LEVEL", "INFO").strip().upper()
+        github_repository = source.get("GITHUB_REPOSITORY", "").strip()
+        github_token_configured = bool(source.get("GITHUB_TOKEN", "").strip())
 
         if not app_name:
             raise ConfigurationError("APP_NAME must not be empty")
@@ -36,7 +40,21 @@ class Settings:
             raise ConfigurationError("APP_ENV must be development, test, or production")
         if log_level not in _ALLOWED_LOG_LEVELS:
             raise ConfigurationError("LOG_LEVEL must be a standard Python logging level")
-        return cls(app_name=app_name, app_env=app_env, log_level=log_level)
+        if github_repository:
+            parts = github_repository.split("/")
+            if len(parts) != 2 or any(
+                not part or part in {".", ".."}
+                or not all(ch.isalnum() or ch in "_.-" for ch in part)
+                for part in parts
+            ):
+                raise ConfigurationError("GITHUB_REPOSITORY must use owner/name format")
+        return cls(
+            app_name=app_name,
+            app_env=app_env,
+            log_level=log_level,
+            github_repository=github_repository,
+            github_token_configured=github_token_configured,
+        )
 
 
 def get_settings(environ: Mapping[str, str] | None = None) -> Settings:

@@ -20,22 +20,29 @@ class GitHubClient:
     def __init__(self, token: str | None = None, *, timeout: int = DEFAULT_TIMEOUT,
                  session: requests.Session | None = None) -> None:
         token = token if token is not None else os.getenv("GITHUB_TOKEN")
-        if not token or not token.strip():
-            raise ValueError("GITHUB_TOKEN is required")
+        if token is not None and not isinstance(token, str):
+            raise ValueError("GITHUB_TOKEN must be a string")
         if isinstance(timeout, bool) or not isinstance(timeout, int) or timeout < 1 or timeout > 120:
             raise ValueError("timeout must be an integer between 1 and 120 seconds")
-        self.__token = token.strip()
+        self.__token = token.strip() if token and token.strip() else None
         self.timeout = timeout
         self.session = session or requests.Session()
         self.session.headers.update({
-            "Authorization": f"Bearer {self.__token}",
             "Accept": "application/vnd.github+json",
             "X-GitHub-Api-Version": "2022-11-28",
             "User-Agent": "project-continue-phase-08",
         })
+        if self.__token:
+            self.session.headers["Authorization"] = f"Bearer {self.__token}"
+
+    @property
+    def authenticated(self) -> bool:
+        """Whether requests use a configured personal or fine-grained token."""
+        return self.__token is not None
 
     def __repr__(self) -> str:
-        return f"{type(self).__name__}(token='[REDACTED]', timeout={self.timeout})"
+        state = "configured" if self.authenticated else "not-configured"
+        return f"{type(self).__name__}(token='{state}', timeout={self.timeout})"
 
     @staticmethod
     def _repository(repository: str) -> str:

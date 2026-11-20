@@ -8,12 +8,17 @@ from integrations.github_client import GitHubClient
 
 
 class GitHubIntegrationService:
+    """Read-only repository dashboard data backed by the GitHub REST API."""
+
     def __init__(self, client: GitHubClient | None = None,
                  repository: str | None = None) -> None:
         self.client = client or GitHubClient()
-        self.repository = repository or os.getenv("GITHUB_REPOSITORY", "")
-        # Validate configuration early, before any network request.
-        self.client._repository(self.repository)
+        self.repository = repository if repository is not None else os.getenv("GITHUB_REPOSITORY", "")
+        self.repository = self.client._repository(self.repository.strip())
+
+    @property
+    def authenticated(self) -> bool:
+        return self.client.authenticated
 
     def repository_overview(self) -> dict[str, Any]:
         return self.client.get_repository(self.repository)
