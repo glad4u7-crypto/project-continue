@@ -4,11 +4,14 @@ Project Continue is a project-workflow assistant designed to organize multiple p
 
 ## Current status
 
-**Phase:** Phase 04 database foundation merged to main; Phase 05 Project Management implementation is under final integration review in PR #13.
-**Phase 05 checkpoints:** PC-P05-S001 through PC-P05-S008 are implemented and recorded as accepted in docs/PHASE-05-PROJECT-MANAGEMENT.md.
-**Verification:** Phase 05 GitHub Actions run #93 passed 55 tests on its previous merge ref. User-reported Colab runtime and manual dashboard acceptance also passed. A fresh CI run against PR #13's updated main base and post-merge verification remain required.
+**Phase 04:** database foundation merged into `main`.
+**Phase 05:** Project Management implementation merged into `main` through [PR #13](https://github.com/glad4u7-crypto/project-continue/pull/13).
+**Phase 05 checkpoints:** PC-P05-S001 through PC-P05-S008 are implemented; see docs/PHASE-05-PROJECT-MANAGEMENT.md for evidence and the final post-merge verification gate.
+**Latest merge commit:** 7cc74016fdd35dc86367951b2198fa4ba390d73f.
+**Automated tests:** GitHub Actions run #93 passed 55 tests on the previous PR merge-ref. Post-merge CI on the final main commit is not yet evidenced.
+**Runtime acceptance:** the user reported successful Colab and dashboard acceptance on implementation SHA 00521ff2da8bf4948482f9fb71da881350a4b411. Re-run Colab acceptance against the final main SHA above to close the final gate.
 
-The repository is built in verifiable checkpoints. main is the authoritative branch; see docs/BRANCHING.md.
+The repository is built in verifiable checkpoints. `main` is the authoritative branch; see docs/BRANCHING.md.
 
 ## Planned capabilities
 
@@ -33,12 +36,12 @@ The repository is built in verifiable checkpoints. main is the authoritative bra
 ## Quick start
 
 1. Create and activate a Python virtual environment.
-2. Install dependencies: pip install -r requirements.txt
-3. Copy .env.example to .env and fill in only the values you need.
-4. Run the dashboard: streamlit run app.py
-5. Run the core bootstrap: python -m app
+2. Install dependencies: `pip install -r requirements.txt`
+3. Copy `.env.example` to `.env` and fill in only the values you need.
+4. Run the dashboard: `streamlit run app.py`
+5. Run the core bootstrap: `python -m app`
 
-Never commit .env, access tokens, passwords, or private keys.
+Never commit `.env`, access tokens, passwords, or private keys.
 
 ## Project structure
 
@@ -54,7 +57,7 @@ Never commit .env, access tokens, passwords, or private keys.
 
 ## Project management dashboard
 
-The dashboard supports project registration, case-insensitive search, active/all/archived filtering, details, metadata editing, reversible archive/restore, task-derived progress, and recent activity. The default SQLite file is .data/project_continue.sqlite3; PROJECT_CONTINUE_DB overrides the path. The .data directory is excluded from Git.
+The dashboard supports project registration, case-insensitive search, active/all/archived filtering, details, metadata editing, reversible archive/restore, task-derived progress, and recent activity. The default SQLite file is `.data/project_continue.sqlite3`; `PROJECT_CONTINUE_DB` overrides the path. The `.data` directory is excluded from Git.
 
 Progress is calculated as completed tasks divided by all tasks. Projects with no tasks show 0%. Permanent project deletion is intentionally not exposed in the dashboard.
 
