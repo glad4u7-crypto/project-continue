@@ -3,15 +3,18 @@
 Project Continue organizes projects, tasks and dependencies, recommends actionable work and verifies results with evidence.
 
 ## Current status
+
 **Phase 04:** database foundation merged into main.
-**Phase 05:** Project Management merged through PR #13.
-**Phase 06:** Task Management implementation in progress on feature/phase-06-task-management. See docs/PHASE-06-TASK-MANAGEMENT.md.
-**Latest verified main before Phase 06:** 71ad78131046d5f4ed03d43bd83aa7d962d61db5.
+**Phase 05:** Project Management merged through PR #13; all eight Phase 05 checkpoints are accepted.
+**Phase 06:** Task Management merged into main through PR #14. GitHub Actions passed compileall and 72 tests. Colab final-SHA and manual dashboard acceptance remain pending; see docs/PHASE-06-TASK-MANAGEMENT.md.
+**Phase 06 merge commit:** b830dccb9739535067d289b816d9e1c84221ee1d.
 
 ## Technology
+
 Python 3.11+, Streamlit, SQLite, python-dotenv, Requests and Pytest.
 
 ## Quick start
+
 1. Create and activate a Python virtual environment.
 2. Install dependencies with pip install -r requirements.txt.
 3. Copy .env.example to .env and configure required values.
@@ -21,6 +24,7 @@ Python 3.11+, Streamlit, SQLite, python-dotenv, Requests and Pytest.
 Never commit .env, tokens, passwords or private keys.
 
 ## Project structure
+
 - app.py — Streamlit entry point
 - core/ — errors, logging and validation
 - database/ — SQLite connection, schema and repository
@@ -30,9 +34,11 @@ Never commit .env, tokens, passwords or private keys.
 - tests/ — automated tests
 
 ## Project and task management
+
 The dashboard supports project registration, search, lifecycle management, task creation/editing, free-text assignment, priority/status tracking, dependency management and dependency-aware completion. Assignees are labels, not authenticated users. Dependency cycles are rejected, and tasks cannot be completed while prerequisites remain unfinished.
 
 ## Documentation
+
 - Development Guide: docs/DEVELOPMENT.md
 - Core Architecture: docs/CORE-ARCHITECTURE.md
 - User Guide: docs/USER_GUIDE.md
