@@ -37,6 +37,7 @@ def test_token_optional_for_public_repositories_and_repr_is_safe(monkeypatch):
     authenticated = GitHubClient("secret-token")
     assert authenticated.authenticated is True
     assert "secret-token" not in repr(authenticated)
+    assert "Bearer secret-token" not in repr(authenticated.session.headers)
 
 
 def test_auth_headers_and_timeout():
