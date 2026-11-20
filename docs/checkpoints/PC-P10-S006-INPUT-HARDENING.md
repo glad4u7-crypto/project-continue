@@ -1,6 +1,6 @@
 # PC-P10-S006 — Input and Integration Hardening
 
-**Status:** IN PROGRESS  
+**Status:** PASS  
 **Phase:** 10 — Production Readiness & Security
 
 ## Implemented controls
@@ -22,7 +22,7 @@
 
 ## CI evidence
 
-- Verification pending after boundary-hardening changes.
+- GitHub Actions run #234: **SUCCESS** — Gitleaks, compile, focused test categories, full suite, coverage and report upload passed with the new boundary tests.
 
 ## Next
 
