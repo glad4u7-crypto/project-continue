@@ -30,8 +30,8 @@ def _render_create(service: ProjectManagementService) -> None:
                 project = service.create_project(name, description)
             except (ValueError, KeyError) as exc:
                 st.error(str(exc))
-            except Exception as exc:
-                st.error(f"Project could not be created: {exc}")
+            except Exception:
+                st.error("Project could not be created. Check the project name and database connection.")
             else:
                 st.success(f'Project “{project["name"]}” created.')
                 st.rerun()
@@ -44,12 +44,30 @@ def _render_project_details(service: ProjectManagementService, project_id: str) 
         return
     st.subheader(project["name"])
     st.caption(project["description"] or "No description provided.")
+    st.caption(f'Project ID: {project["id"]} · Created: {project["created_at"]} · Updated: {project["updated_at"]}')
     metric_cols = st.columns(4)
     metric_cols[0].metric("Progress", f'{project["progress_percent"]:.1f}%')
     metric_cols[1].metric("Tasks", project["total_tasks"])
     metric_cols[2].metric("Completed", project["completed_tasks"])
     metric_cols[3].metric("Status", project["status"].title())
     st.progress(project["progress_percent"] / 100 if project["total_tasks"] else 0.0)
+
+    st.markdown("#### Task status breakdown")
+    status_cols = st.columns(4)
+    for column, (label, key) in zip(status_cols, (("To do", "todo"), ("In progress", "in_progress"), ("Blocked", "blocked"), ("Done", "done"))):
+        column.metric(label, project["task_status_counts"][key])
+    if project["tasks"]:
+        st.dataframe(
+            [
+                {"Task": task["title"], "Status": task["status"].replace("_", " ").title(),
+                 "Priority": task["priority"].title(), "Due": task["due_at"] or "—"}
+                for task in project["tasks"]
+            ],
+            hide_index=True,
+            use_container_width=True,
+        )
+    else:
+        st.caption("No tasks have been added to this project yet.")
 
     with st.expander("Edit project details"):
         with st.form(f"edit_project_{project_id}"):
@@ -61,8 +79,8 @@ def _render_project_details(service: ProjectManagementService, project_id: str) 
                 service.update_project(project_id, name=name, description=description)
             except (ValueError, KeyError) as exc:
                 st.error(str(exc))
-            except Exception as exc:
-                st.error(f"Project could not be updated: {exc}")
+            except Exception:
+                st.error("Project could not be updated. Check the project name and database connection.")
             else:
                 st.success("Project updated.")
                 st.rerun()
@@ -71,8 +89,8 @@ def _render_project_details(service: ProjectManagementService, project_id: str) 
         if st.button("Archive project", key=f"archive_{project_id}"):
             try:
                 service.archive_project(project_id)
-            except Exception as exc:
-                st.error(f"Project could not be archived: {exc}")
+            except Exception:
+                st.error("Project could not be archived.")
             else:
                 st.success("Project archived.")
                 st.rerun()
@@ -80,8 +98,8 @@ def _render_project_details(service: ProjectManagementService, project_id: str) 
         if st.button("Restore project", key=f"restore_{project_id}"):
             try:
                 service.restore_project(project_id)
-            except Exception as exc:
-                st.error(f"Project could not be restored: {exc}")
+            except Exception:
+                st.error("Project could not be restored.")
             else:
                 st.success("Project restored.")
                 st.rerun()

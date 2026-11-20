@@ -53,3 +53,21 @@ Implementation and test definitions are being added on feature/phase-05-project-
 - Result: PASS — compileall succeeded; full suite 50 passed in 0.60s.
 - Scope: this evidence applies only to the commit above. Subsequent commits require a new exact-head CI run.
 - Colab/browser runtime acceptance: pending.
+
+
+## Expanded dashboard and runtime acceptance
+
+The details panel also displays project identifiers and timestamps, task status counts, and a task table. The file-backed acceptance workflow is executable with:
+
+    python scripts/phase05_acceptance.py
+
+It verifies registration, task-derived progress, metadata/activity updates, archive/filter/restore, database reopen persistence, and SQLite integrity_check. The same workflow is covered by an automated pytest test.
+
+### Latest exact-head CI evidence before this expansion
+
+- Commit: c9c32f64b522f6dc414ac238b1dcbab584389a6b
+- GitHub Actions runs #84 (push) and #85 (pull_request): PASS
+- Compile: PASS
+- Full test suite: 53 passed in 1.20s (run #84) and 53 passed in 1.29s (run #85)
+- These results apply to c9c32f64... only. The current expanded commit must receive its own CI run.
+- Colab/browser runtime acceptance: pending.
