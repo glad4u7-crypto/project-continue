@@ -15,7 +15,7 @@
 | PC-P05-S005 | Project Update | Validated name/description editing, persistent update and activity event | PASS |
 | PC-P05-S006 | Project Archive | Reversible archive/restore, idempotent same-state operations; no hard-delete UI | PASS |
 | PC-P05-S007 | Project Progress | Task-derived completion percentage and status breakdown; zero-task projects safely report 0% | PASS |
-| PC-P05-S008 | Project Management Tests | Focused tests, full suite, file-backed SQLite acceptance, GitHub Actions and Colab/browser verification | PASS — prior-base acceptance; final-main integration CI pending |
+| PC-P05-S008 | Project Management Tests | Focused tests, full suite, file-backed SQLite acceptance, GitHub Actions and Colab/browser verification | PASS — prior-base CI and user-reported runtime acceptance; post-merge CI pending |
 
 ## Architecture and behavior
 
@@ -34,17 +34,23 @@
 - User-reported Colab final runtime verification at exact implementation SHA 00521ff2da8bf4948482f9fb71da881350a4b411: successful.
 - User-reported manual dashboard verification: project creation/registration, listing/dashboard, details, search, edit, archive and restore workflows completed successfully.
 - File-backed acceptance script: scripts/phase05_acceptance.py; verifies registration/persistence, task-derived progress, metadata/activity updates, archive/filter/restore, database reopen persistence and SQLite integrity_check. It is covered by pytest.
-- Phase 04 PR #12 was merged into main at 44166feafc7af16ad7b3358dd186c7cd68c1421d.
-- Phase 05 PR #13 is retargeted to main. Updated-base CI, merge, and post-merge verification remain final integration gates.
+- Phase 04 PR #12 merged into main: 44166feafc7af16ad7b3358dd186c7cd68c1421d.
+- Phase 05 PR #13 merged into main: 7cc74016fdd35dc86367951b2198fa4ba390d73f.
+- PR #13 merged successfully with a reviewed 13-file diff. The final implementation and documentation are now on main.
 
-## Remaining integration gates
+## Final post-merge verification
 
-1. Obtain a fresh GitHub Actions run for the current PR #13 head against main.
-2. Confirm all checks pass and review mergeability.
-3. Merge PR #13.
-4. Verify the resulting main SHA and post-merge CI.
-5. Synchronize Colab to the final main SHA and execute the final runtime acceptance workflow.
+- Merge state: PASS; PR #13 is closed and merged.
+- Latest known automated suite: 55 passed on the earlier PR merge-ref (run #93).
+- The GitHub connector currently reports no status checks/workflow runs for merge commit 7cc74016fdd35dc86367951b2198fa4ba390d73f. Therefore post-merge CI is not yet evidenced.
+- The user-reported Colab runtime acceptance was run on implementation SHA 00521ff2da8bf4948482f9fb71da881350a4b411, not the final main merge SHA. Re-run against the final main SHA to close the runtime gate.
 
-## Safety and scope
+## Remaining verification actions
+
+1. Run the file-backed acceptance and full pytest suite against main commit 7cc74016fdd35dc86367951b2198fa4ba390d73f in Colab.
+2. Capture the output and update this record with the exact expected/actual SHA and test counts.
+3. Confirm a GitHub Actions run or status check on the post-merge main commit.
+
+## Scope boundary
 
 Phase 05 covers project management only. Task creation/editing, dependency-aware recommendations, GitHub operations and deployment are separate capabilities and are not claimed complete here.
