@@ -1,78 +1,50 @@
-# Phase 05 — Project Management
+# PHASE 05 — Project Management
 
-**Phase objective:** deliver a usable project registry and lifecycle workspace on top of the Phase 04 SQLite persistence layer.
+**Objective:** deliver a persistent project registry and lifecycle workspace on the Phase 04 SQLite foundation.
 
-**Planning provenance:** the available project history establishes the phase title and an eight-checkpoint structure, but the repository does not currently contain the original master roadmap or the authoritative Phase 05 checkpoint names. The implementation workstreams below are therefore a traceable working decomposition, not a claim that these labels reproduce the missing master document. Reconcile names/IDs with the canonical master plan when it is restored.
+**Checkpoint authority:** this checkpoint list is the project owner's supplied Phase 05 scope and is authoritative for this phase.
 
-## Working checkpoint decomposition (provisional labels)
+## Checkpoint register
 
-| Workstream | Scope | Acceptance evidence |
-|---|---|---|
-| PC-P05-S001 | Project creation service | generated stable ID, validation, persistence, creation activity, rejection tests |
-| PC-P05-S002 | Project registration UI | form submission, success/error feedback, duplicate/invalid handling |
-| PC-P05-S003 | Project registry | active/all/archived filters, text search, empty state |
-| PC-P05-S004 | Project details | metadata, task summary, activity history |
-| PC-P05-S005 | Project editing | validated name/description update, persisted activity |
-| PC-P05-S006 | Project archive/restore | reversible lifecycle, idempotency, no destructive deletion |
-| PC-P05-S007 | Project progress | status counts and completion percentage derived from tasks |
-| PC-P05-S008 | Integration and acceptance | automated tests, full suite, CI and runtime workflow evidence |
+| Checkpoint | Required work | Implementation evidence | Current disposition |
+|---|---|---|---|
+| PC-P05-S001 | Create Project | ProjectManagementService.create_project; generated stable ID, validation, duplicate-name protection, persistence and creation activity; automated tests | PASS |
+| PC-P05-S002 | Project Registration | Streamlit registration form, success/error feedback, validation and duplicate rejection | PASS |
+| PC-P05-S003 | Project Listing | Registry, case-insensitive name/description search, active/all/archived filters and empty state | PASS |
+| PC-P05-S004 | Project Details | Project metadata, task table, task status counts, progress and recent activity | PASS |
+| PC-P05-S005 | Project Update | Validated name/description editing, persistent update and activity event | PASS |
+| PC-P05-S006 | Project Archive | Reversible archive/restore, idempotent same-state operations; no hard-delete UI | PASS |
+| PC-P05-S007 | Project Progress | Task-derived completion percentage and status breakdown; zero-task projects safely report 0% | PASS |
+| PC-P05-S008 | Project Management Tests | Focused tests, full pytest suite, file-backed SQLite acceptance, GitHub Actions and Colab/browser verification | PASS |
 
-## Architecture
+## Architecture and behavior
 
-- Persistence remains in database/ProjectRepository; Phase 05 does not duplicate SQL or alter the Phase 04 schema.
+- Persistence remains in database/ProjectRepository; Phase 05 reuses the Phase 04 schema and repository.
 - Use cases and read models live in services/ProjectManagementService.
 - Streamlit rendering lives in ui/project_management.py.
-- The default database path is .data/project_continue.sqlite3; PROJECT_CONTINUE_DB may override it.
-- Project archive is reversible. The UI does not expose hard deletion.
-- Progress is done tasks / all tasks * 100; projects with no tasks report 0%.
-- Activity events are written for create, update, archive and restore actions.
+- Default database: .data/project_continue.sqlite3; PROJECT_CONTINUE_DB overrides the path.
+- Progress = completed tasks / all tasks × 100; projects with no tasks report 0%.
+- Activity events are recorded for project creation, update, archive and restore.
+- Archiving is reversible. Permanent project deletion is not exposed in the dashboard.
 
-## Acceptance gates
+## Verification evidence
 
-1. Project creation validates names/descriptions and persists generated or supplied identifiers.
-2. Project search is case-insensitive and searches name plus description.
-3. Status filters accept only all, active, or archived.
-4. Details include task counts, task status breakdown, progress and the latest 25 activity records.
-5. Metadata updates preserve project ID and record an activity event.
-6. Archive/restore are reversible and repeated same-state requests do not duplicate events.
-7. Empty projects produce a zero progress percentage without division errors.
-8. No hard delete is exposed in the UI.
-9. Existing Phase 04 repository behavior and all previous tests remain unchanged.
-10. Phase completion requires focused tests, full suite, GitHub Actions on the exact PR head, and a Colab/browser runtime acceptance record.
+- Phase 05 feature head before this documentation reconciliation: 00521ff2da8bf4948482f9fb71da881350a4b411.
+- GitHub Actions run #93: SUCCESS on the Phase 05 head merged with the then-current Phase 04 base; compile/dependency steps passed and full suite reported 55 passed.
+- User-reported Colab final runtime verification: successful.
+- User-reported manual dashboard verification: project creation/registration, listing/dashboard, details, search, edit, archive and restore workflows completed successfully.
+- File-backed acceptance script: scripts/phase05_acceptance.py; verifies registration/persistence, task-derived progress, metadata/activity updates, archive/filter/restore, database reopen persistence and SQLite integrity_check.
+- Phase 04 PR #12 has since been merged into main at 44166feafc7af16ad7b3358dd186c7cd68c1421d.
+- Phase 05 PR #13 is retargeted to main. A fresh CI run against the retargeted base and final merge are still required.
 
-## Verification status
+## Remaining integration gates
 
-Implementation and test definitions are being added on feature/phase-05-project-management, based on Phase 04 commit 7d1a3ef10874bce97f90b9eab354bb4718c078ad. No checkpoint is complete until the relevant checks pass and evidence is recorded.
+1. Confirm a fresh GitHub Actions run for PR #13 after retargeting to main.
+2. Review the final PR diff and mergeability.
+3. Merge PR #13 only after the updated-base CI succeeds.
+4. Verify main's resulting commit and post-merge CI.
+5. Synchronize Colab to the final main SHA and record final runtime evidence.
 
+## Safety and scope
 
-## First implementation verification record
-
-- Commit: 2d05016b444c45c3bcc723dc75b42738037d0e8b
-- GitHub Actions run: 83
-- Workflow: Project Continue CI
-- Result: PASS — compileall succeeded; full suite 50 passed in 0.60s.
-- Scope: this evidence applies only to the commit above. Subsequent commits require a new exact-head CI run.
-- Colab/browser runtime acceptance: pending.
-
-
-## Expanded dashboard and runtime acceptance
-
-The details panel also displays project identifiers and timestamps, task status counts, and a task table. The file-backed acceptance workflow is executable with:
-
-    python scripts/phase05_acceptance.py
-
-It verifies registration, task-derived progress, metadata/activity updates, archive/filter/restore, database reopen persistence, and SQLite integrity_check. The same workflow is covered by an automated pytest test.
-
-### Latest exact-head CI evidence
-
-- Commit: c1be4b9baac91ecaf693d20ee2fadc80a9c64c73
-- GitHub Actions run #86 (push): PASS; compileall passed; full suite 54 passed in 2.88s.
-- GitHub Actions run #87 (pull_request): PASS; compileall passed; full suite 54 passed in 0.95s.
-- Both runs checked the exact commit above.
-- The automated file-backed acceptance test is included in the 54-test suite.
-- Colab/browser runtime acceptance: pending; the executable command is python scripts/phase05_acceptance.py.
-
-
-## Checkpoint disposition at commit c1be4b9
-
-The working decomposition PC-P05-S001 through PC-P05-S008 has implementation coverage in this PR, but none is marked complete yet. Final completion requires Colab execution of the file-backed acceptance script, manual browser workflow verification, reconciliation with the canonical master checkpoint names, and review/merge of the stacked Phase 04 and Phase 05 pull requests.
+Phase 05 covers project management only. Task creation/editing, dependency-aware recommendations, GitHub operations and deployment are separate capabilities and are not claimed complete here.
