@@ -2,8 +2,15 @@
 
 from __future__ import annotations
 
+import sys
 import tempfile
 from pathlib import Path
+
+# Direct script execution puts scripts/ rather than the repository root at
+# sys.path[0]. Add the root so imports work both as a script and under pytest.
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from database import Database, ProjectRepository
 from services import ProjectManagementService
