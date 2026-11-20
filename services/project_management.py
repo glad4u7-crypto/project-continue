@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sqlite3
 import uuid
 from typing import Any
 
@@ -24,12 +25,28 @@ class ProjectManagementService:
             raise ValueError("Project description must be 2000 characters or fewer")
         return normalized
 
+    def _ensure_unique_name(self, name: str, *, exclude_project_id: str | None = None) -> None:
+        folded = name.casefold()
+        for project in self.repository.list_projects():
+            if project["id"] != exclude_project_id and project["name"].casefold() == folded:
+                raise ValueError("A project with this name already exists")
+
+    @staticmethod
+    def _translate_integrity_error(error: sqlite3.IntegrityError) -> ValueError:
+        if "projects.name" in str(error):
+            return ValueError("A project with this name already exists")
+        return ValueError("Project data violates a database constraint")
+
     def create_project(self, name: str, description: str = "", *, project_id: str | None = None) -> dict[str, Any]:
         """Create a project and record its initial activity event."""
         normalized_name = validate_project_name(name)
         normalized_description = self._description(description)
+        self._ensure_unique_name(normalized_name)
         identifier = project_id or f"prj-{uuid.uuid4().hex[:12]}"
-        self.repository.create_project(identifier, normalized_name, normalized_description)
+        try:
+            self.repository.create_project(identifier, normalized_name, normalized_description)
+        except sqlite3.IntegrityError as exc:
+            raise self._translate_integrity_error(exc) from exc
         self.repository.record_activity(identifier, "project.created", payload={"name": normalized_name})
         return self.get_project_details(identifier)  # type: ignore[return-value]
 
@@ -41,11 +58,15 @@ class ProjectManagementService:
         changes: dict[str, Any] = {}
         if name is not None:
             changes["name"] = validate_project_name(name)
+            self._ensure_unique_name(changes["name"], exclude_project_id=project_id)
         if description is not None:
             changes["description"] = self._description(description)
         if not changes:
             return self.get_project_details(project_id)  # type: ignore[return-value]
-        updated = self.repository.update_project(project_id, **changes)
+        try:
+            updated = self.repository.update_project(project_id, **changes)
+        except sqlite3.IntegrityError as exc:
+            raise self._translate_integrity_error(exc) from exc
         self.repository.record_activity(project_id, "project.updated", payload={"fields": sorted(changes)})
         return self.get_project_details(project_id) or updated
 

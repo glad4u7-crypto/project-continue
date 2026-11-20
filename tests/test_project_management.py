@@ -89,3 +89,17 @@ def test_missing_project_update_archive_and_restore_raise_key_error(service):
 def test_invalid_project_status_filter_is_rejected(service):
     with pytest.raises(ValueError, match="Status filter"):
         service.list_projects(status="deleted")
+
+
+def test_project_names_are_unique_case_insensitively(service):
+    service.create_project("North Star")
+    with pytest.raises(ValueError, match="already exists"):
+        service.create_project("north star")
+
+
+def test_update_rejects_another_projects_name(service):
+    first = service.create_project("First")
+    second = service.create_project("Second")
+    with pytest.raises(ValueError, match="already exists"):
+        service.update_project(second["id"], name=first["name"])
+    assert service.get_project_details(second["id"])["name"] == "Second"
