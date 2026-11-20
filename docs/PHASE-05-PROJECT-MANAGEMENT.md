@@ -15,7 +15,7 @@
 | PC-P05-S005 | Project Update | Validated name/description editing, persistent update and activity event | PASS |
 | PC-P05-S006 | Project Archive | Reversible archive/restore, idempotent same-state operations; no hard-delete UI | PASS |
 | PC-P05-S007 | Project Progress | Task-derived completion percentage and status breakdown; zero-task projects safely report 0% | PASS |
-| PC-P05-S008 | Project Management Tests | Focused tests, full pytest suite, file-backed SQLite acceptance, GitHub Actions and Colab/browser verification | PASS |
+| PC-P05-S008 | Project Management Tests | Focused tests, full suite, file-backed SQLite acceptance, GitHub Actions and Colab/browser verification | PASS — prior-base acceptance; final-main integration CI pending |
 
 ## Architecture and behavior
 
@@ -29,21 +29,21 @@
 
 ## Verification evidence
 
-- Phase 05 feature head before this documentation reconciliation: 00521ff2da8bf4948482f9fb71da881350a4b411.
-- GitHub Actions run #93: SUCCESS on the Phase 05 head merged with the then-current Phase 04 base; compile/dependency steps passed and full suite reported 55 passed.
-- User-reported Colab final runtime verification: successful.
+- Phase 05 implementation head before documentation reconciliation: 00521ff2da8bf4948482f9fb71da881350a4b411.
+- GitHub Actions run #93: SUCCESS on the previous Phase 05 PR merge ref; dependency installation and compileall passed; full suite reported 55 passed in 1.06s.
+- User-reported Colab final runtime verification at exact implementation SHA 00521ff2da8bf4948482f9fb71da881350a4b411: successful.
 - User-reported manual dashboard verification: project creation/registration, listing/dashboard, details, search, edit, archive and restore workflows completed successfully.
-- File-backed acceptance script: scripts/phase05_acceptance.py; verifies registration/persistence, task-derived progress, metadata/activity updates, archive/filter/restore, database reopen persistence and SQLite integrity_check.
-- Phase 04 PR #12 has since been merged into main at 44166feafc7af16ad7b3358dd186c7cd68c1421d.
-- Phase 05 PR #13 is retargeted to main. A fresh CI run against the retargeted base and final merge are still required.
+- File-backed acceptance script: scripts/phase05_acceptance.py; verifies registration/persistence, task-derived progress, metadata/activity updates, archive/filter/restore, database reopen persistence and SQLite integrity_check. It is covered by pytest.
+- Phase 04 PR #12 was merged into main at 44166feafc7af16ad7b3358dd186c7cd68c1421d.
+- Phase 05 PR #13 is retargeted to main. Updated-base CI, merge, and post-merge verification remain final integration gates.
 
 ## Remaining integration gates
 
-1. Confirm a fresh GitHub Actions run for PR #13 after retargeting to main.
-2. Review the final PR diff and mergeability.
-3. Merge PR #13 only after the updated-base CI succeeds.
-4. Verify main's resulting commit and post-merge CI.
-5. Synchronize Colab to the final main SHA and record final runtime evidence.
+1. Obtain a fresh GitHub Actions run for the current PR #13 head against main.
+2. Confirm all checks pass and review mergeability.
+3. Merge PR #13.
+4. Verify the resulting main SHA and post-merge CI.
+5. Synchronize Colab to the final main SHA and execute the final runtime acceptance workflow.
 
 ## Safety and scope
 
