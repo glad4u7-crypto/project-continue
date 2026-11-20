@@ -18,6 +18,7 @@ def test_settings_have_valid_values():
     assert isinstance(settings.log_level, str)
     assert isinstance(settings.github_repository, str)
     assert isinstance(settings.github_token_configured, bool)
+    assert isinstance(settings.database_path, str)
     assert settings.app_name != ""
 
 
@@ -43,3 +44,42 @@ def test_github_settings_are_loaded_without_exposing_token():
 def test_invalid_github_repository_is_rejected(repository):
     with pytest.raises(ConfigurationError):
         Settings.from_env({"GITHUB_REPOSITORY": repository})
+
+
+def test_production_requires_absolute_database_path():
+    with pytest.raises(ConfigurationError, match="absolute path"):
+        Settings.from_env({"APP_ENV": "production"})
+
+
+def test_production_accepts_absolute_database_path():
+    configured = Settings.from_env({
+        "APP_ENV": "production",
+        "PROJECT_CONTINUE_DB": "/var/lib/project-continue/data.sqlite3",
+        "LOG_LEVEL": "INFO",
+    })
+    assert configured.database_path == "/var/lib/project-continue/data.sqlite3"
+
+
+def test_debug_logging_is_rejected_in_production():
+    with pytest.raises(ConfigurationError, match="DEBUG"):
+        Settings.from_env({
+            "APP_ENV": "production",
+            "PROJECT_CONTINUE_DB": "/var/lib/project-continue/data.sqlite3",
+            "LOG_LEVEL": "DEBUG",
+        })
+
+
+@pytest.mark.parametrize("path", ["", "   ", "bad\x00path"])
+def test_invalid_database_path_is_rejected(path):
+    with pytest.raises(ConfigurationError, match="PROJECT_CONTINUE_DB"):
+        Settings.from_env({"PROJECT_CONTINUE_DB": path})
+
+
+def test_database_path_defaults_to_local_data_directory():
+    configured = Settings.from_env({"APP_ENV": "development"})
+    assert configured.database_path.endswith(".data/project_continue.sqlite3")
+
+
+def test_app_name_length_is_bounded():
+    with pytest.raises(ConfigurationError, match="100 characters"):
+        Settings.from_env({"APP_NAME": "x" * 101})
