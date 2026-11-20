@@ -27,6 +27,12 @@ jobs:
           pip install -r requirements.txt
       - name: Compile Python files
         run: python -m compileall -q .
+      - name: Run focused test categories
+        run: |
+          python -m pytest -m unit -q
+          python -m pytest -m integration -q
+          python -m pytest -m api -q
+          python -m pytest -m database -q
       - name: Run complete test suite with coverage and JUnit report
         run: |
           mkdir -p reports
