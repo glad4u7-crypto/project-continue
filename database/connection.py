@@ -89,9 +89,10 @@ class Database:
         The backup is created with owner-only permissions where supported.
         Existing destinations are rejected to avoid accidental data loss.
         """
-        target = Path(destination).expanduser()
-        if not str(target).strip():
+        raw_destination = str(destination)
+        if not raw_destination.strip():
             raise ValueError("backup destination must not be empty")
+        target = Path(raw_destination).expanduser()
         if not self._use_uri and Path(self.path).expanduser().resolve() == target.resolve():
             raise ValueError("backup destination must differ from the source database")
         target.parent.mkdir(parents=True, exist_ok=True)
