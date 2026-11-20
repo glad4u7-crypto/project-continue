@@ -2,6 +2,7 @@
 
 import os
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Mapping
 
 from dotenv import load_dotenv
@@ -12,6 +13,7 @@ load_dotenv()
 
 _ALLOWED_ENVIRONMENTS = frozenset({"development", "test", "production"})
 _ALLOWED_LOG_LEVELS = frozenset({"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"})
+_DEFAULT_DATABASE_PATH = ".data/project_continue.sqlite3"
 
 
 @dataclass(frozen=True)
@@ -23,6 +25,7 @@ class Settings:
     log_level: str = "INFO"
     github_repository: str = ""
     github_token_configured: bool = False
+    database_path: str = _DEFAULT_DATABASE_PATH
 
     @classmethod
     def from_env(cls, environ: Mapping[str, str] | None = None) -> "Settings":
@@ -33,13 +36,29 @@ class Settings:
         log_level = source.get("LOG_LEVEL", "INFO").strip().upper()
         github_repository = source.get("GITHUB_REPOSITORY", "").strip()
         github_token_configured = bool(source.get("GITHUB_TOKEN", "").strip())
+        raw_database_path = source.get("PROJECT_CONTINUE_DB", _DEFAULT_DATABASE_PATH)
+        if not isinstance(raw_database_path, str):
+            raise ConfigurationError("PROJECT_CONTINUE_DB must be a filesystem path")
+        database_path = raw_database_path.strip()
+        expanded_database_path = Path(database_path).expanduser()
 
         if not app_name:
             raise ConfigurationError("APP_NAME must not be empty")
+        if len(app_name) > 100:
+            raise ConfigurationError("APP_NAME must be 100 characters or fewer")
         if app_env not in _ALLOWED_ENVIRONMENTS:
             raise ConfigurationError("APP_ENV must be development, test, or production")
         if log_level not in _ALLOWED_LOG_LEVELS:
             raise ConfigurationError("LOG_LEVEL must be a standard Python logging level")
+        if not database_path or "\x00" in database_path:
+            raise ConfigurationError("PROJECT_CONTINUE_DB must be a valid non-empty path")
+        if app_env == "production":
+            if log_level == "DEBUG":
+                raise ConfigurationError("LOG_LEVEL=DEBUG is not allowed in production")
+            if not expanded_database_path.is_absolute():
+                raise ConfigurationError(
+                    "PROJECT_CONTINUE_DB must be an absolute path in production"
+                )
         if github_repository:
             parts = github_repository.split("/")
             if len(parts) != 2 or any(
@@ -54,6 +73,7 @@ class Settings:
             log_level=log_level,
             github_repository=github_repository,
             github_token_configured=github_token_configured,
+            database_path=str(expanded_database_path),
         )
 
 
