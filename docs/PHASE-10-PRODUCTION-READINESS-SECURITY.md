@@ -23,7 +23,7 @@ Harden Project Continue for safer deployment and operation without changing its 
 | PC-P10-S004 | Safe logging and error handling | Redaction tests for tokens, exception messages and sensitive headers | PASS |
 | PC-P10-S005 | Database operational safety | SQLite durability/backup guidance and safe backup verification | PASS |
 | PC-P10-S006 | Input and integration hardening | Boundary tests for untrusted values, URLs, timeouts and API failures | PASS |
-| PC-P10-S007 | Dependency and CI security checks | Reproducible dependency audit and CI security gate | IN PROGRESS |
+| PC-P10-S007 | Dependency and CI security checks | Reproducible dependency audit and CI security gate | PASS |
 | PC-P10-S008 | Production readiness acceptance | Full suite, security checklist, documented limitations and final report | IN PROGRESS |
 
 ## Initial repository baseline
