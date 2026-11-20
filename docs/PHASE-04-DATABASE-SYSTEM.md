@@ -10,16 +10,23 @@
 |---|---|---|
 | PC-P04-S001 | Database Selection | DECISION RECORDED — SQLite |
 | PC-P04-S002 | Database Connection | IMPLEMENTED — verification pending |
-| PC-P04-S003 | Project Table | NOT STARTED |
-| PC-P04-S004 | Task Table | NOT STARTED |
-| PC-P04-S005 | Dependency Table | NOT STARTED |
-| PC-P04-S006 | Activity History | NOT STARTED |
-| PC-P04-S007 | Database CRUD | NOT STARTED |
-| PC-P04-S008 | Database Tests | NOT STARTED |
+| PC-P04-S003 | Project Table | IMPLEMENTED — verification pending |
+| PC-P04-S004 | Task Table | IMPLEMENTED — verification pending |
+| PC-P04-S005 | Dependency Table | IMPLEMENTED — verification pending |
+| PC-P04-S006 | Activity History | IMPLEMENTED — verification pending |
+| PC-P04-S007 | Database CRUD | IMPLEMENTED — verification pending |
+| PC-P04-S008 | Database Tests | IMPLEMENTED — verification pending |
 
 ## Database decision
 
 SQLite through Python's standard-library sqlite3 module is selected for the initial persistence layer. The rationale, limitations, and upgrade conditions are recorded in checkpoints/PC-P04-S001-DATABASE-SELECTION.md.
+
+## Implementation map
+
+- Connection and transaction management: database/connection.py
+- Versioned relational schema: database/schema.py
+- Project/task/dependency/activity operations: database/repository.py
+- Automated acceptance coverage: tests/test_database_connection.py and tests/test_database_repository.py
 
 ## Checkpoint completion rules
 
@@ -37,4 +44,4 @@ This phase establishes persistence primitives and database-backed records. It do
 
 ## Current position
 
-S001 decision is recorded. S002 connection implementation is in place and awaiting CI/runtime verification. Later schema and CRUD checkpoints remain open.
+S001 decision is recorded. S002-S008 implementation is present in the Phase 04 working branch. All eight checkpoints await CI and runtime verification before final completion status can be assigned.
