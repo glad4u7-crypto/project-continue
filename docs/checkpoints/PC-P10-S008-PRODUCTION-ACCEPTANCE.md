@@ -15,7 +15,7 @@
 ## Final verification evidence
 
 - Pull request: https://github.com/glad4u7-crypto/project-continue/pull/21
-- Latest PR CI run #256: SUCCESS on head SHA 544a6ca417e6c9d27d6710ee2bf16d7bc349998f.
+- Latest PR CI run #264: SUCCESS on head SHA 2b721b48b23cadf7a45622899ef07a4e2d8667d5.
 - Feature branch CI run #250: SUCCESS.
 - Gitleaks: no leaks found.
 - pip-audit 2.10.1: no known vulnerabilities found.
