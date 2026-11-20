@@ -2,6 +2,8 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 from config import Settings, settings
 from core.errors import ConfigurationError
 
