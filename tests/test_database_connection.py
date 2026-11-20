@@ -116,3 +116,9 @@ def test_backup_file_permissions_are_owner_only_on_posix(tmp_path):
 def test_verify_backup_rejects_missing_file(tmp_path):
     with pytest.raises(FileNotFoundError):
         ConnectionDatabase.verify_backup(tmp_path / "missing.db")
+
+
+def test_backup_rejects_empty_destination(tmp_path):
+    database = ConnectionDatabase(tmp_path / "source.db")
+    with pytest.raises(ValueError, match="must not be empty"):
+        database.backup("")
