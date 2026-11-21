@@ -21,7 +21,7 @@
 | 10 | Production Readiness & Security | 8/8 checkpoints PASS; security hardening recorded; not a production certification |
 | 11 | AI Brain | Merged; safe provider/advisory architecture, bounded context and explicit human approval gate |
 | 12 | Automation Engine | Merged at a2f3efcc3c53e5cbc7a7329e1358258c88a1a44d; 8 checkpoints, 6 focused tests and 191 full-suite tests recorded |
-| 13 | Memory & Checkpoint Engine | Implementation in PR #34; feature CI, merge, exact-SHA Colab and manual UI gates pending |
+| 13 | Memory & Checkpoint Engine | PR #34 merged; feature CI PASS; exact-SHA Colab and manual UI gates pending |
 
 **Evidence rule:** implementation merged, feature/PR CI passing, post-merge main CI passing, Colab runtime acceptance and manual browser acceptance are separate gates. Never infer one from another.
 
@@ -84,7 +84,7 @@ Operational boundaries:
 
 Implementation branch: feature/phase-13-memory-checkpoint-engine  
 Pull request: #34 — https://github.com/glad4u7-crypto/project-continue/pull/34  
-Feature CI evidence: no successful workflow result has yet been verified. CI is not claimed as PASS; merge only after the Phase 13 workflow succeeds.
+Feature CI evidence: PASS on commit `bdc6117272870fd25064fa1ac3e854cedf17ca76`; Project Continue CI, Phase 13 CI, Cloud Acceptance Lab, Python 3.11 and Python 3.13 checks all completed successfully. PR #34 merged to `main` at `a604d306a4e7397ab76ee583feda3483793cb8f8`.
 
 Files:
 - services/memory_checkpoint_engine.py
