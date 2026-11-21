@@ -68,3 +68,17 @@ def test_access_decisions_are_audited_without_secrets(access):
     events = access.list_audit_events()
     assert events[-1]["outcome"] == "denied"
     assert "correct horse battery" not in repr(events)
+
+
+def test_failed_login_attempts_are_throttled_and_window_expires(tmp_path):
+    now = [10000]
+    db = Database(tmp_path / "throttle.sqlite3")
+    ProjectRepository(db).initialize()
+    access = AccessControl(db, b"z" * 48, clock=lambda: now[0])
+    access.create_user("u1", "u1@example.test", "correct horse battery")
+    for _ in range(10):
+        assert access.authenticate("u1@example.test", "wrong password") is None
+    assert access.authenticate("u1@example.test", "correct horse battery") is None
+    now[0] += 901
+    assert access.authenticate("u1@example.test", "correct horse battery")["id"] == "u1"
+    db.close()
