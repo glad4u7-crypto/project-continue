@@ -11,7 +11,7 @@
 | PC-P13-S005 | Handoff Generator | Deterministic Markdown handoff from live state and durable history |
 | PC-P13-S006 | Resume Command Parser | Strict allow-listed grammar; no shell, eval or arbitrary action execution |
 | PC-P13-S007 | State Recovery | Digest verification and preview-first additive restore |
-| PC-P13-S008 | Recovery Tests | Nine isolated temporary SQLite regression tests |
+| PC-P13-S008 | Recovery Tests | Ten isolated temporary SQLite regression tests |
 
 ## Safety and compatibility
 
