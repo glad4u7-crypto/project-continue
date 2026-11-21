@@ -137,9 +137,9 @@ python -m pytest -q
 
 Capture exact SHA, Python version, full output and test summary. Do not reboot the Colab runtime or stop/restart the running Streamlit dashboard. Refresh the browser tab only when ready to inspect the automatically reloaded application; preserve the existing server process.
 
-## Production boundary / remaining non-phase scope
+## Production boundary / Phase 14 status
 
-Phase 10 does not establish public multi-user production certification. Remaining deployment/product work includes authentication and authorization, multi-tenant isolation, scheduled backup/retention/off-site replication, encryption at rest and host-level access controls, production operations, and independent penetration testing.
+Phase 10 did not establish public multi-user production certification. Phase 14 is now being implemented on `feature/phase-14-production-deployment-operations`. It adds a production-only admin login gate, signed sessions, project membership authorization primitives, access audit records, verified backup/retention/restore services, safe health diagnostics and a host-scheduler backup entry point. This is not yet multi-user certification: project-level authorization is not wired into every existing feature page, and host encryption, secret rotation, always-on scheduling, HTTPS, provider deployment, external alerting and live-host restore evidence remain open. Do not expose the app publicly as a multi-user service.
 
 ## Resume protocol
 
@@ -148,3 +148,27 @@ Phase 10 does not establish public multi-user production certification. Remainin
 3. Keep source changes on feature branches and merge only after required CI succeeds.
 4. Preserve unique checkpoint IDs and exact command output/SHA for runtime claims.
 5. Never claim Colab or browser acceptance without user-supplied evidence.
+
+
+## Phase 14 — Production Deployment & Operations (active)
+
+- Branch: `feature/phase-14-production-deployment-operations`
+- Baseline main: `308c30a77af0e2dfecddcf4526051eca48421b18`
+- Latest implementation areas: `services/access_control.py`, `ui/authentication.py`, `services/backup_operations.py`, `services/operational_health.py`, `scripts/run_verified_backup.py`.
+- Phase plan: `docs/PHASE-14-PRODUCTION-DEPLOYMENT-OPERATIONS.md`
+- Operations runbook: `docs/PHASE-14-OPERATIONS-RUNBOOK.md`
+- Architecture audit: `docs/PHASE-14-DEPLOYMENT-ARCHITECTURE.md`
+- Checkpoint guide: `docs/checkpoints/PC-P14-S001-TO-S008-PRODUCTION-OPERATIONS.md`
+- Automated checks: `.github/workflows/phase14.yml` plus repository-wide CI.
+- Current state: implementation and CI validation in progress; do not merge until latest-head CI is green and known gaps are addressed.
+- Production UI currently admits admin-role operators only. Do not enable multi-user access until every page/service operation enforces project membership.
+- Tests must use isolated temporary SQLite databases. Never run restore/retention against the live Colab database.
+- Never reboot Colab or stop/restart the running Streamlit dashboard without explicit authorization.
+
+### Resume Phase 14
+
+1. Fetch the latest branch head and inspect all Actions for that exact SHA.
+2. Fix every failing check before opening/merging the PR.
+3. Run exact-SHA Colab compile/focused/full tests only after user approval; preserve the existing runtime and dashboard.
+4. Complete browser login/logout and denial checks without restarting the existing app.
+5. Select the actual hosting provider before claiming HTTPS, persistent volume, secrets, external scheduling, off-site backup or production deployment.
