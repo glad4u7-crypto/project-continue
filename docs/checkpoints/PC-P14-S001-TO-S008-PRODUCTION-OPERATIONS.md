@@ -25,11 +25,11 @@ This document is the operational register for Phase 14. Run checkpoints in order
 - Documented deployment assumptions, unresolved provider-specific decisions and risk register.
 - Focused documentation/architecture checks and full regression result.
 
-**Status:** IN PROGRESS — branch and phase plan created; architecture audit and acceptance evidence not yet complete.
+**Status:** IN PROGRESS — architecture audit recorded in `docs/PHASE-14-DEPLOYMENT-ARCHITECTURE.md`; provider choice/review and CI evidence remain pending.
 
 ---
 
-## PC-P14-S002 — Authentication & Authorization
+## PC-P14-S002 — Authentication & Authorization\n\n**Implementation added:** `services/access_control.py` supplies scrypt password hashes, HMAC-signed expiring sessions, role checks and audit events. `ui/authentication.py` adds a fail-closed production operator login gate before dashboard pages. Production config requires a 32-byte `SESSION_SIGNING_KEY`. This production UI gate is deliberately admin-only; do not interpret it as complete multi-user page-level authorization. CI/browser acceptance remains pending.
 
 **Goal:** Add a server-enforced identity and role boundary appropriate to the selected deployment profile.
 
@@ -37,7 +37,7 @@ This document is the operational register for Phase 14. Run checkpoints in order
 
 **Safety:** Do not invent provider credentials or store secrets in Git. Use fake identities in tests.
 
-## PC-P14-S003 — Project/User Isolation
+## PC-P14-S003 — Project/User Isolation\n\n**Implementation added:** project membership roles and deny-by-default `require_project` checks with cross-project tests. **Known gap:** existing Streamlit feature pages have not all been refactored to pass a principal into every data operation; multi-user production mode remains disabled/not certified.
 
 **Goal:** Ensure users can access only projects and records authorized to them.
 
@@ -53,7 +53,7 @@ This document is the operational register for Phase 14. Run checkpoints in order
 
 **Safety:** Do not claim encryption-at-rest unless verified for the selected host and storage. Do not add encryption keys to the repository.
 
-## PC-P14-S005 — Automated Backup & Retention
+## PC-P14-S005 — Automated Backup & Retention\n\n**Implementation added:** `services/backup_operations.py` offers scheduler-callable verified backups, retention preview and explicit-confirmation deletion. External always-on scheduler and off-site provider remain deployment decisions.
 
 **Goal:** Make backups scheduled, verifiable and governed by an explicit retention policy.
 
@@ -61,7 +61,7 @@ This document is the operational register for Phase 14. Run checkpoints in order
 
 **Safety:** Retention cleanup must be preview-first and must never touch the active DB or arbitrary paths. Colab disconnection is not an always-on schedule.
 
-## PC-P14-S006 — Restore Drill & Disaster Recovery
+## PC-P14-S006 — Restore Drill & Disaster Recovery\n\n**Implementation added:** restore drills copy only managed verified backups into a new path, refuse existing/live destinations and re-verify integrity. A provider-hosted drill remains pending.
 
 **Goal:** Prove recovery from a verified backup using a repeatable, non-destructive drill.
 
@@ -69,7 +69,7 @@ This document is the operational register for Phase 14. Run checkpoints in order
 
 **Safety:** Never restore over the live database by default. Require an explicit separate operator procedure for any production cutover.
 
-## PC-P14-S007 — Operational Observability
+## PC-P14-S007 — Operational Observability\n\n**Implementation added:** non-sensitive readiness diagnostics and append-only access-decision audit events. Alert delivery, operational metrics and retention policy remain pending.
 
 **Goal:** Make service health and operational failures diagnosable without leaking sensitive data.
 
