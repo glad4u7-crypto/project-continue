@@ -18,6 +18,7 @@ def test_settings_have_valid_values():
     assert isinstance(settings.log_level, str)
     assert isinstance(settings.github_repository, str)
     assert isinstance(settings.github_token_configured, bool)
+    assert isinstance(settings.session_signing_key_configured, bool)
     assert isinstance(settings.database_path, str)
     assert settings.app_name != ""
 
@@ -56,6 +57,7 @@ def test_production_accepts_absolute_database_path():
         "APP_ENV": "production",
         "PROJECT_CONTINUE_DB": "/var/lib/project-continue/data.sqlite3",
         "LOG_LEVEL": "INFO",
+        "SESSION_SIGNING_KEY": "s" * 48,
     })
     assert configured.database_path == "/var/lib/project-continue/data.sqlite3"
 
@@ -66,6 +68,7 @@ def test_debug_logging_is_rejected_in_production():
             "APP_ENV": "production",
             "PROJECT_CONTINUE_DB": "/var/lib/project-continue/data.sqlite3",
             "LOG_LEVEL": "DEBUG",
+            "SESSION_SIGNING_KEY": "s" * 48,
         })
 
 
