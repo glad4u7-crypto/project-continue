@@ -1,4 +1,5 @@
 import pytest
+import sqlite3
 
 from database import Database, ProjectRepository
 from services.access_control import AccessControl, AccessDenied
@@ -82,3 +83,15 @@ def test_failed_login_attempts_are_throttled_and_window_expires(tmp_path):
     now[0] += 901
     assert access.authenticate("u1@example.test", "correct horse battery")["id"] == "u1"
     db.close()
+
+def test_audit_records_are_immutable(access):
+    owner = access.authenticate("owner@example.test", "correct horse battery")
+    with pytest.raises(AccessDenied):
+        access.require_project(owner, "p-2")
+    event_id = access.list_audit_events()[0]["id"]
+    with pytest.raises(sqlite3.IntegrityError, match="immutable"):
+        with access.database.transaction() as connection:
+            connection.execute("UPDATE pc_audit_events SET outcome='success' WHERE id=?", (event_id,))
+    with pytest.raises(sqlite3.IntegrityError, match="immutable"):
+        with access.database.transaction() as connection:
+            connection.execute("DELETE FROM pc_audit_events WHERE id=?", (event_id,))
