@@ -102,7 +102,7 @@ Checkpoint scope:
 - PC-P13-S005 Handoff Generator — Markdown handoff assembled from durable records.
 - PC-P13-S006 Resume Command Parser — strict allow-list; no shell/eval/arbitrary execution.
 - PC-P13-S007 State Recovery — preview-first, additive and idempotent restore of missing tasks only.
-- PC-P13-S008 Recovery Tests — nine isolated temporary-database tests, including corruption detection and no-overwrite behavior.
+- PC-P13-S008 Recovery Tests — ten isolated temporary-database tests, including corruption detection and no-overwrite behavior.
 
 Safety and compatibility:
 - Phase 13 tables are additive; existing schema version and project/task rows are not rewritten.
