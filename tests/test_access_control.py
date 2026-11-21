@@ -40,6 +40,7 @@ def test_session_signing_key_must_be_strong(access):
 def test_project_membership_enforces_read_write_manage(access):
     owner = access.authenticate("owner@example.test", "correct horse battery")
     viewer = access.authenticate("viewer@example.test", "correct horse battery")
+    access.bootstrap_project_owner(owner, "p-1")
     access.grant_project(owner, "p-1", "viewer-1", role="viewer")
     access.require_project(viewer, "p-1", permission="read")
     with pytest.raises(AccessDenied):
