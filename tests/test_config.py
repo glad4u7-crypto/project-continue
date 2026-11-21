@@ -18,6 +18,7 @@ def test_settings_have_valid_values():
     assert isinstance(settings.log_level, str)
     assert isinstance(settings.github_repository, str)
     assert isinstance(settings.github_token_configured, bool)
+    assert isinstance(settings.session_signing_key_configured, bool)
     assert isinstance(settings.database_path, str)
     assert settings.app_name != ""
 
@@ -56,6 +57,7 @@ def test_production_accepts_absolute_database_path():
         "APP_ENV": "production",
         "PROJECT_CONTINUE_DB": "/var/lib/project-continue/data.sqlite3",
         "LOG_LEVEL": "INFO",
+        "SESSION_SIGNING_KEY": "s" * 48,
     })
     assert configured.database_path == "/var/lib/project-continue/data.sqlite3"
 
@@ -66,6 +68,7 @@ def test_debug_logging_is_rejected_in_production():
             "APP_ENV": "production",
             "PROJECT_CONTINUE_DB": "/var/lib/project-continue/data.sqlite3",
             "LOG_LEVEL": "DEBUG",
+            "SESSION_SIGNING_KEY": "s" * 48,
         })
 
 
@@ -83,3 +86,21 @@ def test_database_path_defaults_to_local_data_directory():
 def test_app_name_length_is_bounded():
     with pytest.raises(ConfigurationError, match="100 characters"):
         Settings.from_env({"APP_NAME": "x" * 101})
+
+
+def test_production_requires_session_signing_key():
+    with pytest.raises(ConfigurationError, match="SESSION_SIGNING_KEY"):
+        Settings.from_env({
+            "APP_ENV": "production",
+            "PROJECT_CONTINUE_DB": "/var/lib/project-continue/data.sqlite3",
+            "LOG_LEVEL": "INFO",
+        })
+
+
+def test_session_signing_key_is_never_exposed_in_settings_repr():
+    configured = Settings.from_env({
+        "APP_ENV": "development",
+        "SESSION_SIGNING_KEY": "sensitive-signing-key-value-" + "x" * 32,
+    })
+    assert configured.session_signing_key_configured is True
+    assert "sensitive-signing-key-value" not in repr(configured)

@@ -25,6 +25,7 @@ class Settings:
     log_level: str = "INFO"
     github_repository: str = ""
     github_token_configured: bool = False
+    session_signing_key_configured: bool = False
     database_path: str = _DEFAULT_DATABASE_PATH
 
     @classmethod
@@ -36,6 +37,7 @@ class Settings:
         log_level = source.get("LOG_LEVEL", "INFO").strip().upper()
         github_repository = source.get("GITHUB_REPOSITORY", "").strip()
         github_token_configured = bool(source.get("GITHUB_TOKEN", "").strip())
+        session_signing_key = source.get("SESSION_SIGNING_KEY", "").strip()
         raw_database_path = source.get("PROJECT_CONTINUE_DB", _DEFAULT_DATABASE_PATH)
         if not isinstance(raw_database_path, str):
             raise ConfigurationError("PROJECT_CONTINUE_DB must be a filesystem path")
@@ -59,6 +61,8 @@ class Settings:
                 raise ConfigurationError(
                     "PROJECT_CONTINUE_DB must be an absolute path in production"
                 )
+            if len(session_signing_key.encode("utf-8")) < 32:
+                raise ConfigurationError("SESSION_SIGNING_KEY must contain at least 32 bytes in production")
         if github_repository:
             parts = github_repository.split("/")
             if len(parts) != 2 or any(
@@ -73,6 +77,7 @@ class Settings:
             log_level=log_level,
             github_repository=github_repository,
             github_token_configured=github_token_configured,
+            session_signing_key_configured=len(session_signing_key.encode("utf-8")) >= 32,
             database_path=str(expanded_database_path),
         )
 
