@@ -176,7 +176,9 @@ class AIResponseParser:
             raise AIResponseError("AI response must be text no longer than 8000 characters")
         text = raw.strip()
         if text.startswith("```"):
-            text = re.sub(r"^\`\`\`(?:json)?\s*|\s*\`\`\`$", "", text, flags=re.I)
+            text = text.split("\n", 1)[1] if "\n" in text else text[3:]
+            if text.rstrip().endswith("```"):
+                text = text.rstrip()[:-3].strip()
         try:
             value = json.loads(text)
         except (ValueError, TypeError):
