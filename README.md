@@ -2,16 +2,22 @@
 
 Project Continue organizes projects, tasks and dependencies, recommends actionable work and verifies results with evidence.
 
-## Current status
+## Verified project status
 
-**Phase 04:** database foundation merged into main.  
-**Phase 05:** Project Management merged through PR #13; all eight Phase 05 checkpoints are accepted.  
-**Phase 06:** Task Management merged into main through PR #14.  
-**Phase 07:** Intelligent Task Engine runtime acceptance passed, including ranking, explainable priority, dependency analysis, actionable-task selection, blocked-task detection and dependency-aware completion verification.  
-**Phase 08:** GitHub read-only integration merged; runtime configuration and dashboard connection check included.  
-**Phase 09:** Automated testing merged into main through PR #20. CI passed after branch synchronization (112 tests; 96% statement coverage). Eight checkpoint records and test reports are documented in docs/PHASE-09-AUTOMATED-TESTING.md.  
-**Phase 04:** Database implementation and hardening are merged; GitHub CI passes with 163 tests and 95% coverage. Final Colab exact-SHA runtime acceptance remains pending.  
-**Phase 10:** Production readiness and security hardening merged into main through PR #21. All eight checkpoints PASS; Gitleaks and pip-audit passed. Latest main CI #283 also passed.
+| Phase | Scope | Repository status |
+|---|---|---|
+| 01 | Foundation | PASS with documented evidence limitations |
+| 02 | Environment Setup | 8/8 checkpoints PASS |
+| 03 | Core Architecture | 8/8 checkpoints PASS |
+| 04 | Database System | 8/8 implementation checkpoints; exact-SHA Colab runtime acceptance PASS |
+| 05 | Project Management | 8/8 checkpoints PASS; Colab and dashboard acceptance recorded |
+| 06 | Task Management | Implementation merged; dedicated file-backed acceptance and UI smoke tests added; CI/Colab/manual UI gate pending |
+| 07 | Intelligent Task Engine | Implementation merged; prior user-reported runtime acceptance; exact-current-SHA recheck and CI wrapper pending |
+| 08 | GitHub Integration | Read-only integration merged; live panel is user-triggered |
+| 09 | Automated Testing | 8/8 checkpoints PASS; CI reports and coverage review recorded |
+| 10 | Production Readiness & Security | 8/8 checkpoints PASS; not a production certification |
+
+Phase 04 Colab verification was supplied against main SHA `50b001467e9b5d9692cb2490bce26efef497e0d2` using Python 3.13.18. Compile, database-marked, focused database, and full test commands completed successfully. The evidence was recorded by merged PR #26.
 
 ## Technology
 
@@ -20,24 +26,25 @@ Python 3.11+, Streamlit, SQLite, python-dotenv, Requests and Pytest.
 ## Quick start
 
 1. Create and activate a Python virtual environment.
-2. Install dependencies with pip install -r requirements.txt.
-3. Copy .env.example to .env and configure required values.
-4. Run streamlit run app.py.
-5. Run python -m pytest -q.
+2. Install dependencies with `python -m pip install -r requirements.txt`.
+3. Copy `.env.example` to `.env` and configure required values.
+4. Run `streamlit run app.py`.
+5. Run `python -m pytest -q`.
 
-Never commit .env, tokens, passwords or private keys.
+Never commit `.env`, tokens, passwords or private keys.
 
 ## Project structure
 
-- app.py — Streamlit entry point
-- config.py — validated application settings
-- core/ — errors, logging and validation
-- database/ — SQLite connection, schema and repository
-- integrations/ — external API clients
-- services/ — project, task and integration use cases
-- ui/ — Streamlit presentation
-- docs/ — architecture, user guide and phase evidence
-- tests/ — automated tests
+- `app.py` — Streamlit entry point
+- `config.py` — validated application settings
+- `core/` — errors, logging and validation
+- `database/` — SQLite connection, schema and repository
+- `integrations/` — external API clients
+- `services/` — project, task and integration use cases
+- `ui/` — Streamlit presentation
+- `scripts/` — isolated phase acceptance workflows
+- `docs/` — architecture, user guide and phase evidence
+- `tests/` — automated tests
 
 ## Project and task management
 
@@ -45,17 +52,20 @@ The dashboard supports project registration, search, lifecycle management, task 
 
 ## GitHub integration
 
-The GitHub panel is read-only. Public repositories can be inspected without a token; private repositories require a fine-grained token with read-only Contents and Metadata permissions. Configure GITHUB_REPOSITORY and optional GITHUB_TOKEN in an untracked .env file. The panel checks repository metadata, branches, recent commits, README and open pull requests.
+The GitHub panel is read-only. Public repositories can be inspected without a token; private repositories require a fine-grained token with read-only Contents and Metadata permissions. Configure `GITHUB_REPOSITORY` and optional `GITHUB_TOKEN` in an untracked `.env` file. The panel checks repository metadata, branches, recent commits, README and open pull requests.
 
 ## Documentation
 
-- Development Guide: docs/DEVELOPMENT.md
-- Core Architecture: docs/CORE-ARCHITECTURE.md
-- User Guide: docs/USER_GUIDE.md
-- Branching Policy: docs/BRANCHING.md
-- Phase 05: docs/PHASE-05-PROJECT-MANAGEMENT.md
-- Phase 06: docs/PHASE-06-TASK-MANAGEMENT.md
-- Phase 08: docs/PHASE-08-GITHUB-INTEGRATION.md
-- Phase 09: docs/PHASE-09-AUTOMATED-TESTING.md
-- Phase 10: docs/PHASE-10-PRODUCTION-READINESS-SECURITY.md
-- Database Operations: docs/DATABASE-OPERATIONS.md
+- Durable handoff: `docs/PROJECT-CONTINUATION-CHECKPOINT.md`
+- Streamlit UI acceptance checklist: `docs/STREAMLIT-UI-ACCEPTANCE.md`
+- Development Guide: `docs/DEVELOPMENT.md`
+- Core Architecture: `docs/CORE-ARCHITECTURE.md`
+- User Guide: `docs/USER_GUIDE.md`
+- Phase 04: `docs/PHASE-04-DATABASE-SYSTEM.md`
+- Phase 05: `docs/PHASE-05-PROJECT-MANAGEMENT.md`
+- Phase 06: `docs/PHASE-06-TASK-MANAGEMENT.md`
+- Phase 07: `docs/PHASE-07-INTELLIGENT-TASK-ENGINE.md`
+- Phase 08: `docs/PHASE-08-GITHUB-INTEGRATION.md`
+- Phase 09: `docs/PHASE-09-AUTOMATED-TESTING.md`
+- Phase 10: `docs/PHASE-10-PRODUCTION-READINESS-SECURITY.md`
+- Database Operations: `docs/DATABASE-OPERATIONS.md`

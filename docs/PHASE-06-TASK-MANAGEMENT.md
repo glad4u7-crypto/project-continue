@@ -1,37 +1,48 @@
-# PHASE 06 — Task Management
+# Phase 06 — Task Management
 
 **Objective:** deliver task creation, assignment, priority/status control, dependency-aware completion, editing and automated verification.
 
-**Assignment model:** optional free-text name or email. It is not an authenticated user identity; a future account system can replace it with user IDs.
+**Assignment model:** optional free-text name or email. It is not an authenticated user identity.
 
 ## Checkpoint register
 
-| Checkpoint | Scope | Evidence | Status |
-|---|---|---|---|
-| PC-P06-S001 | Create Task | Service, generated IDs, validation, persistence, UI and activity event | IMPLEMENTED — CI passed; Colab/UI acceptance pending |
-| PC-P06-S002 | Task Assignment | Optional free-text assignee, update/clear and explicit UI disclosure | IMPLEMENTED — CI passed; Colab/UI acceptance pending |
-| PC-P06-S003 | Task Priority | Four validated priorities, editing and filters | IMPLEMENTED — CI passed; Colab/UI acceptance pending |
-| PC-P06-S004 | Task Status | Four task states, lifecycle controls and filters | IMPLEMENTED — CI passed; Colab/UI acceptance pending |
-| PC-P06-S005 | Task Dependencies | Same-project edges, cycle prevention, add/remove and completion gate | IMPLEMENTED — CI passed; Colab/UI acceptance pending |
-| PC-P06-S006 | Task Update | Editable metadata and audit event | IMPLEMENTED — CI passed; Colab/UI acceptance pending |
-| PC-P06-S007 | Task Completion | Explicit completion, idempotent done state and dependency gate | IMPLEMENTED — CI passed; Colab/UI acceptance pending |
-| PC-P06-S008 | Task Management Tests | Migration regression, unit/integration tests, CI and Colab acceptance | PARTIAL — GitHub CI PASS; Colab acceptance pending |
+| Checkpoint | Scope | Implementation and verification |
+|---|---|---|
+| PC-P06-S001 | Create Task | Implemented; isolated acceptance workflow added; CI pending |
+| PC-P06-S002 | Task Assignment | Implemented; set/update/clear covered by acceptance workflow |
+| PC-P06-S003 | Task Priority | Implemented; four validated priority levels and filters |
+| PC-P06-S004 | Task Status | Implemented; four workflow states and filters |
+| PC-P06-S005 | Task Dependencies | Implemented; same-project edges, cycle prevention and completion gate |
+| PC-P06-S006 | Task Update | Implemented; metadata updates and activity events |
+| PC-P06-S007 | Task Completion | Implemented; prerequisite-aware completion and idempotent done state |
+| PC-P06-S008 | Task Management Tests | New 7-group file-backed acceptance and subprocess test added; CI and Colab pending |
 
 ## Design and safety
 
 - SQLite schema v2 adds nullable assignee and migrates v1 databases in place.
-- Use cases live in services/task_management.py; Streamlit controls are integrated into project details.
+- Use cases live in `services/task_management.py`; Streamlit controls are integrated into project details.
 - Dependencies must be same-project and acyclic. All prerequisites must be done before completion.
 - Assignee is a descriptive label only; no login, identity verification, notification or authorization is implied.
 - Mutations write activity events. No task deletion control is exposed in the dashboard.
-- No runtime dependencies are added.
 
-## Verification record
+## Automated acceptance added
 
-- PR #14 merged into main: https://github.com/glad4u7-crypto/project-continue/pull/14.
-- Merge commit: b830dccb9739535067d289b816d9e1c84221ee1d.
-- PR GitHub Actions run #108: SUCCESS; Python 3.11; compileall passed; 72 tests passed in 1.65s.
-- Post-merge GitHub Actions run #109: SUCCESS against the exact main merge SHA; Python 3.11; compileall passed; 72 tests passed in 2.52s.
-- The 72 tests include the Phase 06 service and migration regression coverage plus the pre-existing test suite.
-- Final Colab verification against the latest main SHA and user manual dashboard acceptance are still required.
-- Do not mark Phase 06 checkpoints PASS until the final Colab run and dashboard acceptance evidence are received and reviewed.
+Run:
+
+```bash
+python -m compileall -q .
+python -m pytest -q tests/test_phase06_acceptance.py
+python scripts/phase06_acceptance.py
+```
+
+The isolated workflow covers task creation, assignment, priority, due date, search/filter, updates, assignment clearing, dependency add/remove, cycle and cross-project rejection, dependency-aware completion, activity history, file-backed close/reopen persistence, SQLite integrity, and verified backup contents. It uses a temporary database and does not touch the user's normal project database.
+
+## Existing verification
+
+- PR #14 merged into main.
+- PR CI run #108 and post-merge run #109: SUCCESS; 72 tests passed.
+- The above historical CI does not substitute for the newly added acceptance tests.
+- The new acceptance test and Streamlit smoke test require a successful CI run before their status can be upgraded.
+- Manual Colab dashboard acceptance remains pending; use the checklist in `docs/STREAMLIT-UI-ACCEPTANCE.md`.
+
+**Current disposition:** implementation merged; automated acceptance added but not yet verified on CI; Colab and manual UI acceptance pending. Do not mark all eight checkpoints PASS until those gates have evidence.
