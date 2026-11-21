@@ -9,13 +9,13 @@
 | Checkpoint | Name | Implementation | Latest verification |
 |---|---|---|---|
 | PC-P04-S001 | Database Selection | SQLite decision recorded | PASS — decision documented |
-| PC-P04-S002 | Database Connection | Implemented | GitHub CI PASS; final Colab retest pending |
-| PC-P04-S003 | Project Table | Implemented | GitHub CI PASS; final Colab retest pending |
-| PC-P04-S004 | Task Table | Implemented | GitHub CI PASS; final Colab retest pending |
-| PC-P04-S005 | Dependency Table | Implemented | GitHub CI PASS; final Colab retest pending |
-| PC-P04-S006 | Activity History | Implemented | GitHub CI PASS; final Colab retest pending |
-| PC-P04-S007 | Database CRUD | Implemented | GitHub CI PASS; final Colab retest pending |
-| PC-P04-S008 | Database Tests | Implemented | GitHub CI PASS; final Colab retest pending |
+| PC-P04-S002 | Database Connection | Implemented | GitHub CI PASS; exact-SHA Colab runtime PASS |
+| PC-P04-S003 | Project Table | Implemented | GitHub CI PASS; exact-SHA Colab runtime PASS |
+| PC-P04-S004 | Task Table | Implemented | GitHub CI PASS; exact-SHA Colab runtime PASS |
+| PC-P04-S005 | Dependency Table | Implemented | GitHub CI PASS; exact-SHA Colab runtime PASS |
+| PC-P04-S006 | Activity History | Implemented | GitHub CI PASS; exact-SHA Colab runtime PASS |
+| PC-P04-S007 | Database CRUD | Implemented | GitHub CI PASS; exact-SHA Colab runtime PASS |
+| PC-P04-S008 | Database Tests | Implemented | GitHub CI PASS; exact-SHA Colab runtime PASS |
 
 ## Implementation map
 
@@ -63,3 +63,17 @@ Also run the real file-backed SQLite workflow: initialization; project/task CRUD
 ## Scope boundaries
 
 This phase establishes persistence primitives and database-backed records. It does not by itself claim that every Streamlit UI workflow or hosted deployment is complete. After database runtime acceptance, run the separate end-to-end UI audit in the durable continuation checkpoint.
+
+
+## Final Colab runtime acceptance — 2026-11-20
+
+- **PC-P04-S002 through PC-P04-S008: PASS** — user-provided Colab acceptance output verified exact main SHA `50b001467e9b5d9692cb2490bce26efef497e0d2`.
+- Expected, actual and verified SHA all matched: `50b001467e9b5d9692cb2490bce26efef497e0d2`.
+- Python: `3.13.18`.
+- Compile check, database-marked tests, focused database connection/repository tests, and full test suite all completed successfully; the final marker was `PC-P04 COLAB RUNTIME ACCEPTANCE PASSED`.
+- Individual test counts were not present in the supplied output, so none are asserted here.
+- GitHub CI evidence remains separately recorded above. The test suite includes file-backed persistence and backup/restore regressions; no separate manual UI or database workflow is claimed by this acceptance transcript.
+
+## Next acceptance work
+
+Phase 04 runtime acceptance is complete. The next gate is a separate Streamlit end-to-end UI audit in the intended Colab environment, including project/task/dependency workflows, GitHub integration panel, restart persistence, backup/restore, and error/empty/loading states. Do not claim UI runtime verification until captured evidence is supplied.
