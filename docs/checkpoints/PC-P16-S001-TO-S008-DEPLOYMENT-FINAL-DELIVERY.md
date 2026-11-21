@@ -89,7 +89,7 @@
 
 **Acceptance:** timestamped sanitized results, host/release SHA, screenshots or logs without credentials, failure/rollback record.
 
-**Status:** NOT STARTED.
+**Status:** BLOCKED — requires merged release, provider/host evidence, end-to-end authorization review and verified isolated restore drill.
 
 ---
 
@@ -108,7 +108,7 @@
 
 **Acceptance:** docs match the deployed release; fresh-user walkthrough completed; screenshots are current and contain no sensitive data.
 
-**Status:** NOT STARTED.
+**Status:** DRAFTED — `docs/USER-GUIDE.md` exists; fresh-user walkthrough and screenshots remain pending.
 
 ---
 
@@ -127,7 +127,7 @@
 
 **Acceptance:** clean-environment install walkthrough passes without relying on undocumented local state.
 
-**Status:** NOT STARTED.
+**Status:** DRAFTED — `docs/INSTALLATION-GUIDE.md` exists; clean-host validation remains pending.
 
 ---
 
@@ -146,7 +146,7 @@
 
 **Acceptance:** isolated restore drill passes on selected host/storage; no restore over active DB; guide matches actual provider implementation.
 
-**Status:** NOT STARTED.
+**Status:** DRAFTED — `docs/BACKUP-AND-RECOVERY-GUIDE.md` exists; provider scheduler, off-site controls and isolated host restore drill remain pending.
 
 ---
 
