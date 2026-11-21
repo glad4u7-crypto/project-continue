@@ -57,12 +57,12 @@ class Settings:
         if app_env == "production":
             if log_level == "DEBUG":
                 raise ConfigurationError("LOG_LEVEL=DEBUG is not allowed in production")
-            if len(session_signing_key.encode("utf-8")) < 32:
-                raise ConfigurationError("SESSION_SIGNING_KEY must contain at least 32 bytes in production")
             if not expanded_database_path.is_absolute():
                 raise ConfigurationError(
                     "PROJECT_CONTINUE_DB must be an absolute path in production"
                 )
+            if len(session_signing_key.encode("utf-8")) < 32:
+                raise ConfigurationError("SESSION_SIGNING_KEY must contain at least 32 bytes in production")
         if github_repository:
             parts = github_repository.split("/")
             if len(parts) != 2 or any(
