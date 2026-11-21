@@ -1,10 +1,12 @@
 """Task management workflows."""
 from __future__ import annotations
+import logging
 import sqlite3,uuid
 from typing import Any
 from core.validation import validate_task_title
 from database.repository import ProjectRepository
 
+_LOG=logging.getLogger(__name__)
 class TaskManagementService:
  def __init__(self,repository:ProjectRepository)->None:self.repository=repository
  @staticmethod
@@ -64,6 +66,12 @@ class TaskManagementService:
   new=self.repository.update_task(task_id,**f)
   self.repository.record_activity(old["project_id"],"task.updated",task_id=task_id,payload={"fields":sorted(f)})
   if old["status"]!="done" and new["status"]=="done":self.repository.record_activity(old["project_id"],"task.completed",task_id=task_id)
+  if old["status"]!=new["status"]:
+   try:
+    from services.automation_engine import AutomationEngine
+    AutomationEngine(self.repository).handle_task_update(old,new)
+   except Exception:
+    _LOG.exception("Task update automation failed; task update remains committed")
   return self.get_task_details(task_id)
  def assign_task(self,task_id:str,assignee:str|None)->dict[str,Any]:
   result=self.update_task(task_id,assignee=assignee if assignee is not None else "")
