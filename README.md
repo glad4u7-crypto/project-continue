@@ -11,11 +11,13 @@ Project Continue organizes projects, tasks and dependencies, recommends actionab
 | 03 | Core Architecture | 8/8 checkpoints PASS |
 | 04 | Database System | 8/8 implementation checkpoints; exact-SHA Colab runtime acceptance PASS |
 | 05 | Project Management | 8/8 checkpoints PASS; Colab and dashboard acceptance recorded |
-| 06 | Task Management | Implementation merged; dedicated file-backed acceptance and UI smoke tests added; CI/Colab/manual UI gate pending |
-| 07 | Intelligent Task Engine | Implementation merged; prior user-reported runtime acceptance; exact-current-SHA recheck and CI wrapper pending |
+| 06 | Task Management | Implementation and isolated file-backed acceptance PASS in PR #27 CI; exact-current-SHA Colab and manual UI gates pending |
+| 07 | Intelligent Task Engine | Implementation and eight capability checks PASS in PR #27 CI; exact-current-SHA Colab and manual UI gates pending |
 | 08 | GitHub Integration | Read-only integration merged; live panel is user-triggered |
-| 09 | Automated Testing | 8/8 checkpoints PASS; CI reports and coverage review recorded |
+| 09 | Automated Testing | 8/8 checkpoints PASS; PR #27 CI: 167 tests passed, 96% statement coverage |
 | 10 | Production Readiness & Security | 8/8 checkpoints PASS; not a production certification |
+
+PR #27 merged at `5d0610d3f9118cbcb3fe621280f6fa8e8fa5e3f9`. Its GitHub Actions CI passed on Python 3.11.18: 167 tests passed, 96% statement coverage (821 statements; 34 uncovered). Post-merge main CI must be checked independently. Phase 06/07 exact-current-SHA Colab acceptance and the eight manual browser checks remain separate pending gates.
 
 Phase 04 Colab verification was supplied against main SHA `50b001467e9b5d9692cb2490bce26efef497e0d2` using Python 3.13.18. Compile, database-marked, focused database, and full test commands completed successfully. The evidence was recorded by merged PR #26.
 
