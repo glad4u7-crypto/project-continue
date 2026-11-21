@@ -16,4 +16,4 @@ def test_streamlit_dashboard_starts_with_isolated_database(tmp_path, monkeypatch
     assert not app.exception
     assert any("Project Continue" in item.value for item in app.title)
     assert any("No matching projects" in item.value for item in app.info)
-    assert any("GitHub repository is not configured" in item.value for item in app.warning)
+    assert any("GitHub integration" in item.value for item in app.header)
