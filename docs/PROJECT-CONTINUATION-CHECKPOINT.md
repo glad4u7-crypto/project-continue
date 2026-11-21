@@ -2,7 +2,7 @@
 
 **Repository:** https://github.com/glad4u7-crypto/project-continue  
 **Canonical branch:** `main`  
-**Current main SHA:** `5d0610d3f9118cbcb3fe621280f6fa8e8fa5e3f9`  
+**Application baseline merge SHA (PR #27):** `5d0610d3f9118cbcb3fe621280f6fa8e8fa5e3f9`  
 **Latest merged work:** PR #27 — Phase 06/07 automated acceptance and Streamlit smoke coverage  
 **Environment:** GitHub Actions for repository CI; Google Colab/browser for user-run runtime and manual UI acceptance.
 
