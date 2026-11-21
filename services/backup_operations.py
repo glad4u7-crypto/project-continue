@@ -63,7 +63,10 @@ class BackupOperations:
         return deleted
 
     def restore_drill(self, backup_path: str | Path, destination: str | Path) -> Path:
-        source = Path(backup_path).expanduser().resolve()
+        raw_source = Path(backup_path).expanduser()
+        if raw_source.is_symlink():
+            raise ValueError("Restore source must not be a symbolic link")
+        source = raw_source.resolve()
         target = Path(destination).expanduser().resolve()
         if source.parent != self.root or not source.name.startswith(self.PREFIX) or not source.name.endswith(self.SUFFIX):
             raise ValueError("Restore source must be a managed backup")
@@ -80,7 +83,9 @@ class BackupOperations:
         destination_db = Database(target)
         try:
             # Use SQLite's backup API for a consistent, isolated copy.
-            with sqlite3.connect(f"file:{source.as_posix()}?mode=ro", uri=True) as src:
+            from urllib.parse import quote
+            source_uri = f"file:{quote(str(source), safe='/:')}?mode=ro"
+            with sqlite3.connect(source_uri, uri=True) as src:
                 with destination_db.connection() as dst:
                     src.backup(dst)
             if not Database.verify_backup(target):
