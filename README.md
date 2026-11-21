@@ -27,25 +27,25 @@ Python 3.11+, Streamlit, SQLite, python-dotenv, Requests and Pytest.
 ## Quick start
 
 1. Create and activate a Python virtual environment.
-2. Install dependencies with \`python -m pip install -r requirements.txt\`.
-3. Copy \`.env.example\` to \`.env\` and configure required values.
-4. Run \`streamlit run app.py\`.
-5. Run \`python -m pytest -q\`.
+2. Install dependencies with `python -m pip install -r requirements.txt`.
+3. Copy `.env.example` to `.env` and configure required values.
+4. Run `streamlit run app.py`.
+5. Run `python -m pytest -q`.
 
-Never commit \`.env\`, tokens, passwords or private keys.
+Never commit `.env`, tokens, passwords or private keys.
 
 ## Project structure
 
-- \`app.py\` — Streamlit entry point
-- \`config.py\` — validated application settings
-- \`core/\` — errors, logging and validation
-- \`database/\` — SQLite connection, schema and repository
-- \`integrations/\` — external API clients
-- \`services/\` — project, task and integration use cases
-- \`ui/\` — Streamlit presentation
-- \`scripts/\` — isolated phase acceptance workflows
-- \`docs/\` — architecture, user guide and phase evidence
-- \`tests/\` — automated tests
+- `app.py` — Streamlit entry point
+- `config.py` — validated application settings
+- `core/` — errors, logging and validation
+- `database/` — SQLite connection, schema and repository
+- `integrations/` — external API clients
+- `services/` — project, task and integration use cases
+- `ui/` — Streamlit presentation
+- `scripts/` — isolated phase acceptance workflows
+- `docs/` — architecture, user guide and phase evidence
+- `tests/` — automated tests
 
 ## Project and task management
 
@@ -53,18 +53,18 @@ The dashboard supports project registration, search, lifecycle management, task 
 
 ## GitHub integration
 
-The GitHub panel is read-only. Public repositories can be inspected without a token; private repositories require a fine-grained token with read-only Contents and Metadata permissions. Configure \`GITHUB_REPOSITORY\` and optional \`GITHUB_TOKEN\` in an untracked \`.env\` file.
+The GitHub panel is read-only. Public repositories can be inspected without a token; private repositories require a fine-grained token with read-only Contents and Metadata permissions. Configure `GITHUB_REPOSITORY` and optional `GITHUB_TOKEN` in an untracked `.env` file.
 
 ## Phase 13 memory and recovery
 
-The Memory & Checkpoint Engine adds project-scoped typed memory, SHA-256 verified snapshots, session history, decision records, Markdown handoffs, a strict resume command parser and preview-first additive task recovery. Recovery never overwrites existing project/task records. See \`docs/PHASE-13-MEMORY-CHECKPOINT-ENGINE.md\`.
+The Memory & Checkpoint Engine adds project-scoped typed memory, SHA-256 verified snapshots, session history, decision records, Markdown handoffs, a strict resume command parser and preview-first additive task recovery. Recovery never overwrites existing project/task records. See `docs/PHASE-13-MEMORY-CHECKPOINT-ENGINE.md`.
 
 ## Documentation
 
-- Durable handoff: \`docs/PROJECT-CONTINUATION-CHECKPOINT.md\`
-- Streamlit UI acceptance: \`docs/STREAMLIT-UI-ACCEPTANCE.md\`
-- Development Guide: \`docs/DEVELOPMENT.md\`
-- Phase 11: \`docs/PHASE-11-AI-BRAIN.md\`
-- Phase 12: \`docs/PHASE-12-AUTOMATION-ENGINE.md\`
-- Phase 13: \`docs/PHASE-13-MEMORY-CHECKPOINT-ENGINE.md\`
-- Phase 13 checkpoint evidence: \`docs/checkpoints/PC-P13-S001-TO-S008-MEMORY-CHECKPOINT-ENGINE.md\`
+- Durable handoff: `docs/PROJECT-CONTINUATION-CHECKPOINT.md`
+- Streamlit UI acceptance: `docs/STREAMLIT-UI-ACCEPTANCE.md`
+- Development Guide: `docs/DEVELOPMENT.md`
+- Phase 11: `docs/PHASE-11-AI-BRAIN.md`
+- Phase 12: `docs/PHASE-12-AUTOMATION-ENGINE.md`
+- Phase 13: `docs/PHASE-13-MEMORY-CHECKPOINT-ENGINE.md`
+- Phase 13 checkpoint evidence: `docs/checkpoints/PC-P13-S001-TO-S008-MEMORY-CHECKPOINT-ENGINE.md`
