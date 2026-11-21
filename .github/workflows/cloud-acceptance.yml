@@ -27,7 +27,7 @@ jobs:
         python-version: ["3.11", "3.13"]
     env:
       APP_ENV: test
-      PROJECT_CONTINUE_DB: ${{ runner.temp }}/project-continue-ci.sqlite3
+      PROJECT_CONTINUE_DB: /tmp/project-continue-ci.sqlite3
       PYTHONUNBUFFERED: "1"
     steps:
       - name: Check out exact commit
