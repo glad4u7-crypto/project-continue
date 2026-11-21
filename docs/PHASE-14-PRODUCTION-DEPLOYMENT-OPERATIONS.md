@@ -27,13 +27,13 @@ Non-goals:
 
 | Checkpoint | Scope | Evidence required | Status |
 |---|---|---|---|
-| PC-P14-S001 | Deployment Architecture & Operational Baseline | Current architecture audit, threat boundaries, deployment decision record, acceptance criteria | IN PROGRESS |
-| PC-P14-S002 | Authentication & Authorization | Explicit identity boundary, role policy, deny-by-default tests | NOT STARTED |
-| PC-P14-S003 | Project/User Isolation | Cross-user/project access denial tests and migration compatibility | NOT STARTED |
-| PC-P14-S004 | Secrets & Data Protection | Secret-safe configuration, encryption boundary, documented host controls and tests | NOT STARTED |
-| PC-P14-S005 | Automated Backup & Retention | Scheduled backup design, retention policy, integrity verification, isolated tests | NOT STARTED |
-| PC-P14-S006 | Restore Drill & Disaster Recovery | Tested restore procedure, integrity checks, rollback and recovery evidence | NOT STARTED |
-| PC-P14-S007 | Operational Observability | Health/readiness checks, safe logs, audit events and failure diagnostics | NOT STARTED |
+| PC-P14-S001 | Deployment Architecture & Operational Baseline | Current architecture audit, threat boundaries, deployment decision record, acceptance criteria | IN PROGRESS — audit recorded; provider review pending |
+| PC-P14-S002 | Authentication & Authorization | Explicit identity boundary, role policy, deny-by-default tests | IMPLEMENTED IN BRANCH — production admin login gate and signed sessions; browser/host acceptance pending |
+| PC-P14-S003 | Project/User Isolation | Cross-user/project access denial tests and migration compatibility | PARTIAL — membership authorization service and tests; existing feature pages are not yet multi-user scoped |
+| PC-P14-S004 | Secrets & Data Protection | Secret-safe configuration, encryption boundary, documented host controls and tests | PARTIAL — production signing-key validation; host encryption/rotation evidence pending |
+| PC-P14-S005 | Automated Backup & Retention | Scheduled backup design, retention policy, integrity verification, isolated tests | IMPLEMENTED IN BRANCH — scheduler-callable backup and preview-first retention; external scheduler wiring pending |
+| PC-P14-S006 | Restore Drill & Disaster Recovery | Tested restore procedure, integrity checks, rollback and recovery evidence | IMPLEMENTED IN BRANCH — isolated restore drill; provider-hosted drill pending |
+| PC-P14-S007 | Operational Observability | Health/readiness checks, safe logs, audit events and failure diagnostics | PARTIAL — safe health diagnostics and access audit; metrics/alert integration pending |
 | PC-P14-S008 | Deployment Pipeline & Final Acceptance | CI gates, deployment guide, full regression, security review and operator checklist | NOT STARTED |
 
 ## Safety and compatibility rules
