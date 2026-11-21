@@ -132,6 +132,22 @@ class AccessControl:
         except (ValueError, TypeError, KeyError, json.JSONDecodeError):
             return None
 
+    def bootstrap_project_owner(self, principal: dict[str, Any], project_id: str) -> None:
+        """One-time explicit bootstrap: first owner only, never replaces an owner."""
+        if principal.get("role") not in {"owner", "admin"}:
+            raise AccessDenied("Only an owner or administrator can bootstrap ownership")
+        with self.database.transaction() as c:
+            if c.execute("SELECT 1 FROM projects WHERE id=?", (project_id,)).fetchone() is None:
+                raise KeyError(project_id)
+            if c.execute("SELECT 1 FROM pc_project_memberships WHERE project_id=? AND role='owner'",
+                         (project_id,)).fetchone() is not None:
+                raise AccessDenied("Project already has an owner")
+            if c.execute("SELECT 1 FROM pc_users WHERE id=? AND enabled=1", (principal.get("id"),)).fetchone() is None:
+                raise AccessDenied("Account is disabled or unavailable")
+            c.execute("INSERT INTO pc_project_memberships VALUES(?,?,?,?)",
+                      (project_id, principal["id"], "owner", int(self.clock())))
+        self._audit(principal["id"], "membership.bootstrap_owner", project_id, "success")
+
     def grant_project(self, actor: dict[str, Any], project_id: str, user_id: str, *, role="viewer") -> None:
         if role not in {"owner", "editor", "viewer"}:
             raise ValueError("Unsupported project role")
