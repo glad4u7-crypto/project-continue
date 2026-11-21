@@ -35,6 +35,10 @@ Remote provider calls require explicit enablement, HTTPS and an API key. Tests u
 - The provider adapter supports OpenAI-compatible Chat Completions only; other providers require a separate adapter.
 - No real model credential or live provider call is part of CI acceptance.
 
+## Latest CI correction
+- Fixed a malformed f-string in `ui/ai_brain.py` discovered by `compileall` on the first CI attempt.
+- Re-run full CI against the corrected branch head before merge.
+
 ## Local acceptance
 ```bash
 python -m compileall -q services/ai_brain.py tests/test_ai_brain.py
