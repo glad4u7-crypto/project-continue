@@ -84,7 +84,7 @@ Operational boundaries:
 
 Implementation branch: feature/phase-13-memory-checkpoint-engine  
 Pull request: #34 — https://github.com/glad4u7-crypto/project-continue/pull/34  
-Feature CI evidence: current GitHub connector query did not expose a workflow run or commit status. CI is not claimed as PASS; merge only after the Phase 13 workflow succeeds.
+Feature CI evidence: no successful workflow result has yet been verified. CI is not claimed as PASS; merge only after the Phase 13 workflow succeeds.
 
 Files:
 - services/memory_checkpoint_engine.py
