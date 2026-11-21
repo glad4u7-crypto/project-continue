@@ -14,7 +14,7 @@ Do not publicly expose the app until login and server-side authorization have be
 
 ## Identity and authorization primitives
 
-`services/access_control.py` provides scrypt password hashes, HMAC-signed expiring sessions, project membership roles (owner/editor/viewer), admin role, access-denial exceptions and audit events. It is a server-side primitive, not a substitute for wiring a login gate and calling `require_project` at every service boundary. The current Streamlit pages are not yet a complete authenticated multi-user application.
+`services/access_control.py` provides scrypt password hashes, HMAC-signed expiring sessions, project membership roles (owner/editor/viewer), admin role, access-denial exceptions and audit events. It is a server-side primitive, not a substitute for wiring a login gate and calling `require_project` at every service boundary. Production mode currently allows only admin-role operators through the global gate. The current Streamlit pages are not yet a complete authenticated multi-user application; project membership checks must be wired into every page/service before enabling multi-user access.
 
 Provision the initial owner using a controlled operator process. `bootstrap_project_owner` is one-time per project and refuses to replace an existing owner. Never create a default password or commit session signing keys.
 
@@ -22,7 +22,7 @@ Provision the initial owner using a controlled operator process. `bootstrap_proj
 
 Use `BackupOperations(database, backup_root)` from an external scheduled process. `create_backup()` uses the SQLite online backup API and verifies integrity. Store backups outside the repository and live database directory; restrict access and encrypt storage using the selected host's facilities.
 
-Retention is preview-first:
+Run `python scripts/run_verified_backup.py` from the repository root on an always-on host after setting `PROJECT_CONTINUE_DB` and `PROJECT_CONTINUE_BACKUP_DIR`. The script emits only a safe status and backup filename; schedule it with the host's cron/system scheduler, not a GitHub-hosted runner that cannot see the private SQLite file.\n\nRetention is preview-first:
 1. Call `preview_retention(keep_days=...)`.
 2. Review every returned candidate.
 3. Only an authorized operator may call `apply_retention(preview, confirm=True)`.
