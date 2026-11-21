@@ -1,8 +1,15 @@
 """Run an isolated end-to-end acceptance check for Phase 07."""
 from __future__ import annotations
 
+import sys
 import tempfile
 from pathlib import Path
+
+# Make direct execution (python scripts/phase07_acceptance.py) resolve the
+# repository's top-level packages exactly as pytest does.
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from database import Database, ProjectRepository
 from services import IntelligentTaskEngine, ProjectManagementService, TaskManagementService
