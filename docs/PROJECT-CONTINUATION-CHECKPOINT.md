@@ -2,66 +2,64 @@
 
 **Repository:** https://github.com/glad4u7-crypto/project-continue  
 **Canonical branch:** `main`  
-**Last accepted main SHA:** `5d66a7a93f84b020f7b6e30432e561c50f272df6` (Phase 04 evidence merge)  
-**Active work branch:** `feature/final-acceptance-audit`  
-**Environment:** Google Colab for user-run runtime acceptance; GitHub Actions for repository CI.
+**Current main SHA:** `5d0610d3f9118cbcb3fe621280f6fa8e8fa5e3f9`  
+**Latest merged work:** PR #27 — Phase 06/07 automated acceptance and Streamlit smoke coverage  
+**Environment:** GitHub Actions for repository CI; Google Colab/browser for user-run runtime and manual UI acceptance.
 
 ## Phase status — evidence-based
 
 | Phase | Scope | Current evidence-based status |
 |---|---|---|
-| 01 | Foundation | PASS with evidence note; final integration audit recorded; old foundation/main branch divergence remains documented |
+| 01 | Foundation | PASS with documented evidence limitations; historical branch divergence remains noted |
 | 02 | Environment Setup | 8/8 checkpoints PASS |
 | 03 | Core Architecture | 8/8 checkpoints PASS |
-| 04 | Database System | Implementation PASS; exact-SHA Colab runtime PASS on `50b001467e9b5d9692cb2490bce26efef497e0d2`; evidence PR #26 merged |
-| 05 | Project Management | 8/8 checkpoints PASS; exact-SHA Colab, file-backed acceptance and user dashboard workflow evidence recorded |
-| 06 | Task Management | Implementation merged; new isolated file-backed acceptance and Streamlit smoke tests added on active branch; CI/Colab/manual dashboard acceptance pending |
-| 07 | Intelligent Task Engine | Implementation merged; prior user-reported runtime acceptance PASS; exact SHA was not preserved; new reproducible CI wrapper added on active branch |
-| 08 | GitHub Integration | Read-only GitHub service and dashboard panel merged; live panel check is user-triggered and still needs manual UI evidence |
-| 09 | Automated Testing | 8/8 checkpoints PASS; JUnit/coverage reporting and CI evidence recorded |
+| 04 | Database System | Implementation and exact-SHA Colab runtime acceptance PASS on documented SHA; evidence PR #26 merged |
+| 05 | Project Management | 8/8 checkpoints PASS; Colab and dashboard workflow evidence recorded |
+| 06 | Task Management | Implementation merged; isolated file-backed acceptance PASS in CI; exact-current-SHA Colab and manual browser acceptance pending |
+| 07 | Intelligent Task Engine | Implementation merged; eight capability checks PASS in CI; prior user-reported runtime PASS; exact-current-SHA Colab and manual browser acceptance pending |
+| 08 | GitHub Integration | Read-only integration merged; live panel is user-triggered and requires manual UI evidence |
+| 09 | Automated Testing | 8/8 checkpoints PASS; current PR CI includes 167 passing tests and 96% statement coverage |
 | 10 | Production Readiness & Security | 8/8 checkpoints PASS; security hardening recorded; not a production certification |
 
-**Important:** implementation merged, GitHub CI passing, Colab runtime acceptance, and manual browser acceptance are distinct gates. Do not convert one into another.
+**Evidence rule:** implementation merged, PR CI passing, post-merge main CI passing, Colab runtime acceptance, and manual browser acceptance are separate gates. Never infer one from another.
 
-## Recent repository changes
+## Recent verified repository changes
 
-- PR #26 merged to main after its CI run #286 succeeded.
-- Merge commit: `5d66a7a93f84b020f7b6e30432e561c50f272df6`.
-- PR #26 documents user-provided exact-SHA Colab acceptance for Phase 04 checkpoints S002–S008.
-- The main CI run #287 was observed in progress immediately after merge; its final result must be checked.
-- A documentation defect was found in this handoff: repeated Phase 04 lines had corrupted the file. This branch replaces it with this normalized checkpoint register.
+- PR #26 merged to main at `5d66a7a93f84b020f7b6e30432e561c50f272df6`; its CI passed and it records user-supplied Phase 04 exact-SHA Colab evidence.
+- PR #27 merged to main at `5d0610d3f9118cbcb3fe621280f6fa8e8fa5e3f9`.
+- PR #27 CI passed: Python 3.11.18, full suite **167 passed**, statement coverage **96%** (821 statements; 34 uncovered); test report artifact uploaded.
+- Phase 06 and Phase 07 acceptance scripts were corrected to add the repository root to `sys.path` when executed directly. Both subprocess tests then passed.
+- Merge-triggered main CI run #44855285678 was observed in progress during the latest audit. Recheck its final conclusion before claiming post-merge main CI PASS.
 
-## Active acceptance work
+## Phase 06 — Task Management
 
-### Phase 06 — Task Management
-
-New files on `feature/final-acceptance-audit`:
+Merged acceptance assets:
 - `scripts/phase06_acceptance.py`
 - `tests/test_phase06_acceptance.py`
 
-The file-backed workflow covers task creation, assignment, priority, due date, search/filter, updates, assignment clearing, dependency add/remove, cycle rejection, cross-project rejection, prerequisite completion gate, activity history, close/reopen persistence, SQLite integrity and verified backup contents.
+The isolated file-backed workflow has seven acceptance groups covering task create/update, assignment and clearing, priority, due date, filters, dependency add/remove, cycle and cross-project rejection, completion gate, activity history, close/reopen persistence, SQLite integrity and verified backup contents. The script uses a temporary database.
 
-### Phase 07 — Intelligent Task Engine
+**Status:** implementation and automated CI acceptance PASS. Exact-current-main-SHA Colab execution and all eight manual UI checkpoints remain pending.
 
-New file:
+## Phase 07 — Intelligent Task Engine
+
+Merged acceptance assets:
+- `scripts/phase07_acceptance.py`
 - `tests/test_phase07_acceptance.py`
 
-It executes `scripts/phase07_acceptance.py` as a subprocess and asserts every acceptance marker. The acceptance script uses its own temporary database.
+The isolated workflow verifies ranking, explainable priority, dependency readiness, next actionable task, blocked-task detection, recommendations, dependency-aware completion and temporary-database isolation.
 
-### Streamlit UI automated smoke test
+**Status:** implementation and automated CI acceptance PASS. Exact-current-main-SHA Colab recheck and manual browser evidence remain pending.
 
-New file:
-- `tests/test_ui_smoke.py`
+## Streamlit UI — manual acceptance still required
 
-Uses Streamlit AppTest with an isolated temporary SQLite database to check that the app starts, renders the dashboard and empty-project state without an exception. This is a startup smoke test, not a substitute for manual end-to-end browser acceptance.
+See `docs/STREAMLIT-UI-ACCEPTANCE.md`. Automated Streamlit AppTest startup/empty-state coverage is not equivalent to clicking through the real Colab/browser application.
 
-## Manual Streamlit UI acceptance — still required
+The eight manual checks cover app lifecycle, project CRUD, task CRUD, dependency gates, GitHub panel, restart persistence, backup/restore, and error/empty/loading states. Do not mark these PASS until actual Colab/browser output is supplied.
 
-See `docs/STREAMLIT-UI-ACCEPTANCE.md` for the eight checkpoints and Colab commands. Required manual workflows include project/task CRUD, dependency gates, GitHub panel, restart persistence, backup/restore, and error/empty/loading states. Do not mark these PASS until the user supplies actual Colab/browser evidence.
+## Next Colab verification — exact current main
 
-## Exact Colab verification commands for the next accepted main revision
-
-After the active branch PR is merged, sync to the exact current main SHA and run:
+Run only after confirming the latest main SHA. Preserve the existing user database; acceptance scripts use their own temporary databases.
 
 ```bash
 cd /content/project-continue
@@ -77,21 +75,16 @@ python scripts/phase06_acceptance.py
 python scripts/phase07_acceptance.py
 ```
 
-Capture the full output, including the SHA and final sentinels. Do not omit failed output.
+Capture the exact SHA, Python version, full output and final PASS sentinels. Then perform the eight browser checks in `docs/STREAMLIT-UI-ACCEPTANCE.md`.
 
 ## Production boundary / remaining non-phase scope
 
-Phase 10 does not establish public multi-user production certification. The following remain deployment/product work unless separately implemented and independently verified:
-- Authentication and authorization.
-- Multi-tenant isolation.
-- Scheduled backup, retention and off-site replication.
-- Encryption at rest and host-level access controls.
-- Production deployment/operations and external penetration testing.
+Phase 10 does not establish public multi-user production certification. Remaining deployment/product work includes authentication and authorization, multi-tenant isolation, scheduled backup/retention/off-site replication, encryption at rest and host-level access controls, production operations, and independent penetration testing.
 
 ## Resume protocol
 
-1. Check this file and the phase-specific evidence before changing status.
+1. Read this checkpoint and phase-specific evidence.
 2. Inspect current `main`, open PRs and latest GitHub Actions.
-3. Keep source changes on a feature branch and merge only after CI succeeds.
-4. Preserve unique checkpoint IDs and attach exact command output/SHA for runtime claims.
-5. Never claim browser UI or Colab acceptance without user-supplied evidence.
+3. Keep source changes on feature branches and merge only after required CI succeeds.
+4. Preserve unique checkpoint IDs and exact command output/SHA for runtime claims.
+5. Never claim Colab or browser acceptance without user-supplied evidence.
