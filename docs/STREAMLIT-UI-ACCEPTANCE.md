@@ -6,14 +6,14 @@
 
 | Checkpoint | Manual workflow | Required evidence |
 |---|---|---|
-| PC-P04-UI-001 | Start and stop Streamlit app | App URL opens; dashboard renders; process stops cleanly |
-| PC-P04-UI-002 | Project create, search, edit, archive and restore | Each action visible after rerun; filters and empty state behave |
-| PC-P04-UI-003 | Task create, edit, status, priority and assignment | Values persist and are shown correctly |
-| PC-P04-UI-004 | Dependency add/remove and blocked completion | Cycle/cross-project errors are safe; dependent task cannot complete early |
-| PC-P04-UI-005 | GitHub integration panel | Configured repository connection check succeeds or safe actionable error appears |
-| PC-P04-UI-006 | Restart persistence | Project/task data remains after stopping and restarting Streamlit |
-| PC-P04-UI-007 | Backup and restore | Backup verifies; restored database has expected records and integrity |
-| PC-P04-UI-008 | Error, empty and loading states | Empty registry, invalid input, API failure and loading feedback render safely |
+| PC-UI-001 | Start and stop Streamlit app | App URL opens; dashboard renders; process stops cleanly |
+| PC-UI-002 | Project create, search, edit, archive and restore | Each action visible after rerun; filters and empty state behave |
+| PC-UI-003 | Task create, edit, status, priority and assignment | Values persist and are shown correctly |
+| PC-UI-004 | Dependency add/remove and blocked completion | Cycle/cross-project errors are safe; dependent task cannot complete early |
+| PC-UI-005 | GitHub integration panel | Configured repository connection check succeeds or safe actionable error appears |
+| PC-UI-006 | Restart persistence | Project/task data remains after stopping and restarting Streamlit |
+| PC-UI-007 | Backup and restore | Backup verifies; restored database has expected records and integrity |
+| PC-UI-008 | Error, empty and loading states | Empty registry, invalid input, API failure and loading feedback render safely |
 
 ## Colab preparation
 
@@ -53,14 +53,14 @@ For each checkpoint, capture:
 Final sentinel after all eight manual checks:
 
 ```text
-PC-P04-UI-001: PASS
-PC-P04-UI-002: PASS
-PC-P04-UI-003: PASS
-PC-P04-UI-004: PASS
-PC-P04-UI-005: PASS
-PC-P04-UI-006: PASS
-PC-P04-UI-007: PASS
-PC-P04-UI-008: PASS
+PC-UI-001: PASS
+PC-UI-002: PASS
+PC-UI-003: PASS
+PC-UI-004: PASS
+PC-UI-005: PASS
+PC-UI-006: PASS
+PC-UI-007: PASS
+PC-UI-008: PASS
 STREAMLIT UI END-TO-END ACCEPTANCE: PASS
 ```
 
