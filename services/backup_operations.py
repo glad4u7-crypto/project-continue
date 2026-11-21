@@ -67,11 +67,11 @@ class BackupOperations:
         target = Path(destination).expanduser().resolve()
         if source.parent != self.root or not source.name.startswith(self.PREFIX) or not source.name.endswith(self.SUFFIX):
             raise ValueError("Restore source must be a managed backup")
-        if target.exists():
-            raise FileExistsError("Restore destination already exists")
         live = Path(self.database.path).expanduser().resolve()
         if self.database.path != ":memory:" and target == live:
             raise ValueError("Restore drill cannot overwrite the live database")
+        if target.exists():
+            raise FileExistsError("Restore destination already exists")
         if target == source:
             raise ValueError("Restore destination must differ from backup source")
         if not Database.verify_backup(source):
