@@ -6,14 +6,14 @@
 
 | Checkpoint | Scope | Implementation | Evidence state |
 |---|---|---|---|
-| PC-P07-S001 | Task Ranking | Deterministic task ranking | Implemented; CI test pending |
-| PC-P07-S002 | Priority Calculation | Explainable 0–100 priority score | Implemented |
-| PC-P07-S003 | Dependency Analysis | Direct/transitive prerequisites and readiness | Implemented |
-| PC-P07-S004 | Next Task Selection | Highest-scoring ready todo/in-progress task | Implemented |
-| PC-P07-S005 | Blocked Task Detection | Unfinished/cyclic prerequisite detection | Implemented |
-| PC-P07-S006 | Recommendation Engine | Start/continue/unblock actions | Implemented |
-| PC-P07-S007 | Completion Verification | Task status and prerequisite verification | Implemented |
-| PC-P07-S008 | Intelligent Engine Tests | Isolated acceptance subprocess test added | CI pending |
+| PC-P07-S001 | Task Ranking | Deterministic task ranking | Automated acceptance PASS in PR #27 CI |
+| PC-P07-S002 | Priority Calculation | Explainable 0–100 priority score | Automated acceptance PASS |
+| PC-P07-S003 | Dependency Analysis | Direct/transitive prerequisites and readiness | Automated acceptance PASS |
+| PC-P07-S004 | Next Task Selection | Highest-scoring ready todo/in-progress task | Automated acceptance PASS |
+| PC-P07-S005 | Blocked Task Detection | Unfinished/cyclic prerequisite detection | Automated acceptance PASS |
+| PC-P07-S006 | Recommendation Engine | Start/continue/unblock actions | Automated acceptance PASS |
+| PC-P07-S007 | Completion Verification | Task status and prerequisite verification | Automated acceptance PASS |
+| PC-P07-S008 | Intelligent Engine Tests | Isolated acceptance subprocess test | Automated acceptance PASS in PR #27 CI |
 
 ## Public API
 
@@ -29,7 +29,7 @@ All functionality is exposed through `services.IntelligentTaskEngine`:
 
 Priority scoring is deterministic and explainable. Dependency analysis reports transitive prerequisites and readiness. The engine is read-only and does not mutate task records.
 
-## Isolated acceptance
+## Isolated automated acceptance
 
 Run:
 
@@ -39,13 +39,15 @@ python -m pytest -q tests/test_phase07_acceptance.py
 python scripts/phase07_acceptance.py
 ```
 
-The acceptance script creates and removes its own temporary SQLite database. It exercises ranking, score/reasons, dependency analysis, next actionable task, blocked detection, recommendations, and dependency-aware completion. A user-supplied Phase 07 runtime acceptance transcript was previously reported as PASS; the prior transcript did not preserve an exact SHA in the repository evidence. The new subprocess test makes this acceptance reproducible in CI.
+The acceptance script creates and removes its own temporary SQLite database. It exercises ranking, score/reasons, dependency analysis, next actionable task, blocked detection, recommendations, and dependency-aware completion. It also confirms isolated database use.
 
 ## Verification record
 
-- PR #16 merged into main.
+- Implementation PR #16 merged into main.
 - Historical PR CI run #127: Python 3.11.18, compile PASS, 86 tests passed.
-- Prior user-reported runtime acceptance included all eight capability checks and isolated database confirmation.
-- Exact-current-main-SHA Colab re-run and CI for the new acceptance wrapper remain pending.
+- Prior user-reported runtime acceptance included all eight capability checks and isolated database confirmation; its exact SHA was not preserved.
+- New reproducible acceptance wrapper merged through PR #27.
+- PR #27 CI: **SUCCESS**, full suite **167 passed**, statement coverage **96%** on Python 3.11.18.
+- Merge commit: `5d0610d3f9118cbcb3fe621280f6fa8e8fa5e3f9`.
 
-**Current disposition:** implementation complete; prior runtime result reported PASS; reproducible CI acceptance and exact-current-SHA Colab recheck pending.
+**Current disposition:** implementation and automated CI acceptance PASS; prior runtime result was user-reported PASS. Exact-current-main-SHA Colab recheck and manual browser evidence remain pending.
