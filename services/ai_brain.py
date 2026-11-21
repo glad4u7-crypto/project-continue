@@ -100,7 +100,7 @@ class OpenAICompatibleProvider:
         except AIResponseError:
             raise
         except (requests.RequestException, ValueError, KeyError, IndexError, TypeError) as exc:
-            safe = redact_sensitive_text(str(exc))
+            safe = redact_secrets(str(exc))
             raise AIError("AI provider request failed: " + safe[:300]) from None
 
 
