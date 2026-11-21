@@ -30,6 +30,7 @@ Implementation branch: feature/phase-13-memory-checkpoint-engine
 
 Files:
 - services/memory_checkpoint_engine.py
+- ui/memory_checkpoint.py (mounted from app.py)
 - tests/test_memory_checkpoint_engine.py
 - docs/PHASE-13-MEMORY-CHECKPOINT-ENGINE.md
 - docs/checkpoints/PC-P13-S001-TO-S008-MEMORY-CHECKPOINT-ENGINE.md
