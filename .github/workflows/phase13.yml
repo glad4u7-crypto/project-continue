@@ -5,12 +5,15 @@ on:
   pull_request:
     branches: ["main"]
     paths:
-      - "services/memory_checkpoint_engine.py"
-      - "tests/test_memory_checkpoint_engine.py"
-      - ".github/workflows/phase13.yml"
-      - "database/**"
+      - "app.py"
+      - "ui/**"
       - "services/**"
       - "tests/**"
+      - "database/**"
+      - "docs/PHASE-13-MEMORY-CHECKPOINT-ENGINE.md"
+      - "docs/checkpoints/PC-P13-S001-TO-S008-MEMORY-CHECKPOINT-ENGINE.md"
+      - "README.md"
+      - ".github/workflows/phase13.yml"
   workflow_dispatch:
 permissions:
   contents: read
@@ -30,7 +33,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
       - name: Compile Phase 13
-        run: python -m compileall -q services/memory_checkpoint_engine.py tests/test_memory_checkpoint_engine.py
+        run: python -m compileall -q app.py ui services/memory_checkpoint_engine.py tests/test_memory_checkpoint_engine.py
       - name: Focused Phase 13 tests
         run: python -m pytest -q tests/test_memory_checkpoint_engine.py
       - name: Full regression suite
