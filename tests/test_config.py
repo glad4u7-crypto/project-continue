@@ -86,3 +86,21 @@ def test_database_path_defaults_to_local_data_directory():
 def test_app_name_length_is_bounded():
     with pytest.raises(ConfigurationError, match="100 characters"):
         Settings.from_env({"APP_NAME": "x" * 101})
+
+
+def test_production_requires_session_signing_key():
+    with pytest.raises(ConfigurationError, match="SESSION_SIGNING_KEY"):
+        Settings.from_env({
+            "APP_ENV": "production",
+            "PROJECT_CONTINUE_DB": "/var/lib/project-continue/data.sqlite3",
+            "LOG_LEVEL": "INFO",
+        })
+
+
+def test_session_signing_key_is_never_exposed_in_settings_repr():
+    configured = Settings.from_env({
+        "APP_ENV": "development",
+        "SESSION_SIGNING_KEY": "sensitive-signing-key-value-" + "x" * 32,
+    })
+    assert configured.session_signing_key_configured is True
+    assert "sensitive-signing-key-value" not in repr(configured)
