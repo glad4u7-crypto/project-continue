@@ -27,12 +27,12 @@ Non-goals:
 
 | Checkpoint | Scope | Evidence required | Status |
 |---|---|---|---|
-| PC-P14-S001 | Deployment Architecture & Operational Baseline | Current architecture audit, threat boundaries, deployment decision record, acceptance criteria | IN PROGRESS — audit recorded; provider review pending |
-| PC-P14-S002 | Authentication & Authorization | Explicit identity boundary, role policy, deny-by-default tests | IMPLEMENTED IN BRANCH — production admin login gate and signed sessions; browser/host acceptance pending |
+| PC-P14-S001 | Deployment Architecture & Operational Baseline | Current architecture audit, threat boundaries, deployment decision record, acceptance criteria | PASS — architecture audit recorded; provider-specific decisions remain documented as external deployment prerequisites |
+| PC-P14-S002 | Authentication & Authorization | Explicit identity boundary, role policy, deny-by-default tests | IMPLEMENTED — production admin login gate, signed sessions and login throttling; browser/host acceptance pending |
 | PC-P14-S003 | Project/User Isolation | Cross-user/project access denial tests and migration compatibility | PARTIAL — membership authorization service and tests; existing feature pages are not yet multi-user scoped |
 | PC-P14-S004 | Secrets & Data Protection | Secret-safe configuration, encryption boundary, documented host controls and tests | PARTIAL — production signing-key validation; host encryption/rotation evidence pending |
-| PC-P14-S005 | Automated Backup & Retention | Scheduled backup design, retention policy, integrity verification, isolated tests | IMPLEMENTED IN BRANCH — scheduler-callable backup and preview-first retention; external scheduler wiring pending |
-| PC-P14-S006 | Restore Drill & Disaster Recovery | Tested restore procedure, integrity checks, rollback and recovery evidence | IMPLEMENTED IN BRANCH — isolated restore drill; provider-hosted drill pending |
+| PC-P14-S005 | Automated Backup & Retention | Scheduled backup design, retention policy, integrity verification, isolated tests | IMPLEMENTED — scheduler-callable backup and preview-first retention; external scheduler wiring pending |
+| PC-P14-S006 | Restore Drill & Disaster Recovery | Tested restore procedure, integrity checks, rollback and recovery evidence | IMPLEMENTED — isolated restore drill; provider-hosted drill pending |
 | PC-P14-S007 | Operational Observability | Health/readiness checks, safe logs, audit events and failure diagnostics | PARTIAL — safe health diagnostics and access audit; metrics/alert integration pending |
 | PC-P14-S008 | Deployment Pipeline & Final Acceptance | CI gates, deployment guide, full regression, security review and operator checklist | NOT STARTED |
 
@@ -64,3 +64,14 @@ Non-goals:
 3. Keep each checkpoint independently testable and resumable.
 4. Record exact commit SHA, commands, outputs and evidence.
 5. Never infer hosted deployment or browser acceptance from CI alone.
+
+
+## Merge record
+
+- PR #35: merged to `main`.
+- Merge commit: `86b3351760d031cdf77ec015e7bca57b6cf1fbc6`.
+- Feature head tested: `4625dea9590e6d554bb0cac30bb4f408cb8830fb`.
+- Phase 14 matrix: Python 3.11 and 3.13 PASS; 32 focused tests and 217 full regression tests PASS.
+- Repository-wide CI, Cloud Acceptance Lab and Phase 13 workflow PASS on the tested feature head.
+- Post-merge main workflows and Colab/browser acceptance remain separate gates.
+- Phase 14 is not yet a live-host production deployment or multi-user production certification.
