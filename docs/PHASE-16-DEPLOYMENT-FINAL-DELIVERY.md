@@ -3,7 +3,7 @@
 **Repository:** `glad4u7-crypto/project-continue`  
 **Branch:** `feature/phase-16-deployment-final-delivery`  
 **Baseline:** `68466e2eacae26535c115e3984d105a2c4fb14b9`  
-**Status:** STARTED — production configuration audit recorded; live deployment is gated.
+**Status:** PARTIAL DELIVERY — S005/S006/S007 documentation drafted; S001 configuration contract audited; S002–S004 and S008 remain blocked on provider, authorization and real-host evidence.
 
 ## Objective
 
@@ -13,13 +13,13 @@ Prepare and deliver Project Continue to a real, selected hosting environment wit
 
 | Checkpoint | Scope | Acceptance evidence | Initial status |
 |---|---|---|---|
-| PC-P16-S001 | Production Configuration | Validated production env contract, secret inventory, persistent DB path, auth/security gate review, config tests | IN PROGRESS — existing config contract audited; host values/provider not selected |
-| PC-P16-S002 | Deployment Preparation | Provider decision, runtime/build specification, dependency lock/reproducibility, health probe, storage/secrets/network plan, rollback plan | BLOCKED — provider and deployment profile not selected |
+| PC-P16-S001 | Production Configuration | Validated production env contract, secret inventory, persistent DB path, auth/security gate review, config tests | PARTIAL — existing contract audited; synthetic runtime tests and provider values pending |
+| PC-P16-S002 | Deployment Preparation | Provider decision, runtime/build specification, dependency lock/reproducibility, health probe, storage/secrets/network plan, rollback plan | PARTIAL — provider-neutral preparation docs ready; provider/build/health probe not validated |
 | PC-P16-S003 | Deployment | Operator-approved release deployed to selected host, HTTPS, persistent storage, secret injection, release SHA recorded | NOT STARTED — no live deployment authorized or configured |
 | PC-P16-S004 | Production Health Check | Live URL checks, login/denial checks, DB read/write, backup status, logs, restart/persistence and alert evidence | NOT STARTED — requires S003 |
-| PC-P16-S005 | User Documentation | User workflows, screenshots where appropriate, limitations, troubleshooting and support path | NOT STARTED |
-| PC-P16-S006 | Installation Guide | Clean-machine install, environment setup, start/stop/update, verification and uninstall | NOT STARTED |
-| PC-P16-S007 | Backup & Recovery Guide | Backup schedule, encryption/retention, off-site policy, isolated restore drill, RPO/RTO and rollback | NOT STARTED |
+| PC-P16-S005 | User Documentation | User workflows, limitations, troubleshooting and support path | DRAFTED — `docs/USER-GUIDE.md`; walkthrough pending |
+| PC-P16-S006 | Installation Guide | Clean-machine install, environment setup, start/stop/update, verification and uninstall | DRAFTED — `docs/INSTALLATION-GUIDE.md`; clean-host validation pending |
+| PC-P16-S007 | Backup & Recovery Guide | Backup schedule, encryption/retention, off-site policy, isolated restore drill, RPO/RTO and rollback | DRAFTED — `docs/BACKUP-AND-RECOVERY-GUIDE.md`; provider drill pending |
 | PC-P16-S008 | Final Project Sign-off | Exact release SHA, CI + host evidence, security review, docs, recovery evidence, known limitations and operator approval | NOT STARTED |
 
 ## PC-P16-S001 — Production Configuration (initial audit)
@@ -78,3 +78,4 @@ Phase 14 documentation explicitly records that the production login gate is admi
 ## Phase execution protocol
 
 Run checkpoints in order. Each checkpoint must include its own exact commands, expected output, evidence to capture, rollback/safety notes and a unique resume identifier. A checkpoint is PASS only when its own evidence is recorded. CI, Colab, browser and real-host acceptance are separate evidence classes.
+\n\n## Documentation delivered on feature branch\n\n- `docs/USER-GUIDE.md`\n- `docs/INSTALLATION-GUIDE.md`\n- `docs/BACKUP-AND-RECOVERY-GUIDE.md`\n\nThese guides describe repository behavior and clearly label provider-specific controls as pending. They do not certify a live host.\n
