@@ -82,7 +82,7 @@ def test_resume_command_returns_verified_checkpoint(workspace):
 
 
 def test_checkpoint_corruption_is_rejected(workspace):
-    _,db,engine,pid=workspace
+    db,_,engine,pid=workspace
     cp=engine.create_checkpoint(pid,"Integrity source",checkpoint_id="PC-P13-TAMPER-001")
     with db.transaction() as c:
         c.execute("UPDATE project_checkpoints SET payload_json=? WHERE checkpoint_id=?",
