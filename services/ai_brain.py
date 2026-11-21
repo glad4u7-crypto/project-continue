@@ -10,7 +10,7 @@ from typing import Any, Mapping, Protocol
 
 import requests
 
-from core.security import redact_sensitive_text
+from core.security import redact_secrets
 
 
 class AIError(RuntimeError):
