@@ -68,6 +68,8 @@ class AccessControl:
               succeeded INTEGER NOT NULL CHECK(succeeded IN (0,1))
             );
             CREATE INDEX IF NOT EXISTS idx_pc_login_attempts ON pc_login_attempts(email_digest,attempted_at);
+            CREATE TRIGGER IF NOT EXISTS pc_audit_no_update BEFORE UPDATE ON pc_audit_events BEGIN SELECT RAISE(ABORT,'audit events are immutable'); END;
+            CREATE TRIGGER IF NOT EXISTS pc_audit_no_delete BEFORE DELETE ON pc_audit_events BEGIN SELECT RAISE(ABORT,'audit events are immutable'); END;
             """)
 
     @staticmethod
@@ -112,6 +114,7 @@ class AccessControl:
         candidate = hashlib.scrypt(str(password).encode(), salt=row["password_salt"], n=2**14, r=8, p=1)
         succeeded = hmac.compare_digest(candidate, row["password_hash"])
         with self.database.transaction() as c:
+            c.execute("DELETE FROM pc_login_attempts WHERE attempted_at<?", (now - 86400,))
             c.execute("INSERT INTO pc_login_attempts VALUES(?,?,?)",
                       (email_digest, now, int(succeeded)))
             if succeeded:
