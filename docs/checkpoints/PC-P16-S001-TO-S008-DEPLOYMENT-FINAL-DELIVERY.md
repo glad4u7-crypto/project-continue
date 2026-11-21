@@ -27,7 +27,7 @@
 
 **Safety:** Never paste actual secret values. Do not publicly expose the application while any data-bearing service path lacks server-side authorization.
 
-**Initial status:** IN PROGRESS — repository contract audited; deployment target unresolved.
+**Current status:** PARTIAL — contract audited and guides drafted; synthetic production config test evidence and provider-specific secret mapping remain pending.
 
 ---
 
@@ -47,7 +47,7 @@
 
 **Acceptance:** clean reproducible build; provider configuration reviewed; no secrets committed; rollback and access boundary documented.
 
-**Status:** BLOCKED until provider/deployment profile is selected.
+**Status:** PARTIAL — generic installation and operations guidance drafted; provider-specific build, health probe, volume and rollback plan blocked until provider is selected.
 
 ---
 
