@@ -160,7 +160,7 @@ Phase 10 did not establish public multi-user production certification. Phase 14 
 - Architecture audit: `docs/PHASE-14-DEPLOYMENT-ARCHITECTURE.md`
 - Checkpoint guide: `docs/checkpoints/PC-P14-S001-TO-S008-PRODUCTION-OPERATIONS.md`
 - Automated checks: `.github/workflows/phase14.yml` plus repository-wide CI.
-- Current state: implementation and CI validation in progress; do not merge until latest-head CI is green and known gaps are addressed.
+- Current state: repository implementation merged via PR #35. Feature-head Phase 14 CI, repository CI, Cloud Acceptance Lab and Phase 13 CI all passed at `4625dea9590e6d554bb0cac30bb4f408cb8830fb` (32 focused / 217 full regression). Post-merge main workflows are pending.
 - Production UI currently admits admin-role operators only. Do not enable multi-user access until every page/service operation enforces project membership.
 - Tests must use isolated temporary SQLite databases. Never run restore/retention against the live Colab database.
 - Never reboot Colab or stop/restart the running Streamlit dashboard without explicit authorization.
@@ -169,6 +169,6 @@ Phase 10 did not establish public multi-user production certification. Phase 14 
 
 1. Fetch the latest branch head and inspect all Actions for that exact SHA.
 2. Fix every failing check before opening/merging the PR.
-3. Run exact-SHA Colab compile/focused/full tests only after user approval; preserve the existing runtime and dashboard.
+3. Run exact-SHA Colab compile/focused/full tests on main after post-merge CI; preserve the existing runtime and dashboard.
 4. Complete browser login/logout and denial checks without restarting the existing app.
 5. Select the actual hosting provider before claiming HTTPS, persistent volume, secrets, external scheduling, off-site backup or production deployment.
