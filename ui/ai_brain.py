@@ -21,7 +21,7 @@ def render_ai_brain() -> None:
     if not projects:
         st.info("Create an active project to use AI Brain.")
         return
-    labels = {f'{p["name"]} · {p["id']}': p["id"] for p in projects}
+    labels = {f"{p['name']} · {p['id']}": p['id'] for p in projects}
     selected = st.selectbox("Project context", list(labels), key="ai_brain_project")
     project_id = labels[selected]
     ai_settings = AISettings.from_env()
