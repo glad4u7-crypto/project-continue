@@ -5,7 +5,7 @@ import json
 import os
 import re
 import secrets
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Mapping, Protocol
 
 import requests
@@ -30,7 +30,7 @@ class AISettings:
     provider: str = "mock"
     model: str = "mock"
     base_url: str = ""
-    api_key: str = ""
+    api_key: str = field(default="", repr=False)
     timeout_seconds: int = 20
     max_context_chars: int = 12000
     enabled: bool = False
