@@ -21,7 +21,7 @@
 | 10 | Production Readiness & Security | 8/8 checkpoints PASS; security hardening recorded; not a production certification |
 | 11 | AI Brain | Merged; safe provider/advisory architecture, bounded context and explicit human approval gate |
 | 12 | Automation Engine | Merged at a2f3efcc3c53e5cbc7a7329e1358258c88a1a44d; 8 checkpoints, 6 focused tests and 191 full-suite tests recorded |
-| 13 | Memory & Checkpoint Engine | PR #34 merged; feature CI PASS; exact-SHA Colab and manual UI gates pending |
+| 13 | Memory & Checkpoint Engine | PR #34 merged; implementation and focused evidence recorded; manual dashboard UI gate remains distinct |
 
 **Evidence rule:** implementation merged, feature/PR CI passing, post-merge main CI passing, Colab runtime acceptance and manual browser acceptance are separate gates. Never infer one from another.
 
@@ -139,7 +139,7 @@ Capture exact SHA, Python version, full output and test summary. Do not reboot t
 
 ## Production boundary / Phase 14 status
 
-Phase 10 did not establish public multi-user production certification. Phase 14 is now being implemented on `feature/phase-14-production-deployment-operations`. It adds a production-only admin login gate, signed sessions, project membership authorization primitives, access audit records, verified backup/retention/restore services, safe health diagnostics and a host-scheduler backup entry point. This is not yet multi-user certification: project-level authorization is not wired into every existing feature page, and host encryption, secret rotation, always-on scheduling, HTTPS, provider deployment, external alerting and live-host restore evidence remain open. Do not expose the app publicly as a multi-user service.
+Phase 10 did not establish public multi-user production certification. Phase 14 implementation was merged via PR #35. It adds a production-only admin login gate, signed sessions, project membership authorization primitives, access audit records, verified backup/retention/restore services, safe health diagnostics and a host-scheduler backup entry point. This is not yet multi-user certification: project-level authorization is not wired into every existing feature page, and host encryption, secret rotation, always-on scheduling, HTTPS, provider deployment, external alerting and live-host restore evidence remain open. Do not expose the app publicly as a multi-user service.
 
 ## Resume protocol
 
@@ -150,7 +150,7 @@ Phase 10 did not establish public multi-user production certification. Phase 14 
 5. Never claim Colab or browser acceptance without user-supplied evidence.
 
 
-## Phase 14 — Production Deployment & Operations (active)
+## Phase 14 — Production Deployment & Operations (merged; host acceptance pending)
 
 - Branch: `feature/phase-14-production-deployment-operations`
 - Baseline main: `308c30a77af0e2dfecddcf4526051eca48421b18`
@@ -160,7 +160,7 @@ Phase 10 did not establish public multi-user production certification. Phase 14 
 - Architecture audit: `docs/PHASE-14-DEPLOYMENT-ARCHITECTURE.md`
 - Checkpoint guide: `docs/checkpoints/PC-P14-S001-TO-S008-PRODUCTION-OPERATIONS.md`
 - Automated checks: `.github/workflows/phase14.yml` plus repository-wide CI.
-- Current state: repository implementation merged via PR #35. Feature-head Phase 14 CI, repository CI, Cloud Acceptance Lab and Phase 13 CI all passed at `4625dea9590e6d554bb0cac30bb4f408cb8830fb` (32 focused / 217 full regression). Post-merge main workflows are pending.
+- Current state: repository implementation merged via PR #35. Feature-head Phase 14 CI, repository CI, Cloud Acceptance Lab and Phase 13 CI all passed at `4625dea9590e6d554bb0cac30bb4f408cb8830fb` (32 focused / 217 full regression). Provider-specific and live-host acceptance remain pending.
 - Production UI currently admits admin-role operators only. Do not enable multi-user access until every page/service operation enforces project membership.
 - Tests must use isolated temporary SQLite databases. Never run restore/retention against the live Colab database.
 - Never reboot Colab or stop/restart the running Streamlit dashboard without explicit authorization.
@@ -172,3 +172,23 @@ Phase 10 did not establish public multi-user production certification. Phase 14 
 3. Run exact-SHA Colab compile/focused/full tests on main after post-merge CI; preserve the existing runtime and dashboard.
 4. Complete browser login/logout and denial checks without restarting the existing app.
 5. Select the actual hosting provider before claiming HTTPS, persistent volume, secrets, external scheduling, off-site backup or production deployment.
+
+
+## Phase 15 — Complete Integration (Colab acceptance PASS; PR CI pending)
+
+- Feature branch: `feature/phase-15-integration`
+- Acceptance baseline SHA: `68466e2eacae26535c115e3984d105a2c4fb14b9`
+- Detailed evidence: `docs/PHASE-15-COMPLETE-INTEGRATION.md`
+- Checkpoint guide: `docs/checkpoints/PC-P15-S001-TO-S008-COMPLETE-INTEGRATION.md`
+- PC-P15-S001 repository audit: checkout root `/content/project-continue-acceptance`; branch `feature/phase-15-integration`; baseline SHA recorded; clean working tree; no remote feature branch existed during initial audit.
+- PC-P15-S002 Database & Memory: 33 passed (5.10s), exit 0.
+- PC-P15-S003 Project & Task: 39 passed (9.82s), exit 0.
+- PC-P15-S004 AI & Automation: 24 passed (1.78s), exit 0.
+- PC-P15-S005 GitHub Integration: 21 passed (0.15s), exit 0.
+- PC-P15-S006 Streamlit Integration: 4 passed (1.60s), exit 0; automated tests only, manual browser checklist still required.
+- PC-P15-S007 Security & Recovery: 49 passed (6.71s), exit 0.
+- PC-P15-S008 full regression: 217 passed (26.11s), exit 0; Python compile check exit 0.
+- Focused groups total 170 passing executions; these overlap with the full suite and must not be added to the 217 as unique tests.
+- Final Colab check: clean working tree; no commit/push/merge; no runtime reboot; no Streamlit dashboard restart.
+- Evidence is user-supplied Colab output on the stated baseline. It does not substitute for GitHub PR CI, post-merge CI, manual browser acceptance or Phase 14 host-specific acceptance.
+- Do not reboot Colab or stop/restart the running dashboard for follow-up checks.
