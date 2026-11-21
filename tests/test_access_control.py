@@ -95,3 +95,17 @@ def test_audit_records_are_immutable(access):
     with pytest.raises(sqlite3.IntegrityError, match="immutable"):
         with access.database.transaction() as connection:
             connection.execute("DELETE FROM pc_audit_events WHERE id=?", (event_id,))
+
+
+def test_bootstrap_rejects_forged_or_stale_principal_role(access):
+    # A caller cannot elevate a viewer by editing the role in a principal dict.
+    forged = {"id": "viewer-1", "role": "owner"}
+    with pytest.raises(AccessDenied):
+        access.bootstrap_project_owner(forged, "p-2")
+
+    # Nor can a disabled account bootstrap ownership.
+    owner = access.authenticate("owner@example.test", "correct horse battery")
+    with access.database.transaction() as connection:
+        connection.execute("UPDATE pc_users SET enabled=0 WHERE id='owner-1'")
+    with pytest.raises(AccessDenied):
+        access.bootstrap_project_owner(owner, "p-2")
