@@ -72,7 +72,7 @@ def test_recovery_preview_and_additive_restore(workspace):
     assert applied["restored_task_ids"]==["restore-me"] and repo.get_task("restore-me")["title"]=="Snapshot task"
     assert repo.get_task("keep-me")["title"]=="Changed live title"
     again=e.recover_state(cp["checkpoint_id"],apply=True)
-    assert again["restored_task_ids"]==[] and again["skipped_existing_count"]==1
+    assert again["restored_task_ids"]==[] and again["skipped_existing_count"]==2
 
 def test_resume_command_returns_verified_checkpoint(workspace):
     _,_,e,pid=workspace
