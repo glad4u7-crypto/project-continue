@@ -20,7 +20,8 @@ Project Continue organizes projects, tasks and dependencies, recommends actionab
 | 12 | Automation Engine | Merged; schedules, bounded retries, notifications and automated checks |
 | 13 | Memory & Checkpoint Engine | Merged; Colab acceptance evidence recorded; manual dashboard check pending |
 | 14 | Production Deployment & Operations | PR #35 merged; feature CI passed; host-specific acceptance pending |
-| 15 | Complete Integration | Colab acceptance: 170 focused test executions and 217 full-suite tests passed; PR CI and manual browser/host gates pending |
+| 15 | Complete Integration | Merged to main; Colab acceptance: 170 focused test executions and 217 full-suite tests passed; manual browser/host gates pending |
+| 16 | Deployment & Final Delivery | Documentation integrated; live deployment, host health checks, authorization remediation and final sign-off remain gated |
 
 ## Technology
 
@@ -83,3 +84,8 @@ The Phase 15 Colab acceptance run passed all six focused integration groups (170
 - Phase 14 checkpoint instructions: `docs/checkpoints/PC-P14-S001-TO-S008-PRODUCTION-OPERATIONS.md`
 - Phase 15: `docs/PHASE-15-COMPLETE-INTEGRATION.md`
 - Phase 15 checkpoint evidence: `docs/checkpoints/PC-P15-S001-TO-S008-COMPLETE-INTEGRATION.md`
+- Phase 16 deployment & final delivery: `docs/PHASE-16-DEPLOYMENT-FINAL-DELIVERY.md`
+- Phase 16 user guide: `docs/USER-GUIDE.md`
+- Phase 16 installation guide: `docs/INSTALLATION-GUIDE.md`
+- Phase 16 backup & recovery guide: `docs/BACKUP-AND-RECOVERY-GUIDE.md`
+- Phase 16 checkpoint instructions: `docs/checkpoints/PC-P16-S001-TO-S008-DEPLOYMENT-FINAL-DELIVERY.md`
