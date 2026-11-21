@@ -18,7 +18,7 @@ Project Continue organizes projects, tasks and dependencies, recommends actionab
 | 10 | Production Readiness & Security | 8/8 checkpoints PASS; not a production certification |
 | 11 | AI Brain | Merged; safe provider/advisory architecture and explicit approval gate |
 | 12 | Automation Engine | Merged; schedules, bounded retries, notifications and automated checks |
-| 13 | Memory & Checkpoint Engine | Merged; Colab acceptance 201 passed; manual dashboard check pending |\n| 14 | Production Deployment & Operations | Implementation and CI in progress; host-specific production acceptance pending |
+| 13 | Memory & Checkpoint Engine | Merged; Colab acceptance 201 passed; manual dashboard check pending |\n| 14 | Production Deployment & Operations | PR #35 merged; feature CI 32 focused / 217 full tests PASS; host-specific acceptance pending |
 
 ## Technology
 
