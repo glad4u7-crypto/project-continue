@@ -12,7 +12,7 @@ class MemoryCheckpointError(ValueError): pass
 class MemoryCheckpointEngine:
     """SQLite continuity layer. Recovery is additive and never overwrites live records."""
     MEMORY_KINDS=frozenset({"preference","fact","constraint","decision","progress"})
-    RESUME_VERBS=frozenset({"resume","continue","status","handoff","checkpoint","help"})
+    RESUME_VERBS=frozenset({"resume","status","handoff","checkpoint","help"})
     def __init__(self, repository: Any, clock=_now):
         self.repository,self.db,self.clock=repository,repository.database,clock
         with self.db.connection() as c:
