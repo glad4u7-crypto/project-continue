@@ -9,6 +9,7 @@ import base64
 import hashlib
 import hmac
 import json
+import hashlib
 import re
 import secrets
 import sqlite3
@@ -62,6 +63,11 @@ class AccessControl:
               created_at INTEGER NOT NULL
             );
             CREATE INDEX IF NOT EXISTS idx_pc_audit_created ON pc_audit_events(created_at);
+            CREATE TABLE IF NOT EXISTS pc_login_attempts(
+              email_digest TEXT NOT NULL, attempted_at INTEGER NOT NULL,
+              succeeded INTEGER NOT NULL CHECK(succeeded IN (0,1))
+            );
+            CREATE INDEX IF NOT EXISTS idx_pc_login_attempts ON pc_login_attempts(email_digest,attempted_at);
             """)
 
     @staticmethod
@@ -87,14 +93,31 @@ class AccessControl:
 
     def authenticate(self, email: str, password: str) -> dict[str, Any] | None:
         normalized = email.strip().lower() if isinstance(email, str) else ""
+        email_digest = hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+        now = int(self.clock())
         with self.database.connection() as c:
+            failures = c.execute(
+                "SELECT COUNT(*) AS n FROM pc_login_attempts "
+                "WHERE email_digest=? AND succeeded=0 AND attempted_at>?",
+                (email_digest, now - 900)).fetchone()["n"]
             row = c.execute("SELECT * FROM pc_users WHERE email=? AND enabled=1",
                             (normalized,)).fetchone()
+        if failures >= 10:
+            return None
         if row is None:
             hashlib.scrypt(str(password).encode(), salt=b"project-continue-dummy-salt", n=2**14, r=8, p=1)
+            with self.database.transaction() as c:
+                c.execute("INSERT INTO pc_login_attempts VALUES(?,?,0)", (email_digest, now))
             return None
         candidate = hashlib.scrypt(str(password).encode(), salt=row["password_salt"], n=2**14, r=8, p=1)
-        if not hmac.compare_digest(candidate, row["password_hash"]):
+        succeeded = hmac.compare_digest(candidate, row["password_hash"])
+        with self.database.transaction() as c:
+            c.execute("INSERT INTO pc_login_attempts VALUES(?,?,?)",
+                      (email_digest, now, int(succeeded)))
+            if succeeded:
+                c.execute("DELETE FROM pc_login_attempts WHERE email_digest=? AND succeeded=0",
+                          (email_digest,))
+        if not succeeded:
             return None
         return {"id": row["id"], "email": row["email"], "role": row["role"]}
 
