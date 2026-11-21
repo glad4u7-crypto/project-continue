@@ -62,12 +62,15 @@ def test_resume_parser_allowlist(workspace):
 def test_recovery_preview_and_additive_restore(workspace):
     _,repo,e,pid=workspace
     repo.create_task("restore-me",pid,"Snapshot task")
+    repo.create_task("keep-me",pid,"Original title")
     cp=e.create_checkpoint(pid,"Recovery source",checkpoint_id="PC-P13-RECOVER-001")
+    repo.update_task("keep-me",title="Changed live title")
     repo.delete_task("restore-me")
     preview=e.recover_state(cp["checkpoint_id"])
     assert preview["verified"] and preview["missing_task_ids"]==["restore-me"] and repo.get_task("restore-me") is None
     applied=e.recover_state(cp["checkpoint_id"],apply=True)
     assert applied["restored_task_ids"]==["restore-me"] and repo.get_task("restore-me")["title"]=="Snapshot task"
+    assert repo.get_task("keep-me")["title"]=="Changed live title"
     again=e.recover_state(cp["checkpoint_id"],apply=True)
     assert again["restored_task_ids"]==[] and again["skipped_existing_count"]==1
 
@@ -76,3 +79,13 @@ def test_resume_command_returns_verified_checkpoint(workspace):
     cp=e.create_checkpoint(pid,"Resume here",checkpoint_id="PC-P13-RESUME-001")
     result=e.resume("resume PC-P13-RESUME-001")
     assert result["recovery_preview"]["verified"] and result["checkpoint"]["checkpoint_id"]==cp["checkpoint_id"]
+
+
+def test_checkpoint_corruption_is_rejected(workspace):
+    _,db,engine,pid=workspace
+    cp=engine.create_checkpoint(pid,"Integrity source",checkpoint_id="PC-P13-TAMPER-001")
+    with db.transaction() as c:
+        c.execute("UPDATE project_checkpoints SET payload_json=? WHERE checkpoint_id=?",
+                  ('{"schema_version":1,"tasks":[]}',cp["checkpoint_id"]))
+    with pytest.raises(MemoryCheckpointError):
+        engine.get_checkpoint(cp["checkpoint_id"])
