@@ -2,59 +2,125 @@
 
 **Repository:** https://github.com/glad4u7-crypto/project-continue  
 **Canonical branch:** main  
+**Current main baseline at Phase 13 start:** f14d51d05f1858d92ed8ebe61a146ba4ddbeeba7  
 **Environment:** GitHub Actions for repository CI; Google Colab/browser for user-run runtime and manual UI acceptance.
 
 ## Phase status — evidence-based
 
 | Phase | Scope | Current evidence-based status |
 |---|---|---|
-| 01 | Foundation | PASS with documented evidence limitations |
+| 01 | Foundation | PASS with documented evidence limitations; historical branch divergence remains noted |
 | 02 | Environment Setup | 8/8 checkpoints PASS |
 | 03 | Core Architecture | 8/8 checkpoints PASS |
-| 04 | Database System | Implementation and documented exact-SHA Colab runtime acceptance PASS |
-| 05 | Project Management | 8/8 checkpoints PASS |
-| 06 | Task Management | Implementation and isolated CI acceptance PASS; exact-current-SHA Colab/manual UI pending |
-| 07 | Intelligent Task Engine | Implementation and capability CI PASS; exact-current-SHA Colab/manual UI pending |
-| 08 | GitHub Integration | Read-only integration merged; manual UI evidence separate |
-| 09 | Automated Testing | 8/8 checkpoints PASS |
-| 10 | Production Readiness & Security | 8/8 checkpoints PASS; not production certification |
-| 11 | AI Brain | Merged; safe advisory provider and explicit approval gate |
-| 12 | Automation Engine | Merged; scheduled checks, retries, notifications and CI verification |
-| 13 | Memory & Checkpoint Engine | Feature-branch implementation; feature CI, PR review, merge and exact-SHA Colab gates pending |
+| 04 | Database System | Implementation and exact-SHA Colab runtime acceptance PASS on documented SHA; evidence PR #26 merged |
+| 05 | Project Management | 8/8 checkpoints PASS; Colab and dashboard workflow evidence recorded |
+| 06 | Task Management | Implementation merged; isolated file-backed acceptance PASS in CI; exact-current-SHA Colab and manual browser acceptance pending |
+| 07 | Intelligent Task Engine | Implementation merged; eight capability checks PASS in CI; prior user-reported runtime PASS; exact-current-SHA Colab and manual browser acceptance pending |
+| 08 | GitHub Integration | Read-only integration merged; live panel is user-triggered and requires manual UI evidence |
+| 09 | Automated Testing | 8/8 checkpoints PASS; Phase 12 full suite recorded 191 passed |
+| 10 | Production Readiness & Security | 8/8 checkpoints PASS; security hardening recorded; not a production certification |
+| 11 | AI Brain | Merged; safe provider/advisory architecture, bounded context and explicit human approval gate |
+| 12 | Automation Engine | Merged at a2f3efcc3c53e5cbc7a7329e1358258c88a1a44d; 8 checkpoints, 6 focused tests and 191 full-suite tests recorded |
+| 13 | Memory & Checkpoint Engine | Implementation in PR #34; feature CI, merge, exact-SHA Colab and manual UI gates pending |
 
-**Evidence rule:** implementation, feature-branch CI, post-merge main CI, Colab runtime acceptance and manual browser acceptance are separate gates. Never infer one from another.
+**Evidence rule:** implementation merged, feature/PR CI passing, post-merge main CI passing, Colab runtime acceptance and manual browser acceptance are separate gates. Never infer one from another.
+
+## Recent verified repository changes
+
+- PR #26 merged to main at 5d66a7a93f84b020f7b6e30432e561c50f272df6; it records user-supplied Phase 04 exact-SHA Colab evidence.
+- PR #27 merged to main at 5d0610d3f9118cbcb3fe621280f6fa8e8fa5e3f9.
+- PR #27 CI passed on Python 3.11.18: 167 tests passed, 96% statement coverage (821 statements; 34 uncovered).
+- Phase 06/07 acceptance scripts add the repository root to sys.path when run directly; subprocess tests passed.
+- Phase 12 merged at a2f3efcc3c53e5cbc7a7329e1358258c88a1a44d; PR #32 and scheduled automation workflow evidence are recorded in docs/PHASE-12-AUTOMATION-ENGINE.md.
+- Phase 13 is being developed in PR #34; do not mark its CI or merge gate PASS without a visible successful run.
+
+## Phase 06 — Task Management
+
+Merged acceptance assets:
+- scripts/phase06_acceptance.py
+- tests/test_phase06_acceptance.py
+
+The isolated file-backed workflow covers task create/update, assignment and clearing, priority, due date, filters, dependency add/remove, cycle and cross-project rejection, completion gate, activity history, close/reopen persistence, SQLite integrity and verified backup contents. It uses a temporary database.
+
+**Status:** implementation and automated CI acceptance PASS. Exact-current-main-SHA Colab execution and all eight manual UI checkpoints remain pending.
+
+## Phase 07 — Intelligent Task Engine
+
+Merged acceptance assets:
+- scripts/phase07_acceptance.py
+- tests/test_phase07_acceptance.py
+
+The isolated workflow verifies ranking, explainable priority, dependency readiness, next actionable task, blocked-task detection, recommendations, dependency-aware completion and temporary-database isolation.
+
+**Status:** implementation and automated CI acceptance PASS. Exact-current-main-SHA Colab recheck and manual browser evidence remain pending.
+
+## Phase 11 — AI Brain
+
+The merged implementation provides:
+- provider protocol, deterministic mock provider and optional HTTPS OpenAI-compatible provider;
+- opt-in configuration, bounded timeout/context and secret redaction;
+- project-scoped read-only context and advisory next-task suggestions;
+- strict JSON parser and action allow-list;
+- explicit approval/rejection gate. Approval records intent only; it does not mutate tasks.
+
+No live provider key is required for offline tests. See docs/PHASE-11-AI-BRAIN.md.
+
+## Phase 12 — Automation Engine
+
+Merged implementation includes SQLite automation rules, interval schedules, run history, allow-listed checks, bounded retries/backoff, manual retry, durable in-app notifications, CLI runner and GitHub Actions verification.
+
+Evidence recorded: PR #32 merged; workflow run #5 SUCCESS; 6 focused automation tests and 191 full-suite tests passed; post-merge main CI run #343 SUCCESS on merge SHA a2f3efcc3c53e5cbc7a7329e1358258c88a1a44d.
+
+Operational boundaries:
+- A persistent host scheduler must periodically invoke scripts/run_automation_checks.py.
+- A disconnected Colab runtime is not an always-on scheduler.
+- GitHub Actions cannot access the user's Colab SQLite database.
+- Notifications are in-app only; email/SMS delivery is not implemented.
+- Automation tables are additive and existing project/task rows are not rewritten.
+
+**Exact-SHA Colab acceptance for Phase 12 remains pending** unless the user supplies the requested output. Do not reboot the runtime or stop/restart the running Streamlit dashboard for verification.
 
 ## Phase 13 — Memory & Checkpoint Engine
 
 Implementation branch: feature/phase-13-memory-checkpoint-engine  
-Pull request: #34 (open; https://github.com/glad4u7-crypto/project-continue/pull/34)  
-CI evidence: the GitHub connector returned no workflow run or commit status for this head; do not claim CI PASS or merge until the Phase 13 workflow result is confirmed.
+Pull request: #34 — https://github.com/glad4u7-crypto/project-continue/pull/34  
+Feature CI evidence: current GitHub connector query did not expose a workflow run or commit status. CI is not claimed as PASS; merge only after the Phase 13 workflow succeeds.
 
 Files:
 - services/memory_checkpoint_engine.py
-- ui/memory_checkpoint.py (mounted from app.py)
+- ui/memory_checkpoint.py, mounted from app.py
 - tests/test_memory_checkpoint_engine.py
 - docs/PHASE-13-MEMORY-CHECKPOINT-ENGINE.md
 - docs/checkpoints/PC-P13-S001-TO-S008-MEMORY-CHECKPOINT-ENGINE.md
 - .github/workflows/phase13.yml
 
 Checkpoint scope:
-- PC-P13-S001 Project Memory Schema — typed, project-scoped SQLite memory with bounded JSON.
-- PC-P13-S002 Checkpoint Storage — immutable project/task/dependency snapshot and SHA-256 integrity.
-- PC-P13-S003 Session History — append-only durable session events.
+- PC-P13-S001 Project Memory Schema — typed, project-scoped SQLite memory with bounded JSON values.
+- PC-P13-S002 Checkpoint Storage — project/task/dependency snapshots and SHA-256 integrity verification.
+- PC-P13-S003 Session History — append-only durable session events and metadata.
 - PC-P13-S004 Decision Records — context, decision, rationale and status.
-- PC-P13-S005 Handoff Generator — deterministic Markdown handoff.
-- PC-P13-S006 Resume Command Parser — strict allow-list, no shell/eval.
-- PC-P13-S007 State Recovery — preview-first, additive, idempotent restore of missing tasks only.
-- PC-P13-S008 Recovery Tests — isolated temporary-database regression tests.
+- PC-P13-S005 Handoff Generator — Markdown handoff assembled from durable records.
+- PC-P13-S006 Resume Command Parser — strict allow-list; no shell/eval/arbitrary execution.
+- PC-P13-S007 State Recovery — preview-first, additive and idempotent restore of missing tasks only.
+- PC-P13-S008 Recovery Tests — nine isolated temporary-database tests, including corruption detection and no-overwrite behavior.
 
-Safety:
+Safety and compatibility:
 - Phase 13 tables are additive; existing schema version and project/task rows are not rewritten.
 - Recovery requires the original project to exist and never overwrites existing tasks or project metadata.
 - Do not store credentials or secrets in project memory.
+- Tests use temporary SQLite databases; no live Colab database is accessed.
+- Dashboard panel includes memory CRUD, checkpoint creation/preview, session/decision entry, handoff download, resume parsing and explicit recovery confirmation.
 - Colab runtime and manual Streamlit UI acceptance are not claimed by feature-branch implementation.
 
-Verification commands after merge, using the exact main SHA:
+## Streamlit UI — manual acceptance still required
+
+See docs/STREAMLIT-UI-ACCEPTANCE.md. Automated Streamlit AppTest startup/empty-state coverage is not equivalent to clicking through the real Colab/browser application.
+
+The eight manual checks cover app lifecycle, project CRUD, task CRUD, dependency gates, GitHub panel, restart persistence, backup/restore, and error/empty/loading states. Do not mark these PASS until actual Colab/browser output is supplied.
+
+## Next Colab verification — exact current main
+
+Run only after the Phase 13 PR is merged and the exact main SHA is confirmed. Preserve the existing user database; Phase 13 tests use temporary databases.
 
 ~~~bash
 cd /content/project-continue
@@ -64,17 +130,21 @@ git pull --ff-only origin main
 git rev-parse HEAD
 python --version
 python -m pip install -r requirements.txt
-python -m compileall -q services/memory_checkpoint_engine.py tests/test_memory_checkpoint_engine.py
+python -m compileall -q app.py ui services/memory_checkpoint_engine.py tests/test_memory_checkpoint_engine.py
 python -m pytest -q tests/test_memory_checkpoint_engine.py
 python -m pytest -q
 ~~~
 
-Preserve the existing Colab runtime and running Streamlit dashboard. The Phase 13 tests use a temporary SQLite database.
+Capture exact SHA, Python version, full output and test summary. Do not reboot the Colab runtime or stop/restart the running Streamlit dashboard. Refresh the browser tab only when ready to inspect the automatically reloaded application; preserve the existing server process.
+
+## Production boundary / remaining non-phase scope
+
+Phase 10 does not establish public multi-user production certification. Remaining deployment/product work includes authentication and authorization, multi-tenant isolation, scheduled backup/retention/off-site replication, encryption at rest and host-level access controls, production operations, and independent penetration testing.
 
 ## Resume protocol
 
-1. Read this checkpoint and the phase-specific evidence.
+1. Read this checkpoint and phase-specific evidence.
 2. Inspect current main, open PRs and latest GitHub Actions.
-3. Keep source changes on feature branches; merge only after required CI succeeds.
-4. Preserve unique checkpoint IDs, exact SHA and command output for runtime claims.
+3. Keep source changes on feature branches and merge only after required CI succeeds.
+4. Preserve unique checkpoint IDs and exact command output/SHA for runtime claims.
 5. Never claim Colab or browser acceptance without user-supplied evidence.
