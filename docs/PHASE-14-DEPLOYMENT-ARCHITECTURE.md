@@ -9,7 +9,7 @@
 
 | Area | Current implementation | Operational implication |
 |---|---|---|
-| Web application | Streamlit entry point `app.py`; project, AI, automation, memory/checkpoint and GitHub panels | Browser UI is not an identity boundary |
+| Web application | Streamlit entry point `app.py`; project, AI, automation, memory/checkpoint and GitHub panels | Production entry point now has an admin-only login gate; feature pages are not yet multi-user scoped |
 | Configuration | Immutable `Settings`; APP_ENV, LOG_LEVEL, GITHUB_REPOSITORY, token-presence flag and DB path | Production requires absolute DB path and disallows DEBUG; no provider-specific deployment config |
 | Persistence | SQLite via `Database`; short-lived connections, foreign keys, busy timeout and transaction helper | Single-file persistence; host filesystem permissions and durable volume are essential |
 | Schema | Version 2; projects/tasks/dependencies/activity; automation and Phase 13 tables initialized by their services | Existing schema has no user, role, membership or tenant ownership model |
@@ -22,7 +22,7 @@
 
 ## 2. Trust boundaries
 
-1. **Browser → Streamlit process:** currently no login/session identity or server-enforced authorization layer is visible in the application entry point.
+1. **Browser → Streamlit process:** production mode now verifies an HMAC-signed admin session before rendering pages; development/Colab behavior remains unchanged. Project-level checks exist as a service but are not wired through every existing page.
 2. **Streamlit/services → SQLite:** local process-level access; anyone able to execute code as the host account may access the database file.
 3. **Application → GitHub API:** outbound integration; token presence is configuration-only and credentials must remain outside source control.
 4. **Automation scheduler → SQLite:** runner executes checks against the configured database on the host where it runs. GitHub-hosted runners do not share the user's Colab filesystem.
