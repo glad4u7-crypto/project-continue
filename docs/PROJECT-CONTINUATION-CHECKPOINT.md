@@ -26,7 +26,10 @@
 
 ## Phase 13 — Memory & Checkpoint Engine
 
-Implementation branch: feature/phase-13-memory-checkpoint-engine
+Implementation branch: feature/phase-13-memory-checkpoint-engine  
+Pull request: #34 (open; https://github.com/glad4u7-crypto/project-continue/pull/34)  
+Latest recorded feature head: e86f144f10e43e21e87bbefe17c6e8160c96967f  
+CI evidence: the GitHub connector returned no workflow run or commit status for this head; do not claim CI PASS or merge until the Phase 13 workflow result is confirmed.
 
 Files:
 - services/memory_checkpoint_engine.py
