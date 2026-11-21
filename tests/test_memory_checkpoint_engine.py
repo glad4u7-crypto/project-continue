@@ -89,3 +89,20 @@ def test_checkpoint_corruption_is_rejected(workspace):
                   ('{"schema_version":1,"tasks":[]}',cp["checkpoint_id"]))
     with pytest.raises(MemoryCheckpointError):
         engine.get_checkpoint(cp["checkpoint_id"])
+
+
+def test_checkpoint_operations_are_scoped_to_the_selected_project(workspace):
+    _, repo, engine, project_id = workspace
+    other = ProjectManagementService(repo).create_project("Other memory project")
+    cp = engine.create_checkpoint(project_id, "Private snapshot", checkpoint_id="PC-P13-SCOPE-001")
+
+    # A caller holding a checkpoint ID cannot inspect or restore it through another project.
+    assert engine.get_checkpoint(cp["checkpoint_id"], project_id=other["id"]) is None
+    with pytest.raises(KeyError):
+        engine.recover_state(cp["checkpoint_id"], project_id=other["id"])
+    with pytest.raises(KeyError):
+        engine.resume("resume PC-P13-SCOPE-001", project_id=other["id"])
+
+    # The owning project can still verify and preview the same checkpoint.
+    assert engine.get_checkpoint(cp["checkpoint_id"], project_id=project_id)["project_id"] == project_id
+    assert engine.recover_state(cp["checkpoint_id"], project_id=project_id)["verified"]
