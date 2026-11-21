@@ -89,3 +89,4 @@ The Phase 15 Colab acceptance run passed all six focused integration groups (170
 - Phase 16 installation guide: `docs/INSTALLATION-GUIDE.md`
 - Phase 16 backup & recovery guide: `docs/BACKUP-AND-RECOVERY-GUIDE.md`
 - Phase 16 checkpoint instructions: `docs/checkpoints/PC-P16-S001-TO-S008-DEPLOYMENT-FINAL-DELIVERY.md`
+- Authorization wiring audit / production release gate: `docs/SECURITY-AUTHORIZATION-WIRING-AUDIT.md`
