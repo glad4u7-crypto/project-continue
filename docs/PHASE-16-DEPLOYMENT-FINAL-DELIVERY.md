@@ -78,4 +78,12 @@ Phase 14 documentation explicitly records that the production login gate is admi
 ## Phase execution protocol
 
 Run checkpoints in order. Each checkpoint must include its own exact commands, expected output, evidence to capture, rollback/safety notes and a unique resume identifier. A checkpoint is PASS only when its own evidence is recorded. CI, Colab, browser and real-host acceptance are separate evidence classes.
-\n\n## Documentation delivered on feature branch\n\n- `docs/USER-GUIDE.md`\n- `docs/INSTALLATION-GUIDE.md`\n- `docs/BACKUP-AND-RECOVERY-GUIDE.md`\n\nThese guides describe repository behavior and clearly label provider-specific controls as pending. They do not certify a live host.\n
+
+
+## Documentation delivered on feature branch
+
+- `docs/USER-GUIDE.md`
+- `docs/INSTALLATION-GUIDE.md`
+- `docs/BACKUP-AND-RECOVERY-GUIDE.md`
+
+These guides describe repository behavior and clearly label provider-specific controls as pending. They do not certify a live host.
