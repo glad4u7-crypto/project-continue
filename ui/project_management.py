@@ -60,20 +60,22 @@ def _render_tasks(pid,service):
    with st.expander("Dependencies"):
     for d in t["dependencies"]:
      left,right=st.columns([4,1]);left.write(f'{d["title"]} — {d["status"]}')
-     if right.button("Remove",key=f'remove_{t["id"]}_{d["id"]}'):service.remove_dependency(t["id"],d["id"]);st.rerun()
+     if right.button("Remove",key=f'remove_{t["id"]}_{d["id"]}'):
+      try: service.remove_dependency(t["id"],d["id"]); st.rerun()
+      except AccessDenied: st.error("You do not have permission to change task dependencies.")
     if candidates:
      opts={f'{q["title"]} [{q["id"]}]':q["id"] for q in candidates}
      with st.form(f'add_dep_{t["id"]}'):
       chosen=st.selectbox("This task depends on",list(opts));add=st.form_submit_button("Add dependency")
      if add:
       try:service.add_dependency(t["id"],opts[chosen])
-      except (ValueError,KeyError) as e:st.error(str(e))
+      except (ValueError,KeyError,AccessDenied) as e:st.error(str(e))
       else:st.success("Dependency added.");st.rerun()
    if t["status"]!="done":
     if t["can_complete"]:
      if st.button("Mark complete",key=f'complete_{t["id"]}'):
       try:service.complete_task(t["id"])
-      except (ValueError,KeyError) as e:st.error(str(e))
+      except (ValueError,KeyError,AccessDenied) as e:st.error(str(e))
       else:st.success("Task completed.");st.rerun()
     else:st.warning("Completion blocked: "+", ".join(d["title"] for d in t["pending_dependencies"]))
 
@@ -136,8 +138,12 @@ def _render_details(projects,tasks,pid):
    except (ValueError,KeyError) as e:st.error(str(e))
    else:st.success("Project updated.");st.rerun()
  if p["status"]=="active":
-  if st.button("Archive project",key=f"archive_{pid}"):projects.archive_project(pid);st.rerun()
- elif st.button("Restore project",key=f"restore_{pid}"):projects.restore_project(pid);st.rerun()
+  if st.button("Archive project",key=f"archive_{pid}"):
+   try: projects.archive_project(pid); st.rerun()
+   except AccessDenied: st.error("Only a project owner or administrator may archive this project.")
+ elif st.button("Restore project",key=f"restore_{pid}"):
+   try: projects.restore_project(pid); st.rerun()
+   except AccessDenied: st.error("Only a project owner or administrator may restore this project.")
  st.markdown("#### Recent activity")
  for e in p["activity"][:10]:st.caption(f'{e["created_at"]} · {e["event_type"].replace("."," ").title()}')
 
