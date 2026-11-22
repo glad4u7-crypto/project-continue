@@ -26,10 +26,7 @@ class ProjectAuthorization:
     def require_principal(principal: Any) -> dict[str, Any]:
         if not isinstance(principal, dict):
             raise AccessDenied("Authenticated principal is required")
-        user_id = principal.get("id")
-        if not isinstance(user_id, str) or not user_id.strip():
-            raise AccessDenied("Authenticated principal is required")
-        return principal
+        return self.access_control.verify_principal(principal)
 
     def require_read(self, principal: Any, project_id: str) -> None:
         self.access_control.require_project(
