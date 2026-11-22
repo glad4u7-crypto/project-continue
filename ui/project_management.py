@@ -3,12 +3,12 @@ from __future__ import annotations
 from database import Database,ProjectRepository
 from services import ProjectManagementService,TaskManagementService
 from config import get_settings
+from services.authorization_context import AuthorizationContext
 import streamlit as st
 
-@st.cache_resource(show_spinner=False)
-def _services(path:str):
+def _services(path:str, authorization_context:AuthorizationContext|None=None):
  db=Database(path);repo=ProjectRepository(db);repo.initialize()
- return ProjectManagementService(repo),TaskManagementService(repo)
+ return ProjectManagementService(repo,authorization_context),TaskManagementService(repo,authorization_context)
 
 def _render_create(service):
  with st.expander("＋ Register a project",expanded=False):
@@ -97,8 +97,8 @@ def _render_details(projects,tasks,pid):
  st.markdown("#### Recent activity")
  for e in p["activity"][:10]:st.caption(f'{e["created_at"]} · {e["event_type"].replace("."," ").title()}')
 
-def render_project_management():
- path=get_settings().database_path;projects,tasks=_services(path)
+def render_project_management(authorization_context:AuthorizationContext|None=None):
+ path=get_settings().database_path;projects,tasks=_services(path,authorization_context)
  st.title("🧭 Project Continue");st.caption("Project workspace · task planning · progress · activity");_render_create(projects)
  a,b=st.columns([2,1]);query=a.text_input("Search projects");status=b.selectbox("Project status",["active","all","archived"],index=0)
  items=projects.list_projects(status=status,query=query);st.markdown("### Project registry")
