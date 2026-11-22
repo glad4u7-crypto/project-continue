@@ -48,13 +48,18 @@ def render_ai_brain(authorization_context: AuthorizationContext | None = None) -
     else:
         provider = MockAIProvider()
     brain_key = "ai_brain_instance"
-    # Keep the one-time approval register stable across Streamlit reruns.
-    if brain_key not in st.session_state or st.session_state.get("ai_brain_project_id") != project_id:
+    principal_id = authorization_context.principal["id"] if authorization_context is not None else "legacy"
+    # Bind the in-memory approval register to both project and authenticated account.
+    if (brain_key not in st.session_state
+            or st.session_state.get("ai_brain_project_id") != project_id
+            or st.session_state.get("ai_brain_principal_id") != principal_id):
+        st.session_state.pop("ai_brain_last_result", None)
         st.session_state[brain_key] = AIBrain(
             repository, IntelligentTaskEngine(repository), provider,
             ai_settings.max_context_chars, authorization_context=authorization_context,
         )
         st.session_state["ai_brain_project_id"] = project_id
+        st.session_state["ai_brain_principal_id"] = principal_id
     brain = st.session_state[brain_key]
     if st.button("Generate next-step suggestion", type="primary", key="ai_brain_suggest"):
         try:
