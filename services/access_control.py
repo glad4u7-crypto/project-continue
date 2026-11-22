@@ -121,14 +121,44 @@ class AccessControl:
                           (email_digest,))
         if not succeeded:
             return None
-        return {"id": row["id"], "email": row["email"], "role": row["role"]}
+        return self._signed_principal(row, now + 3600)
+
+    def _signed_principal(self, row, expires_at: int) -> dict[str, Any]:
+        principal = {"id": row["id"], "email": row["email"], "role": row["role"]}
+        message = json.dumps([principal["id"], principal["email"], principal["role"], int(expires_at)], separators=(",", ":"))
+        proof = _b64(hmac.new(self._key, ("principal:" + message).encode(), hashlib.sha256).digest())
+        return {**principal, "_principal_exp": int(expires_at), "_principal_proof": proof}
+
+    def verify_principal(self, principal: dict[str, Any]) -> dict[str, Any]:
+        if not isinstance(principal, dict):
+            raise AccessDenied("Verified session principal is required")
+        try:
+            user_id, email, role = principal["id"], principal["email"], principal["role"]
+            expires = int(principal["_principal_exp"])
+            proof = principal["_principal_proof"]
+            if not isinstance(user_id, str) or not isinstance(email, str) or not isinstance(role, str):
+                raise ValueError
+            if expires <= int(self.clock()):
+                raise ValueError
+            message = json.dumps([user_id, email, role, expires], separators=(",", ":"))
+            expected = _b64(hmac.new(self._key, ("principal:" + message).encode(), hashlib.sha256).digest())
+            if not isinstance(proof, str) or not hmac.compare_digest(proof, expected):
+                raise ValueError
+        except (KeyError, TypeError, ValueError):
+            raise AccessDenied("Verified session principal is required") from None
+        with self.database.connection() as c:
+            row = c.execute("SELECT id,email,role,enabled FROM pc_users WHERE id=?", (user_id,)).fetchone()
+        if row is None or not row["enabled"] or row["email"] != email or row["role"] != role:
+            raise AccessDenied("Account is disabled or session is no longer valid")
+        return self._signed_principal(row, expires)
 
     def issue_session(self, principal: dict[str, Any], *, ttl_seconds=3600) -> str:
         if ttl_seconds < 60 or ttl_seconds > 86400:
             raise ValueError("Session lifetime must be 60-86400 seconds")
+        principal = self.verify_principal(principal)
         with self.database.connection() as c:
             row = c.execute("SELECT id,role,enabled FROM pc_users WHERE id=?",
-                            (principal.get("id"),)).fetchone()
+                            (principal["id"],)).fetchone()
         if row is None or not row["enabled"]:
             raise AccessDenied("Account is disabled or unavailable")
         payload = {"sub": row["id"], "role": row["role"],
@@ -153,13 +183,14 @@ class AccessControl:
                                 (payload["sub"],)).fetchone()
             if row is None or not row["enabled"] or row["role"] != payload.get("role"):
                 return None
-            return {"id": row["id"], "email": row["email"], "role": row["role"]}
+            return self._signed_principal(row, int(payload["exp"]))
         except (ValueError, TypeError, KeyError, json.JSONDecodeError):
             return None
 
     def bootstrap_project_owner(self, principal: dict[str, Any], project_id: str) -> None:
         """One-time explicit bootstrap: first owner only, never replaces an owner."""
-        if not isinstance(principal, dict) or principal.get("role") not in {"owner", "admin"}:
+        principal = self.verify_principal(principal)
+        if principal.get("role") not in {"owner", "admin"}:
             raise AccessDenied("Only an owner or administrator can bootstrap ownership")
         with self.database.transaction() as c:
             if c.execute("SELECT 1 FROM projects WHERE id=?", (project_id,)).fetchone() is None:
@@ -189,6 +220,7 @@ class AccessControl:
     def require_project(self, principal: dict[str, Any], project_id: str, *, permission="read") -> None:
         if permission not in {"read", "write", "manage"}:
             raise ValueError("Unsupported permission")
+        principal = self.verify_principal(principal)
         with self.database.connection() as c:
             user = c.execute("SELECT role,enabled FROM pc_users WHERE id=?",
                              (principal.get("id"),)).fetchone()
