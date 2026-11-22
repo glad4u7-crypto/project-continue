@@ -1,6 +1,7 @@
 """Streamlit entry point for Project Continue."""
+import os
 import streamlit as st
-from ui.authentication import render_production_authentication
+from ui.authentication import render_production_authentication, render_project_authentication, current_authorization_context
 from config import settings
 from ui.github_integration import render_github_integration
 from ui.project_management import render_project_management
@@ -11,12 +12,21 @@ from ui.memory_checkpoint import render_memory_checkpoint
 st.set_page_config(page_title=settings.app_name, page_icon="🧭", layout="wide")
 
 # Development/Colab behavior is unchanged. Production fails closed behind login.
-if settings.app_env == "production" and not render_production_authentication():
+membership_enforced = os.environ.get("AUTHORIZATION_ENFORCED", "").strip().lower() in {"1", "true", "yes"}
+if settings.app_env == "production":
+    if not render_production_authentication():
+        st.stop()
+elif membership_enforced and not render_project_authentication():
     st.stop()
-render_project_management()
-render_ai_brain()
-render_automation()
-render_memory_checkpoint()
-render_github_integration()
+
+authorization_context = current_authorization_context() if (settings.app_env == "production" or membership_enforced) else None
+render_project_management(authorization_context)
+render_ai_brain(authorization_context)
+render_automation(authorization_context)
+render_memory_checkpoint(authorization_context)
+if authorization_context is None or authorization_context.principal.get("role") == "admin":
+    render_github_integration()
+else:
+    st.info("GitHub integration is restricted to administrators.")
 st.divider()
 st.caption(f"Environment: {settings.app_env} · Log level: {settings.log_level}")
