@@ -56,8 +56,11 @@ def render_memory_checkpoint(authorization_context: AuthorizationContext | None 
                 a, b = st.columns([5, 1])
                 a.write(f"**{item['memory_key']}** · {item['kind']}: {item['value']}")
                 if b.button("Forget", key="forget_" + item["id"]):
-                    engine.forget_memory(pid, item["memory_key"])
-                    st.rerun()
+                    try:
+                        engine.forget_memory(pid, item["memory_key"])
+                        st.rerun()
+                    except AccessDenied:
+                        st.error("You do not have permission to remove project memory.")
 
         with st.expander("Checkpoint storage", expanded=True):
             label = st.text_input("Checkpoint label", key="memory_checkpoint_label")
