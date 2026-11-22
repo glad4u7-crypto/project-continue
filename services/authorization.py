@@ -22,8 +22,7 @@ class ProjectAuthorization:
             raise TypeError("access_control must be an AccessControl instance")
         self.access_control = access_control
 
-    @staticmethod
-    def require_principal(principal: Any) -> dict[str, Any]:
+    def require_principal(self, principal: Any) -> dict[str, Any]:
         if not isinstance(principal, dict):
             raise AccessDenied("Authenticated principal is required")
         return self.access_control.verify_principal(principal)
