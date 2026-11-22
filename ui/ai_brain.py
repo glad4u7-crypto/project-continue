@@ -7,9 +7,11 @@ from config import get_settings
 from database import Database, ProjectRepository
 from services.ai_brain import AISettings, AIBrain, MockAIProvider, OpenAICompatibleProvider
 from services.intelligent_task_engine import IntelligentTaskEngine
+from services.authorization_context import AuthorizationContext
+from services.access_control import AccessDenied
 
 
-def render_ai_brain() -> None:
+def render_ai_brain(authorization_context: AuthorizationContext | None = None) -> None:
     st.divider()
     st.header("🧠 AI Brain")
     st.caption("Read-only suggestions. AI cannot modify tasks; every suggestion requires your decision.")
@@ -18,6 +20,15 @@ def render_ai_brain() -> None:
     repository = ProjectRepository(db)
     repository.initialize()
     projects = [p for p in repository.list_projects() if p.get("status") == "active"]
+    if authorization_context is not None:
+        visible = []
+        for project in projects:
+            try:
+                authorization_context.require(project["id"], "read")
+                visible.append(project)
+            except AccessDenied:
+                continue
+        projects = visible
     if not projects:
         st.info("Create an active project to use AI Brain.")
         return
@@ -41,7 +52,7 @@ def render_ai_brain() -> None:
     if brain_key not in st.session_state or st.session_state.get("ai_brain_project_id") != project_id:
         st.session_state[brain_key] = AIBrain(
             repository, IntelligentTaskEngine(repository), provider,
-            ai_settings.max_context_chars,
+            ai_settings.max_context_chars, authorization_context=authorization_context,
         )
         st.session_state["ai_brain_project_id"] = project_id
     brain = st.session_state[brain_key]
@@ -61,7 +72,8 @@ def render_ai_brain() -> None:
     st.warning("Approval records your decision only. It does not execute or apply the suggestion.")
     left, right = st.columns(2)
     request_id = result["approval_request_id"]
-    if result["approval_status"] == "pending":
+    can_decide = authorization_context is None or authorization_context.principal.get("role") in {"admin", "owner", "editor"}
+    if result["approval_status"] == "pending" and can_decide:
         if left.button("Approve suggestion", key="ai_brain_approve"):
             updated = brain.approvals.decide(request_id, approved=True)
             result["approval_status"] = updated.status
