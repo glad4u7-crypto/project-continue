@@ -11,6 +11,8 @@ from typing import Any, Mapping, Protocol
 import requests
 
 from core.security import redact_secrets
+from services.authorization_context import AuthorizationContext
+from services.access_control import AccessDenied
 
 
 class AIError(RuntimeError):
@@ -210,20 +212,26 @@ class ApprovalRequest:
     project_id: str
     suggestion: Mapping[str, Any]
     status: str = "pending"
+    requester_id: str | None = None
 
 
 class HumanApprovalGate:
     """In-memory, explicit approval gate. Approval records intent; it never mutates project data."""
-    def __init__(self) -> None:
+    def __init__(self, authorization_context: AuthorizationContext | None = None) -> None:
         self._requests: dict[str, ApprovalRequest] = {}
+        self.authorization_context = authorization_context
 
     def submit(self, project_id: str, suggestion: Mapping[str, Any]) -> ApprovalRequest:
         if not isinstance(project_id, str) or not project_id.strip():
             raise ValueError("project_id is required")
         if not isinstance(suggestion, Mapping) or suggestion.get("suggested_action") not in AIResponseParser.ACTIONS:
             raise ValueError("A validated AI suggestion is required")
+        requester_id = None
+        if self.authorization_context is not None:
+            self.authorization_context.require(project_id, "read")
+            requester_id = self.authorization_context.principal["id"]
         request = ApprovalRequest(secrets.token_urlsafe(18), project_id,
-                                  dict(suggestion), "pending")
+                                  dict(suggestion), "pending", requester_id)
         self._requests[request.request_id] = request
         return request
 
@@ -231,10 +239,15 @@ class HumanApprovalGate:
         if request_id not in self._requests:
             raise KeyError(request_id)
         current = self._requests[request_id]
+        if self.authorization_context is not None:
+            self.authorization_context.require(current.project_id, "write")
+            actor = self.authorization_context.principal["id"]
+            if current.requester_id not in (None, actor) and self.authorization_context.principal.get("role") != "admin":
+                raise AccessDenied("Only the requester or an administrator may decide this approval")
         if current.status != "pending":
             raise ValueError("Approval request has already been decided")
         updated = ApprovalRequest(current.request_id, current.project_id, current.suggestion,
-                                  "approved" if approved else "rejected")
+                                  "approved" if approved else "rejected", current.requester_id)
         self._requests[request_id] = updated
         return updated
 
@@ -245,12 +258,15 @@ class HumanApprovalGate:
 class AIBrain:
     """Facade for context -> advice -> explicit human approval."""
     def __init__(self, repository: Any, task_engine: Any, provider: AIProvider | None = None,
-                 max_context_chars: int = 12000) -> None:
+                 max_context_chars: int = 12000, authorization_context: AuthorizationContext | None = None) -> None:
         self.context_builder = ProjectContextBuilder(repository, max_context_chars)
         self.reasoner = NextTaskReasoner(task_engine, provider)
-        self.approvals = HumanApprovalGate()
+        self.authorization_context = authorization_context
+        self.approvals = HumanApprovalGate(authorization_context)
 
     def suggest(self, project_id: str) -> dict[str, Any]:
+        if self.authorization_context is not None:
+            self.authorization_context.require(project_id, "read")
         context = self.context_builder.build(project_id)
         result = self.reasoner.reason(project_id, context)
         approval = self.approvals.submit(project_id, result["ai_advice"])
