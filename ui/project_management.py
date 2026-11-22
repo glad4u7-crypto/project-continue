@@ -4,7 +4,9 @@ from database import Database,ProjectRepository
 from services import ProjectManagementService,TaskManagementService
 from config import get_settings
 from services.authorization_context import AuthorizationContext
+from services.access_control import AccessDenied
 import streamlit as st
+import sqlite3
 
 def _services(path:str, authorization_context:AuthorizationContext|None=None):
  db=Database(path);repo=ProjectRepository(db);repo.initialize()
@@ -78,6 +80,47 @@ def _render_details(projects,tasks,pid):
  p=projects.get_project_details(pid)
  if p is None:st.warning("This project no longer exists.");return
  st.subheader(p["name"]);st.caption(p["description"] or "No description provided.")
+ auth=projects.authorization_context
+ if auth is not None:
+  try:
+   auth.require(pid,"manage"); can_manage=True
+  except AccessDenied:
+   can_manage=False
+  if can_manage:
+   access=auth.policy.access_control; db=projects.repository.database
+   with st.expander("Project access and members"):
+    with db.connection() as connection:
+     owner_count=connection.execute("SELECT COUNT(*) AS n FROM pc_project_memberships WHERE project_id=? AND role='owner'",(pid,)).fetchone()["n"]
+     users=[dict(r) for r in connection.execute("SELECT id,email,role,enabled FROM pc_users ORDER BY email")]
+     members=[dict(r) for r in connection.execute("SELECT u.id,u.email,m.role FROM pc_project_memberships m JOIN pc_users u ON u.id=m.user_id WHERE m.project_id=? ORDER BY m.role,u.email",(pid,))]
+    if owner_count==0 and auth.principal.get("role")=="admin":
+     if st.button("Bootstrap my account as first project owner",key="bootstrap_owner_"+pid):
+      try: access.bootstrap_project_owner(auth.principal,pid)
+      except (AccessDenied,KeyError) as exc: st.error(str(exc))
+      else: st.success("Project owner established."); st.rerun()
+    if auth.principal.get("role")=="admin":
+     with st.form("create_member_"+pid,clear_on_submit=True):
+      new_id=st.text_input("New account ID",max_chars=100)
+      new_email=st.text_input("New account email",max_chars=320)
+      new_password=st.text_input("Temporary password (12+ characters)",type="password",max_chars=1024)
+      new_role=st.selectbox("Account role",["owner","editor","viewer"],index=2)
+      create=st.form_submit_button("Create account")
+     if create:
+      try: access.create_user(new_id,new_email,new_password,role=new_role)
+      except (ValueError,sqlite3.IntegrityError) as exc: st.error(str(exc))
+      else: st.success("Account created. Add it to this project below."); st.rerun()
+    if users:
+     with st.form("grant_member_"+pid):
+      target=st.selectbox("Account",options=[u["id"] for u in users],format_func=lambda uid: next(f"{u['email']} · {uid}" for u in users if u["id"]==uid))
+      roles=["editor","viewer"] if auth.principal.get("role")!="admin" else ["owner","editor","viewer"]
+      member_role=st.selectbox("Project role",roles)
+      grant=st.form_submit_button("Add or update membership")
+     if grant:
+      try: access.grant_project(auth.principal,pid,target,role=member_role)
+      except (AccessDenied,ValueError,KeyError) as exc: st.error(str(exc))
+      else: st.success("Project membership updated."); st.rerun()
+    st.write("**Current members**")
+    for member in members: st.caption(f"{member['email']} · {member['role']}")
  cols=st.columns(4);cols[0].metric("Progress",f'{p["progress_percent"]:.1f}%');cols[1].metric("Tasks",p["total_tasks"])
  cols[2].metric("Completed",p["completed_tasks"]);cols[3].metric("Status",p["status"].title())
  st.progress(p["progress_percent"]/100 if p["total_tasks"] else 0.0)
