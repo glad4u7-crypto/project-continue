@@ -42,8 +42,12 @@ def requires_project(permission: str, *, project_arg: str | None = None,
                     project_id=bound.arguments.get(project_arg)
                 elif resource_arg:
                     key=bound.arguments.get(resource_arg)
-                    lookup=(fn if resolver == fn.__name__ else getattr(self,resolver)) if resolver else getattr(self.repository,resolver or "")
-                    resource=lookup(self,key) if resolver == fn.__name__ else lookup(key)
+                    if resolver == fn.__name__:
+                        resource = fn(self, key)
+                    elif hasattr(self, resolver):
+                        resource = getattr(self, resolver)(key)
+                    else:
+                        resource = getattr(self.repository, resolver)(key)
                     if resource is None: raise AccessDenied("Resource not found")
                     project_id=resource.get("project_id")
                 else:
