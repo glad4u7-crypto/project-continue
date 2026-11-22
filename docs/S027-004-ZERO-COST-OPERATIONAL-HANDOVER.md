@@ -30,7 +30,16 @@ Scheduled GitHub Actions that execute repository tests are CI, not production DB
 - Applied retention policy: not established.
 - Approved RPO/RTO and production recovery handover: not established.
 
-No claim is made that the above live state was rechecked by this documentation-only change.
+### Zero-cost storage discovery (2026-11-22)
+
+- A Dropbox connector is available and its root folder listing was readable.
+- The root listing showed no dedicated Project Continue backup destination.
+- The available Dropbox tools did not expose account quota/free-space figures, so sufficient free capacity is **UNVERIFIED**.
+- A connected Dropbox account is a possible private destination for encrypted archives, but it does not provide a scheduler or give GitHub Actions/Colab an always-on path to the production DB.
+- No folder was created, no file was uploaded, and no Dropbox account identity or unrelated folder names are recorded here.
+- Creating a dedicated folder and uploading a test ciphertext require a separate explicit destination/mutation approval.
+
+No claim is made that the live application/database state was rechecked by this documentation-only change.
 
 ## 3. Zero-cost feasibility matrix
 
@@ -40,7 +49,7 @@ No claim is made that the above live state was rechecked by this documentation-o
 | GitHub scheduled CI | Yes, subject to plan quotas | CI ONLY; cannot read Colab DB |
 | Colab-local backup while runtime is active | Technically possible | MANUAL / SESSION-BOUND |
 | Reliable always-on scheduler on free Colab | No guarantee | NOT ACCEPTED |
-| Private off-site storage | Only if an existing free account/quota is available and authorized | NOT PROVISIONED |
+| Private off-site storage | Dropbox connector exists, but quota and dedicated destination are unverified | NOT PROVISIONED |
 | Client-side encryption | Possible with local tooling and protected key custody | NOT DEPLOYED |
 | Automatic retention | Requires a dependable runner and storage target | NOT DEPLOYED |
 | Failure alerting | Possible only after a reliable monitor and notification destination are configured | NOT DEPLOYED |
@@ -82,7 +91,7 @@ A 24-hour RPO or RTO must not be promised while no reliable daily scheduler, dur
 
 ## 7. Acceptance gates
 
-S027-004 remains **BLOCKED — ZERO-COST HOSTING / STORAGE CAPABILITY NOT ESTABLISHED** until all of the following are evidenced:
+S027-004 remains **BLOCKED — ZERO-COST HOSTING / SCHEDULER CAPABILITY NOT ESTABLISHED** until all of the following are evidenced:
 
 - [ ] A private, durable, zero-cost storage destination is authorized and has sufficient available quota.
 - [ ] Client-side encryption and independent key recovery are demonstrated.
@@ -97,6 +106,6 @@ S027-004 remains **BLOCKED — ZERO-COST HOSTING / STORAGE CAPABILITY NOT ESTABL
 
 ## 8. Current safety boundary
 
-This branch contains documentation only. It does not alter `main`, deploy a host, configure a scheduler, connect a cloud drive, provision storage, copy the production DB, or touch the running Colab/Streamlit environment.
+This branch contains documentation only. It does not alter `main`, deploy a host, configure a scheduler, create a Dropbox folder, provision storage, copy the production DB, or touch the running Colab/Streamlit environment.
 
 **Final decision:** Do not mark S027-004 Production Operational Handover ACCEPTED under the current strict INR 0/month constraint. Preserve the verified application and database state; proceed only when the zero-cost access/scheduler/storage prerequisites can be demonstrated.
