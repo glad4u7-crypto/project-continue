@@ -72,7 +72,13 @@ def render_ai_brain(authorization_context: AuthorizationContext | None = None) -
     st.warning("Approval records your decision only. It does not execute or apply the suggestion.")
     left, right = st.columns(2)
     request_id = result["approval_request_id"]
-    can_decide = authorization_context is None or authorization_context.principal.get("role") in {"admin", "owner", "editor"}
+    request = brain.approvals.get(request_id)
+    can_decide = authorization_context is None or (
+        authorization_context.principal.get("role") in {"admin", "owner", "editor"}
+        and request is not None
+        and (request.requester_id in (None, authorization_context.principal["id"])
+             or authorization_context.principal.get("role") == "admin")
+    )
     if result["approval_status"] == "pending" and can_decide:
         if left.button("Approve suggestion", key="ai_brain_approve"):
             updated = brain.approvals.decide(request_id, approved=True)
