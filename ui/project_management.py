@@ -5,6 +5,7 @@ from services import ProjectManagementService,TaskManagementService
 from config import get_settings
 from services.authorization_context import AuthorizationContext
 from services.access_control import AccessDenied
+from services.access_control import AccessDenied
 import streamlit as st
 import sqlite3
 
@@ -19,7 +20,7 @@ def _render_create(service):
    submit=st.form_submit_button("Create project",type="primary",use_container_width=True)
   if submit:
    try:p=service.create_project(name,desc)
-   except (ValueError,KeyError) as e:st.error(str(e))
+   except (ValueError,KeyError,AccessDenied) as e:st.error(str(e))
    except Exception:st.error("Project could not be created. Check the database connection.")
    else:st.success(f'Project “{p["name"]}” created.');st.rerun()
 
