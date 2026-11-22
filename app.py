@@ -14,7 +14,10 @@ st.set_page_config(page_title=settings.app_name, page_icon="🧭", layout="wide"
 # Development/Colab behavior is unchanged. Production fails closed behind login.
 membership_enforced = os.environ.get("AUTHORIZATION_ENFORCED", "").strip().lower() in {"1", "true", "yes"}
 if settings.app_env == "production":
-    if not render_production_authentication():
+    if membership_enforced:
+        if not render_project_authentication():
+            st.stop()
+    elif not render_production_authentication():
         st.stop()
 elif membership_enforced and not render_project_authentication():
     st.stop()
