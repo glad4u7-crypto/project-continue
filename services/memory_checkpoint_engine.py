@@ -3,6 +3,8 @@ from __future__ import annotations
 import hashlib, json, uuid
 from typing import Any, Mapping
 from datetime import datetime, timezone
+from services.authorization_context import AuthorizationContext, requires_project
+from services.access_control import AccessDenied
 
 def _now(): return datetime.now(timezone.utc).isoformat()
 def _json(value): return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
@@ -13,8 +15,9 @@ class MemoryCheckpointEngine:
     """SQLite continuity layer. Recovery is additive and never overwrites live records."""
     MEMORY_KINDS=frozenset({"preference","fact","constraint","decision","progress"})
     RESUME_VERBS=frozenset({"resume","status","handoff","checkpoint","help"})
-    def __init__(self, repository: Any, clock=_now):
+    def __init__(self, repository: Any, clock=_now, authorization_context: AuthorizationContext | None = None):
         self.repository,self.db,self.clock=repository,repository.database,clock
+        self.authorization_context=authorization_context
         with self.db.connection() as c:
             c.executescript("""
             CREATE TABLE IF NOT EXISTS project_memory(id TEXT PRIMARY KEY,project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,memory_key TEXT NOT NULL,kind TEXT NOT NULL,value_json TEXT NOT NULL,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,UNIQUE(project_id,memory_key));
@@ -35,7 +38,8 @@ class MemoryCheckpointEngine:
         if project is None: raise KeyError(pid)
         return project
     # PC-P13-S001
-    def remember(self,pid,memory_key,value,*,kind="fact"):
+    @requires_project("write", project_arg="pid")
+    def remember(self,pid,memory_key,value,*,kind="fact"): 
         self._require_project(pid); key=self._text(memory_key,"memory_key",120)
         if kind not in self.MEMORY_KINDS: raise MemoryCheckpointError("Unsupported memory kind")
         encoded=_json(value)
@@ -46,10 +50,12 @@ class MemoryCheckpointEngine:
             ON CONFLICT(project_id,memory_key) DO UPDATE SET kind=excluded.kind,value_json=excluded.value_json,updated_at=excluded.updated_at""",
             (self._id("mem"),pid,key,kind,encoded,now,now))
         return self.get_memory(pid,key)
+    @requires_project("read", project_arg="pid")
     def get_memory(self,pid,key):
         with self.db.connection() as c: row=c.execute("SELECT * FROM project_memory WHERE project_id=? AND memory_key=?",(pid,key)).fetchone()
         if row is None:return None
         item=dict(row);item["value"]=json.loads(item.pop("value_json"));return item
+    @requires_project("read", project_arg="pid")
     def list_memory(self,pid,*,kind=None):
         self._require_project(pid)
         if kind is not None and kind not in self.MEMORY_KINDS: raise MemoryCheckpointError("Unsupported memory kind")
@@ -60,9 +66,11 @@ class MemoryCheckpointEngine:
         for row in rows:
             item=dict(row);item["value"]=json.loads(item.pop("value_json"));result.append(item)
         return result
+    @requires_project("write", project_arg="pid")
     def forget_memory(self,pid,key):
         with self.db.transaction() as c:return c.execute("DELETE FROM project_memory WHERE project_id=? AND memory_key=?",(pid,key)).rowcount==1
     # PC-P13-S002
+    @requires_project("write", project_arg="pid")
     def create_checkpoint(self,pid,label,*,checkpoint_id=None):
         project=self._require_project(pid);label=self._text(label,"label",160);tasks=self.repository.list_tasks(pid)
         ids={t["id"] for t in tasks}
@@ -73,18 +81,21 @@ class MemoryCheckpointEngine:
             c.execute("INSERT INTO project_checkpoints(id,project_id,checkpoint_id,label,schema_version,payload_json,payload_sha256,created_at) VALUES(?,?,?,?,1,?,?,?)",
                       (self._id("cp"),pid,cid,label,raw,digest,self.clock()))
         return self.get_checkpoint(cid)
+    @requires_project("read", resource_arg="cid", resolver="get_checkpoint")
     def get_checkpoint(self,cid):
         with self.db.connection() as c:row=c.execute("SELECT * FROM project_checkpoints WHERE checkpoint_id=?",(cid,)).fetchone()
         if row is None:return None
         item=dict(row);raw=item["payload_json"]
         if hashlib.sha256(raw.encode()).hexdigest()!=item["payload_sha256"]:raise MemoryCheckpointError("Checkpoint integrity verification failed")
         item["payload"]=json.loads(raw);return item
+    @requires_project("read", project_arg="pid")
     def list_checkpoints(self,pid,*,limit=50):
         self._require_project(pid)
         if isinstance(limit,bool) or not isinstance(limit,int) or not 1<=limit<=200:raise MemoryCheckpointError("limit must be between 1 and 200")
         with self.db.connection() as c:rows=c.execute("SELECT checkpoint_id,label,created_at,payload_sha256 FROM project_checkpoints WHERE project_id=? ORDER BY created_at DESC LIMIT ?",(pid,limit)).fetchall()
         return [dict(r) for r in rows]
     # PC-P13-S003
+    @requires_project("write", project_arg="pid")
     def record_session(self,pid,event_type,summary,*,session_id=None,metadata=None):
         self._require_project(pid);event=self._text(event_type,"event_type",80);summary=self._text(summary,"summary",2000)
         meta=_json(dict(metadata or {}))
@@ -92,6 +103,7 @@ class MemoryCheckpointEngine:
         sid=self._text(session_id,"session_id",100) if session_id else self._id("session");eid=self._id("evt")
         with self.db.transaction() as c:c.execute("INSERT INTO session_history VALUES(?,?,?,?,?,?,?)",(eid,pid,sid,event,summary,meta,self.clock()))
         return {"id":eid,"project_id":pid,"session_id":sid,"event_type":event,"summary":summary,"metadata":json.loads(meta)}
+    @requires_project("read", project_arg="pid")
     def list_sessions(self,pid,*,limit=100):
         self._require_project(pid)
         if isinstance(limit,bool) or not isinstance(limit,int) or not 1<=limit<=500:raise MemoryCheckpointError("limit must be between 1 and 500")
@@ -101,22 +113,26 @@ class MemoryCheckpointEngine:
             item=dict(row);item["metadata"]=json.loads(item.pop("metadata_json"));out.append(item)
         return out
     # PC-P13-S004
-    def record_decision(self,pid,title,context,decision,rationale,*,status="accepted"):
+    @requires_project("write", project_arg="pid")
+    def record_decision(self,pid,title,context,decision,rationale,*,status="accepted"): 
         self._require_project(pid)
         if status not in {"proposed","accepted","rejected","superseded"}:raise MemoryCheckpointError("Unsupported decision status")
         did=self._id("decision");now=self.clock()
         vals=(did,pid,did,self._text(title,"title",160),self._text(context,"context"),self._text(decision,"decision"),self._text(rationale,"rationale"),status,now,now)
         with self.db.transaction() as c:c.execute("INSERT INTO decision_records VALUES(?,?,?,?,?,?,?,?,?,?)",vals)
         return self.get_decision(did)
+    @requires_project("read", resource_arg="did", resolver="get_decision")
     def get_decision(self,did):
         with self.db.connection() as c:row=c.execute("SELECT * FROM decision_records WHERE decision_id=?",(did,)).fetchone()
         return dict(row) if row else None
+    @requires_project("read", project_arg="pid")
     def list_decisions(self,pid,*,limit=100):
         self._require_project(pid)
         if isinstance(limit,bool) or not isinstance(limit,int) or not 1<=limit<=500:raise MemoryCheckpointError("limit must be between 1 and 500")
         with self.db.connection() as c:rows=c.execute("SELECT * FROM decision_records WHERE project_id=? ORDER BY created_at DESC LIMIT ?",(pid,limit)).fetchall()
         return [dict(r) for r in rows]
     # PC-P13-S005
+    @requires_project("read", project_arg="pid")
     def generate_handoff(self,pid):
         project=self._require_project(pid);mem=self.list_memory(pid);dec=self.list_decisions(pid,limit=20)
         sessions=self.list_sessions(pid,limit=20);cps=self.list_checkpoints(pid,limit=10)
@@ -143,6 +159,8 @@ class MemoryCheckpointEngine:
         payload=cp["payload"]
         if payload.get("schema_version")!=1 or not isinstance(payload.get("tasks"),list):raise MemoryCheckpointError("Unsupported checkpoint payload")
         pid=cp["project_id"]
+        if self.authorization_context is not None:
+            self.authorization_context.require(pid, "write" if apply else "read")
         if self.repository.get_project(pid) is None:raise MemoryCheckpointError("Original project is missing; automatic project recreation is not supported")
         existing={t["id"] for t in self.repository.list_tasks(pid)};tasks=payload["tasks"]
         if any(not isinstance(t,dict) or not all(k in t for k in ("id","title")) for t in tasks):raise MemoryCheckpointError("Checkpoint contains invalid task entries")
@@ -162,6 +180,8 @@ class MemoryCheckpointEngine:
             cp=self.get_checkpoint(arg)
             if cp is None:raise KeyError(arg)
             return {"command":verb,"checkpoint":cp,"recovery_preview":self.recover_state(arg,apply=False)}
+        if verb in {"status","handoff"} and self.authorization_context is not None:
+            self.authorization_context.require_admin()
         if verb=="status":return {"command":verb,"projects":len(self.repository.list_projects())}
         if verb=="handoff":return {"command":verb,"projects":[p["id"] for p in self.repository.list_projects()]}
         if verb=="checkpoint":return {"command":verb,"label":arg,"requires_project_id":True}
