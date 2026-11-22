@@ -19,7 +19,8 @@ class AuthorizationContext:
         else: raise ValueError("Unsupported permission")
 
     def require_admin(self) -> None:
-        # The principal is revalidated against the live account row by AccessControl.
+        # Verify the signed principal and live account before checking privilege.
+        self.principal = self.policy.access_control.verify_principal(self.principal)
         if self.principal.get("role") != "admin":
             raise AccessDenied("Administrator access required")
         with self.policy.access_control.database.connection() as c:
