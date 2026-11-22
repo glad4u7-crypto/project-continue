@@ -50,7 +50,7 @@ def render_memory_checkpoint(authorization_context: AuthorizationContext | None 
                     engine.remember(pid, key, parsed, kind=kind)
                     st.success("Memory saved.")
                     st.rerun()
-                except (ValueError, KeyError) as exc:
+                except (ValueError, KeyError, AccessDenied) as exc:
                     st.error(str(exc))
             for item in engine.list_memory(pid):
                 a, b = st.columns([5, 1])
@@ -142,7 +142,7 @@ def render_memory_checkpoint(authorization_context: AuthorizationContext | None 
                 st.json({k: v for k, v in result.items() if k != "checkpoint"})
                 if result.get("checkpoint"):
                     st.write("Checkpoint verified; recovery preview is available above.")
-    except MemoryCheckpointError as exc:
+    except (MemoryCheckpointError, AccessDenied) as exc:
         st.error(str(exc))
     finally:
         db.close()
