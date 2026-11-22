@@ -9,6 +9,8 @@ import streamlit as st
 from config import settings
 from database import Database, ProjectRepository
 from services.access_control import AccessControl
+from services.authorization import ProjectAuthorization
+from services.authorization_context import AuthorizationContext
 
 
 @st.cache_resource(show_spinner=False)
@@ -53,6 +55,48 @@ def render_production_authentication() -> bool:
     if submitted:
         principal = access.authenticate(email, password)
         if principal is None or principal["role"] != "admin":
+            st.error("Sign-in failed or account is not authorized.")
+        else:
+            st.session_state["_pc_operator_session"] = access.issue_session(principal)
+            st.rerun()
+    return False
+
+
+def current_authorization_context() -> AuthorizationContext | None:
+    """Return request-scoped authorization only for a currently verified signed session."""
+    try:
+        access = _access_control()
+        token = st.session_state.get("_pc_operator_session")
+        principal = access.verify_session(token) if isinstance(token, str) else None
+        return AuthorizationContext(ProjectAuthorization(access), principal) if principal else None
+    except Exception:
+        return None
+
+
+def render_project_authentication() -> bool:
+    """Authenticate any enabled account when membership-based access is explicitly enabled."""
+    try:
+        access = _access_control()
+    except Exception:
+        st.error("Project authorization is not configured. Contact the operator.")
+        return False
+    token = st.session_state.get("_pc_operator_session")
+    principal = access.verify_session(token) if isinstance(token, str) else None
+    if principal is not None:
+        st.sidebar.caption("Authenticated project member · " + principal["role"])
+        if st.sidebar.button("Sign out", key="pc_member_signout"):
+            st.session_state.pop("_pc_operator_session", None)
+            st.rerun()
+        return True
+    st.title("Project Continue — Sign in")
+    st.info("Sign in with an enabled account. Project data is limited by membership and role.")
+    with st.form("pc_member_login", clear_on_submit=True):
+        email = st.text_input("Email", max_chars=320)
+        password = st.text_input("Password", type="password", max_chars=1024)
+        submitted = st.form_submit_button("Sign in", type="primary")
+    if submitted:
+        principal = access.authenticate(email, password)
+        if principal is None:
             st.error("Sign-in failed or account is not authorized.")
         else:
             st.session_state["_pc_operator_session"] = access.issue_session(principal)
