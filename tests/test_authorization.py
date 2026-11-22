@@ -5,6 +5,12 @@ from database import Database, ProjectRepository
 from services.access_control import AccessControl, AccessDenied
 from services.authorization import ProjectAuthorization
 from services.project_management import ProjectManagementService
+from services.task_management import TaskManagementService
+from services.authorization_context import AuthorizationContext
+from services.memory_checkpoint_engine import MemoryCheckpointEngine
+from services.automation_engine import AutomationEngine
+from services.ai_brain import AIBrain, MockAIProvider
+from services.intelligent_task_engine import IntelligentTaskEngine
 
 
 @pytest.fixture
@@ -83,3 +89,98 @@ def test_disabled_account_is_denied_after_authentication(secured):
         c.execute("UPDATE pc_users SET enabled=0 WHERE id='editor'")
     with pytest.raises(AccessDenied):
         policy.require_write(p["editor"], first)
+
+
+def test_service_boundaries_enforce_owner_editor_viewer_and_project_isolation(secured):
+    db, _, policy, principals, first, second = secured
+    repo = ProjectRepository(db)
+    owner = AuthorizationContext(policy, principals["owner"])
+    editor = AuthorizationContext(policy, principals["editor"])
+    viewer = AuthorizationContext(policy, principals["viewer"])
+    outsider = AuthorizationContext(policy, principals["outsider"])
+
+    owner_projects = ProjectManagementService(repo, owner)
+    created = owner_projects.create_project("Owner-created project")
+    assert created["id"] in {p["id"] for p in owner_projects.list_projects()}
+    assert created["id"] not in {p["id"] for p in ProjectManagementService(repo, outsider).list_projects()}
+
+    owner_tasks = TaskManagementService(repo, owner)
+    task = owner_tasks.create_task(first, "Authorized task")
+    assert TaskManagementService(repo, viewer).get_task_details(task["id"])["id"] == task["id"]
+    TaskManagementService(repo, editor).update_task(task["id"], title="Editor update")
+    with pytest.raises(AccessDenied):
+        TaskManagementService(repo, viewer).update_task(task["id"], title="Viewer update")
+    with pytest.raises(AccessDenied):
+        TaskManagementService(repo, outsider).get_task_details(task["id"])
+    with pytest.raises(AccessDenied):
+        TaskManagementService(repo, editor).list_tasks(second)
+
+
+def test_memory_checkpoint_and_recovery_are_project_scoped(secured):
+    db, _, policy, principals, first, second = secured
+    repo = ProjectRepository(db)
+    owner = AuthorizationContext(policy, principals["owner"])
+    viewer = AuthorizationContext(policy, principals["viewer"])
+    outsider = AuthorizationContext(policy, principals["outsider"])
+    owner_engine = MemoryCheckpointEngine(repo, authorization_context=owner)
+    owner_engine.remember(first, "goal", "ship safely")
+    checkpoint = owner_engine.create_checkpoint(first, "before-recovery")
+
+    viewer_engine = MemoryCheckpointEngine(repo, authorization_context=viewer)
+    assert viewer_engine.get_checkpoint(checkpoint["checkpoint_id"])["project_id"] == first
+    with pytest.raises(AccessDenied):
+        viewer_engine.remember(first, "forbidden", "no")
+    with pytest.raises(AccessDenied):
+        viewer_engine.recover_state(checkpoint["checkpoint_id"], apply=True)
+    with pytest.raises(AccessDenied):
+        MemoryCheckpointEngine(repo, authorization_context=outsider).get_checkpoint(checkpoint["checkpoint_id"])
+    with pytest.raises(AccessDenied):
+        owner_engine.list_memory(second)
+
+
+def test_ai_approval_is_project_scoped_and_requester_bound(secured):
+    db, _, policy, principals, first, _ = secured
+    repo = ProjectRepository(db)
+    owner = AuthorizationContext(policy, principals["owner"])
+    editor = AuthorizationContext(policy, principals["editor"])
+    viewer = AuthorizationContext(policy, principals["viewer"])
+    brain = AIBrain(repo, IntelligentTaskEngine(repo), MockAIProvider(), authorization_context=owner)
+    result = brain.suggest(first)
+    with pytest.raises(AccessDenied):
+        brain.approvals.decide(result["approval_request_id"], approved=True)
+
+    editor_brain = AIBrain(repo, IntelligentTaskEngine(repo), MockAIProvider(), authorization_context=editor)
+    editor_result = editor_brain.suggest(first)
+    with pytest.raises(AccessDenied):
+        editor_brain.approvals.decide(editor_result["approval_request_id"], approved=True)
+    with pytest.raises(AccessDenied):
+        AIBrain(repo, IntelligentTaskEngine(repo), MockAIProvider(), authorization_context=viewer).approvals.decide(
+            result["approval_request_id"], approved=True
+        )
+    assert brain.approvals.decide(result["approval_request_id"], approved=True).status == "approved"
+
+
+def test_automation_global_controls_are_admin_only_and_notifications_are_scoped(secured):
+    db, _, policy, principals, first, second = secured
+    repo = ProjectRepository(db)
+    owner = AuthorizationContext(policy, principals["owner"])
+    viewer = AuthorizationContext(policy, principals["viewer"])
+    admin_engine = AutomationEngine(repo)
+    admin_engine.notify(first, "system", "First project", "Visible to members")
+    admin_engine.notify(second, "system", "Second project", "Not visible to first-project members")
+    member_engine = AutomationEngine(repo, authorization_context=viewer)
+    assert [n["title"] for n in member_engine.list_notifications()] == ["First project"]
+    with pytest.raises(AccessDenied):
+        member_engine.create_schedule("forbidden", "database_health")
+    with pytest.raises(AccessDenied):
+        member_engine.list_schedules()
+    assert AutomationEngine(repo, authorization_context=owner).create_task_status_rule(first, "done")
+
+
+def test_principal_id_cannot_be_forged_to_impersonate_owner(secured):
+    _, _, policy, _, first, _ = secured
+    forged = {"id": "owner", "email": "owner@example.test", "role": "owner"}
+    with pytest.raises(AccessDenied):
+        policy.require_read(forged, first)
+    with pytest.raises(AccessDenied):
+        AuthorizationContext(policy, forged)
