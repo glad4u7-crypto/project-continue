@@ -146,17 +146,14 @@ def test_ai_approval_is_project_scoped_and_requester_bound(secured):
     viewer = AuthorizationContext(policy, principals["viewer"])
     brain = AIBrain(repo, IntelligentTaskEngine(repo), MockAIProvider(), authorization_context=owner)
     result = brain.suggest(first)
+
+    brain.approvals.authorization_context = editor
     with pytest.raises(AccessDenied):
         brain.approvals.decide(result["approval_request_id"], approved=True)
-
-    editor_brain = AIBrain(repo, IntelligentTaskEngine(repo), MockAIProvider(), authorization_context=editor)
-    editor_result = editor_brain.suggest(first)
+    brain.approvals.authorization_context = viewer
     with pytest.raises(AccessDenied):
-        editor_brain.approvals.decide(editor_result["approval_request_id"], approved=True)
-    with pytest.raises(AccessDenied):
-        AIBrain(repo, IntelligentTaskEngine(repo), MockAIProvider(), authorization_context=viewer).approvals.decide(
-            result["approval_request_id"], approved=True
-        )
+        brain.approvals.decide(result["approval_request_id"], approved=True)
+    brain.approvals.authorization_context = owner
     assert brain.approvals.decide(result["approval_request_id"], approved=True).status == "approved"
 
 
