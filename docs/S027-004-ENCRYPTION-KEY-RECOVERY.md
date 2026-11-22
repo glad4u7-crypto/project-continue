@@ -65,7 +65,7 @@ from pathlib import Path
 import secrets
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-MAGIC = b"PCBK001\\0"
+MAGIC = b"PCBK001\0"
 
 def encrypt_file(source: str, destination: str, key: bytes) -> None:
     if len(key) != 32:
