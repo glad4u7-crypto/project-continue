@@ -4,9 +4,11 @@ import streamlit as st
 from config import get_settings
 from database import Database, ProjectRepository
 from services.memory_checkpoint_engine import MemoryCheckpointEngine, MemoryCheckpointError
+from services.authorization_context import AuthorizationContext
+from services.access_control import AccessDenied
 
 
-def render_memory_checkpoint() -> None:
+def render_memory_checkpoint(authorization_context: AuthorizationContext | None = None) -> None:
     st.divider()
     st.header("🧠 Memory & Checkpoint Engine")
     st.caption("Save project context, record decisions, create verified checkpoints and resume safely.")
@@ -14,8 +16,17 @@ def render_memory_checkpoint() -> None:
     try:
         repo = ProjectRepository(db)
         repo.initialize()
-        engine = MemoryCheckpointEngine(repo)
+        engine = MemoryCheckpointEngine(repo, authorization_context=authorization_context)
         projects = repo.list_projects()
+        if authorization_context is not None:
+            visible = []
+            for project in projects:
+                try:
+                    authorization_context.require(project["id"], "read")
+                    visible.append(project)
+                except AccessDenied:
+                    continue
+            projects = visible
         if not projects:
             st.info("Create a project before saving memory or checkpoints.")
             return
@@ -72,7 +83,8 @@ def render_memory_checkpoint() -> None:
                     st.write({"verified": preview["verified"], "missing_task_ids": preview["missing_task_ids"],
                               "existing_tasks_skipped": preview["skipped_existing_count"]})
                     st.warning("Applying recovery adds missing tasks only. Existing tasks and project details are not overwritten.")
-                    if preview["missing_task_ids"] and st.checkbox("I understand: restore missing tasks from this checkpoint", key="memory_recovery_confirm"):
+                    can_recover = authorization_context is None or authorization_context.principal.get("role") in {"admin", "owner", "editor"}
+                    if preview["missing_task_ids"] and can_recover and st.checkbox("I understand: restore missing tasks from this checkpoint", key="memory_recovery_confirm"):
                         if st.button("Apply additive recovery", type="primary", key="memory_recovery_apply"):
                             result = engine.recover_state(chosen, apply=True)
                             st.success(f"Restored {len(result['restored_task_ids'])} task(s).")
