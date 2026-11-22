@@ -210,8 +210,15 @@ class AccessControl:
     def grant_project(self, actor: dict[str, Any], project_id: str, user_id: str, *, role="viewer") -> None:
         if role not in {"owner", "editor", "viewer"}:
             raise ValueError("Unsupported project role")
+        actor = self.verify_principal(actor)
         self.require_project(actor, project_id, permission="manage")
+        if role == "owner" and actor.get("role") != "admin":
+            raise AccessDenied("Only an administrator may assign project-owner role")
         with self.database.transaction() as c:
+            existing = c.execute("SELECT role FROM pc_project_memberships WHERE project_id=? AND user_id=?", (project_id, user_id)).fetchone()
+            owner_count = c.execute("SELECT COUNT(*) AS n FROM pc_project_memberships WHERE project_id=? AND role='owner'", (project_id,)).fetchone()["n"]
+            if existing is not None and existing["role"] == "owner" and role != "owner" and owner_count <= 1:
+                raise AccessDenied("A project must retain at least one owner")
             c.execute("INSERT INTO pc_project_memberships VALUES(?,?,?,?) "
                       "ON CONFLICT(project_id,user_id) DO UPDATE SET role=excluded.role",
                       (project_id, user_id, role, int(self.clock())))
