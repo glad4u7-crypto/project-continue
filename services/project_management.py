@@ -8,13 +8,16 @@ from typing import Any
 
 from core.validation import validate_project_name
 from database.repository import ProjectRepository
+from services.authorization_context import AuthorizationContext, requires_project
+from services.access_control import AccessDenied
 
 
 class ProjectManagementService:
     """Project lifecycle and read-model operations without duplicating persistence."""
 
-    def __init__(self, repository: ProjectRepository) -> None:
+    def __init__(self, repository: ProjectRepository, authorization_context: AuthorizationContext | None = None) -> None:
         self.repository = repository
+        self.authorization_context = authorization_context
 
     @staticmethod
     def _description(value: str) -> str:
@@ -39,6 +42,8 @@ class ProjectManagementService:
 
     def create_project(self, name: str, description: str = "", *, project_id: str | None = None) -> dict[str, Any]:
         """Create a project and record its initial activity event."""
+        if self.authorization_context is not None and self.authorization_context.principal.get("role") not in {"admin", "owner"}:
+            raise AccessDenied("Only an administrator or owner may create a project")
         normalized_name = validate_project_name(name)
         normalized_description = self._description(description)
         self._ensure_unique_name(normalized_name)
@@ -48,8 +53,11 @@ class ProjectManagementService:
         except sqlite3.IntegrityError as exc:
             raise self._translate_integrity_error(exc) from exc
         self.repository.record_activity(identifier, "project.created", payload={"name": normalized_name})
+        if self.authorization_context is not None:
+            self.authorization_context.policy.access_control.bootstrap_project_owner(self.authorization_context.principal, identifier)
         return self.get_project_details(identifier)  # type: ignore[return-value]
 
+    @requires_project("manage", project_arg="project_id")
     def update_project(self, project_id: str, *, name: str | None = None,
                        description: str | None = None) -> dict[str, Any]:
         """Update editable project metadata and record the changed fields."""
@@ -70,6 +78,7 @@ class ProjectManagementService:
         self.repository.record_activity(project_id, "project.updated", payload={"fields": sorted(changes)})
         return self.get_project_details(project_id) or updated
 
+    @requires_project("manage", project_arg="project_id")
     def archive_project(self, project_id: str) -> dict[str, Any]:
         """Archive an active project; repeated archive requests are idempotent."""
         project = self.repository.get_project(project_id)
@@ -80,6 +89,7 @@ class ProjectManagementService:
             self.repository.record_activity(project_id, "project.archived")
         return self.get_project_details(project_id)  # type: ignore[return-value]
 
+    @requires_project("manage", project_arg="project_id")
     def restore_project(self, project_id: str) -> dict[str, Any]:
         """Restore an archived project to active status."""
         project = self.repository.get_project(project_id)
@@ -117,9 +127,13 @@ class ProjectManagementService:
                 continue
             if normalized_query and normalized_query not in (project["name"] + " " + project["description"]).casefold():
                 continue
+            if self.authorization_context is not None:
+                try: self.authorization_context.require(project["id"], "read")
+                except AccessDenied: continue
             result.append({**project, **self._progress(project["id"])})
         return result
 
+    @requires_project("read", project_arg="project_id")
     def get_project_details(self, project_id: str) -> dict[str, Any] | None:
         """Return project metadata, task progress, and recent activity."""
         project = self.repository.get_project(project_id)

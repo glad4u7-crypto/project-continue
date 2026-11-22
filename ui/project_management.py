@@ -3,12 +3,15 @@ from __future__ import annotations
 from database import Database,ProjectRepository
 from services import ProjectManagementService,TaskManagementService
 from config import get_settings
+from services.authorization_context import AuthorizationContext
+from services.access_control import AccessDenied
+from services.access_control import AccessDenied
 import streamlit as st
+import sqlite3
 
-@st.cache_resource(show_spinner=False)
-def _services(path:str):
+def _services(path:str, authorization_context:AuthorizationContext|None=None):
  db=Database(path);repo=ProjectRepository(db);repo.initialize()
- return ProjectManagementService(repo),TaskManagementService(repo)
+ return ProjectManagementService(repo,authorization_context),TaskManagementService(repo,authorization_context)
 
 def _render_create(service):
  with st.expander("＋ Register a project",expanded=False):
@@ -17,7 +20,7 @@ def _render_create(service):
    submit=st.form_submit_button("Create project",type="primary",use_container_width=True)
   if submit:
    try:p=service.create_project(name,desc)
-   except (ValueError,KeyError) as e:st.error(str(e))
+   except (ValueError,KeyError,AccessDenied) as e:st.error(str(e))
    except Exception:st.error("Project could not be created. Check the database connection.")
    else:st.success(f'Project “{p["name"]}” created.');st.rerun()
 
@@ -57,20 +60,22 @@ def _render_tasks(pid,service):
    with st.expander("Dependencies"):
     for d in t["dependencies"]:
      left,right=st.columns([4,1]);left.write(f'{d["title"]} — {d["status"]}')
-     if right.button("Remove",key=f'remove_{t["id"]}_{d["id"]}'):service.remove_dependency(t["id"],d["id"]);st.rerun()
+     if right.button("Remove",key=f'remove_{t["id"]}_{d["id"]}'):
+      try: service.remove_dependency(t["id"],d["id"]); st.rerun()
+      except AccessDenied: st.error("You do not have permission to change task dependencies.")
     if candidates:
      opts={f'{q["title"]} [{q["id"]}]':q["id"] for q in candidates}
      with st.form(f'add_dep_{t["id"]}'):
       chosen=st.selectbox("This task depends on",list(opts));add=st.form_submit_button("Add dependency")
      if add:
       try:service.add_dependency(t["id"],opts[chosen])
-      except (ValueError,KeyError) as e:st.error(str(e))
+      except (ValueError,KeyError,AccessDenied) as e:st.error(str(e))
       else:st.success("Dependency added.");st.rerun()
    if t["status"]!="done":
     if t["can_complete"]:
      if st.button("Mark complete",key=f'complete_{t["id"]}'):
       try:service.complete_task(t["id"])
-      except (ValueError,KeyError) as e:st.error(str(e))
+      except (ValueError,KeyError,AccessDenied) as e:st.error(str(e))
       else:st.success("Task completed.");st.rerun()
     else:st.warning("Completion blocked: "+", ".join(d["title"] for d in t["pending_dependencies"]))
 
@@ -78,6 +83,47 @@ def _render_details(projects,tasks,pid):
  p=projects.get_project_details(pid)
  if p is None:st.warning("This project no longer exists.");return
  st.subheader(p["name"]);st.caption(p["description"] or "No description provided.")
+ auth=projects.authorization_context
+ if auth is not None:
+  try:
+   auth.require(pid,"manage"); can_manage=True
+  except AccessDenied:
+   can_manage=False
+  if can_manage:
+   access=auth.policy.access_control; db=projects.repository.database
+   with st.expander("Project access and members"):
+    with db.connection() as connection:
+     owner_count=connection.execute("SELECT COUNT(*) AS n FROM pc_project_memberships WHERE project_id=? AND role='owner'",(pid,)).fetchone()["n"]
+     users=[dict(r) for r in connection.execute("SELECT id,email,role,enabled FROM pc_users ORDER BY email")]
+     members=[dict(r) for r in connection.execute("SELECT u.id,u.email,m.role FROM pc_project_memberships m JOIN pc_users u ON u.id=m.user_id WHERE m.project_id=? ORDER BY m.role,u.email",(pid,))]
+    if owner_count==0 and auth.principal.get("role")=="admin":
+     if st.button("Bootstrap my account as first project owner",key="bootstrap_owner_"+pid):
+      try: access.bootstrap_project_owner(auth.principal,pid)
+      except (AccessDenied,KeyError) as exc: st.error(str(exc))
+      else: st.success("Project owner established."); st.rerun()
+    if auth.principal.get("role")=="admin":
+     with st.form("create_member_"+pid,clear_on_submit=True):
+      new_id=st.text_input("New account ID",max_chars=100)
+      new_email=st.text_input("New account email",max_chars=320)
+      new_password=st.text_input("Temporary password (12+ characters)",type="password",max_chars=1024)
+      new_role=st.selectbox("Account role",["owner","editor","viewer"],index=2)
+      create=st.form_submit_button("Create account")
+     if create:
+      try: access.create_user(new_id,new_email,new_password,role=new_role)
+      except (ValueError,sqlite3.IntegrityError) as exc: st.error(str(exc))
+      else: st.success("Account created. Add it to this project below."); st.rerun()
+    if users:
+     with st.form("grant_member_"+pid):
+      target=st.selectbox("Account",options=[u["id"] for u in users],format_func=lambda uid: next(f"{u['email']} · {uid}" for u in users if u["id"]==uid))
+      roles=["editor","viewer"] if auth.principal.get("role")!="admin" else ["owner","editor","viewer"]
+      member_role=st.selectbox("Project role",roles)
+      grant=st.form_submit_button("Add or update membership")
+     if grant:
+      try: access.grant_project(auth.principal,pid,target,role=member_role)
+      except (AccessDenied,ValueError,KeyError) as exc: st.error(str(exc))
+      else: st.success("Project membership updated."); st.rerun()
+    st.write("**Current members**")
+    for member in members: st.caption(f"{member['email']} · {member['role']}")
  cols=st.columns(4);cols[0].metric("Progress",f'{p["progress_percent"]:.1f}%');cols[1].metric("Tasks",p["total_tasks"])
  cols[2].metric("Completed",p["completed_tasks"]);cols[3].metric("Status",p["status"].title())
  st.progress(p["progress_percent"]/100 if p["total_tasks"] else 0.0)
@@ -92,13 +138,17 @@ def _render_details(projects,tasks,pid):
    except (ValueError,KeyError) as e:st.error(str(e))
    else:st.success("Project updated.");st.rerun()
  if p["status"]=="active":
-  if st.button("Archive project",key=f"archive_{pid}"):projects.archive_project(pid);st.rerun()
- elif st.button("Restore project",key=f"restore_{pid}"):projects.restore_project(pid);st.rerun()
+  if st.button("Archive project",key=f"archive_{pid}"):
+   try: projects.archive_project(pid); st.rerun()
+   except AccessDenied: st.error("Only a project owner or administrator may archive this project.")
+ elif st.button("Restore project",key=f"restore_{pid}"):
+   try: projects.restore_project(pid); st.rerun()
+   except AccessDenied: st.error("Only a project owner or administrator may restore this project.")
  st.markdown("#### Recent activity")
  for e in p["activity"][:10]:st.caption(f'{e["created_at"]} · {e["event_type"].replace("."," ").title()}')
 
-def render_project_management():
- path=get_settings().database_path;projects,tasks=_services(path)
+def render_project_management(authorization_context:AuthorizationContext|None=None):
+ path=get_settings().database_path;projects,tasks=_services(path,authorization_context)
  st.title("🧭 Project Continue");st.caption("Project workspace · task planning · progress · activity");_render_create(projects)
  a,b=st.columns([2,1]);query=a.text_input("Search projects");status=b.selectbox("Project status",["active","all","archived"],index=0)
  items=projects.list_projects(status=status,query=query);st.markdown("### Project registry")

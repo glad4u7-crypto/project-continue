@@ -1,13 +1,16 @@
 """SQLite-backed allow-listed automation, scheduled checks, recovery and notifications."""
 from datetime import datetime,timedelta,timezone
 import json,sqlite3,uuid
+from services.authorization_context import AuthorizationContext
+from services.access_control import AccessDenied
 
 def _now(): return datetime.now(timezone.utc)
 def _iso(v): return v.isoformat()
 class AutomationEngine:
  CHECKS=frozenset({"database_health","overdue_tasks","stale_tasks"})
- def __init__(self,repository,clock=_now):
+ def __init__(self,repository,clock=_now,authorization_context:AuthorizationContext|None=None):
   self.repository,self.db,self.clock=repository,repository.database,clock
+  self.authorization_context=authorization_context
   with self.db.connection() as c:
    c.executescript("""
    CREATE TABLE IF NOT EXISTS automation_rules(id TEXT PRIMARY KEY,project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,event_type TEXT NOT NULL,target_status TEXT,enabled INTEGER NOT NULL DEFAULT 1,created_at TEXT NOT NULL);
@@ -20,12 +23,14 @@ class AutomationEngine:
  @staticmethod
  def _id(p): return p+"-"+uuid.uuid4().hex[:16]
  def create_task_status_rule(self,project_id,target_status):
+  if self.authorization_context is not None: self.authorization_context.require(project_id, 'write')
   if self.repository.get_project(project_id) is None: raise KeyError(project_id)
   if target_status not in {"todo","in_progress","blocked","done"}: raise ValueError("Unsupported task status")
   rid=self._id("rule")
   with self.db.transaction() as c: c.execute("INSERT INTO automation_rules VALUES(?,?,?,?,1,?)",(rid,project_id,"task.status_changed",target_status,_iso(self.clock())))
   return rid
  def handle_task_update(self,old,new):
+  if self.authorization_context is not None: self.authorization_context.require(new['project_id'], 'write')
   if old.get("status")==new.get("status"): return 0
   with self.db.connection() as c: rules=c.execute("SELECT * FROM automation_rules WHERE project_id=? AND enabled=1 AND event_type='task.status_changed'",(new["project_id"],)).fetchall()
   n=0
@@ -35,6 +40,9 @@ class AutomationEngine:
     n+=int(self.notify(new["project_id"],"task_status","Task status changed",f"{new['title']} is now {new['status'].replace('_',' ')}.",dedupe_key=key))
   return n
  def notify(self,project_id,kind,title,message,*,dedupe_key=None):
+  if self.authorization_context is not None:
+   if project_id is None: self.authorization_context.require_admin()
+   else: self.authorization_context.require(project_id, 'write')
   if kind not in {"task_status","overdue_task","automation_failure","system"}: raise ValueError("Unsupported notification kind")
   if not isinstance(title,str) or not title.strip() or len(title)>160 or not isinstance(message,str) or not message.strip() or len(message)>1000: raise ValueError("Invalid notification text")
   with self.db.transaction() as c:
@@ -47,11 +55,29 @@ class AutomationEngine:
   if not 1<=limit<=200: raise ValueError("limit must be between 1 and 200")
   where="WHERE read_at IS NULL" if unread_only else ""
   with self.db.connection() as c: rows=c.execute(f"SELECT * FROM automation_notifications {where} ORDER BY created_at DESC LIMIT ?",(limit,)).fetchall()
-  return [dict(x) for x in rows]
+  result=[]
+  for row in rows:
+   item=dict(row)
+   if self.authorization_context is not None:
+    pid=item.get("project_id")
+    if pid is None:
+     try: self.authorization_context.require_admin()
+     except AccessDenied: continue
+    else:
+     try: self.authorization_context.require(pid, "read")
+     except AccessDenied: continue
+   result.append(item)
+  return result
  def mark_notification_read(self,nid):
+  if self.authorization_context is not None:
+   with self.db.connection() as c: row=c.execute("SELECT project_id FROM automation_notifications WHERE id=?",(nid,)).fetchone()
+   if row is None: return False
+   if row["project_id"] is None: self.authorization_context.require_admin()
+   else: self.authorization_context.require(row["project_id"], "read")
   with self.db.transaction() as c: cur=c.execute("UPDATE automation_notifications SET read_at=? WHERE id=? AND read_at IS NULL",(_iso(self.clock()),nid))
   return cur.rowcount==1
  def create_schedule(self,name,check_name,*,interval_seconds=86400,max_attempts=3,first_run_at=None):
+  if self.authorization_context is not None: self.authorization_context.require_admin()
   if not isinstance(name,str) or not name.strip() or len(name)>100: raise ValueError("Schedule name must contain 1-100 characters")
   if check_name not in self.CHECKS: raise ValueError("Check is not allow-listed")
   if isinstance(interval_seconds,bool) or not isinstance(interval_seconds,int) or not 60<=interval_seconds<=2592000: raise ValueError("interval_seconds must be between 60 and 2592000")
@@ -60,9 +86,11 @@ class AutomationEngine:
   with self.db.transaction() as c: c.execute("INSERT INTO automation_schedules(id,name,check_name,interval_seconds,next_run_at,max_attempts,created_at) VALUES(?,?,?,?,?,?,?)",(sid,name.strip(),check_name,interval_seconds,_iso(first_run_at or now),max_attempts,_iso(now)))
   return sid
  def list_schedules(self):
+  if self.authorization_context is not None: self.authorization_context.require_admin()
   with self.db.connection() as c: rows=c.execute("SELECT * FROM automation_schedules ORDER BY created_at").fetchall()
   return [dict(x) for x in rows]
  def set_schedule_enabled(self,sid,enabled):
+  if self.authorization_context is not None: self.authorization_context.require_admin()
   if not isinstance(enabled,bool): raise ValueError("enabled must be boolean")
   with self.db.transaction() as c: cur=c.execute("UPDATE automation_schedules SET enabled=? WHERE id=?",(int(enabled),sid))
   return cur.rowcount==1
@@ -79,6 +107,7 @@ class AutomationEngine:
    return {"ok":True,"stale_count":len(rows)}
   raise ValueError("Unknown scheduled check")
  def run_due_checks(self,*,limit=20):
+  if self.authorization_context is not None: self.authorization_context.require_admin()
   if not 1<=limit<=100: raise ValueError("limit must be between 1 and 100")
   now=self.clock().astimezone(timezone.utc)
   with self.db.connection() as c: due=c.execute("SELECT * FROM automation_schedules WHERE enabled=1 AND next_run_at<=? ORDER BY next_run_at LIMIT ?",(_iso(now),limit)).fetchall()
@@ -106,5 +135,6 @@ class AutomationEngine:
     out["failed"]+=1; out["runs"].append({"schedule_id":s["id"],"status":"failed","attempt":failures,"retry_at":_iso(retry)})
   return out
  def retry_failed(self,sid):
+  if self.authorization_context is not None: self.authorization_context.require_admin()
   with self.db.transaction() as c: cur=c.execute("UPDATE automation_schedules SET enabled=1,failure_count=0,next_run_at=? WHERE id=?",(_iso(self.clock()),sid))
   return cur.rowcount==1
