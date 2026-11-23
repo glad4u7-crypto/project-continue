@@ -9,7 +9,7 @@ def render_automation(authorization_context:AuthorizationContext|None=None):
  st.caption("A persistent host scheduler or manual invocation runs jobs; notifications are stored in SQLite.")
  repo=get_project_repository(get_settings().database_path)
 
-e=AutomationEngine(repo,authorization_context=authorization_context)
+ e=AutomationEngine(repo,authorization_context=authorization_context)
  is_admin=authorization_context is None or authorization_context.principal.get("role")=="admin"
  if is_admin:
   with st.expander("Create scheduled check"):
