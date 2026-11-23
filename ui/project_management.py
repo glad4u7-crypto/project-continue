@@ -1,16 +1,15 @@
 """Streamlit project and task dashboard."""
 from __future__ import annotations
-from database import Database,ProjectRepository
+from database.runtime import get_project_repository
 from services import ProjectManagementService,TaskManagementService
 from config import get_settings
 from services.authorization_context import AuthorizationContext
-from services.access_control import AccessDenied
 from services.access_control import AccessDenied
 import streamlit as st
 import sqlite3
 
 def _services(path:str, authorization_context:AuthorizationContext|None=None):
- db=Database(path);repo=ProjectRepository(db);repo.initialize()
+ repo=get_project_repository(path)
  return ProjectManagementService(repo,authorization_context),TaskManagementService(repo,authorization_context)
 
 def _render_create(service):
