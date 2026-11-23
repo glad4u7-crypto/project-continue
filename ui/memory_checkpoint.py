@@ -2,7 +2,7 @@
 from __future__ import annotations
 import streamlit as st
 from config import get_settings
-from database import Database, ProjectRepository
+from database.runtime import get_project_repository
 from services.memory_checkpoint_engine import MemoryCheckpointEngine, MemoryCheckpointError
 from services.authorization_context import AuthorizationContext
 from services.access_control import AccessDenied
@@ -12,10 +12,8 @@ def render_memory_checkpoint(authorization_context: AuthorizationContext | None 
     st.divider()
     st.header("🧠 Memory & Checkpoint Engine")
     st.caption("Save project context, record decisions, create verified checkpoints and resume safely.")
-    db = Database(get_settings().database_path)
+    repo = get_project_repository(get_settings().database_path)
     try:
-        repo = ProjectRepository(db)
-        repo.initialize()
         engine = MemoryCheckpointEngine(repo, authorization_context=authorization_context)
         projects = repo.list_projects()
         if authorization_context is not None:
@@ -148,4 +146,5 @@ def render_memory_checkpoint(authorization_context: AuthorizationContext | None 
     except (MemoryCheckpointError, AccessDenied) as exc:
         st.error(str(exc))
     finally:
-        db.close()
+        # The shared Streamlit resource owns the database lifecycle.
+        pass
