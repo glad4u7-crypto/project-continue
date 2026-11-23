@@ -4,7 +4,7 @@ from __future__ import annotations
 import streamlit as st
 
 from config import get_settings
-from database import Database, ProjectRepository
+from database.runtime import get_project_repository
 from services.ai_brain import AISettings, AIBrain, MockAIProvider, OpenAICompatibleProvider
 from services.intelligent_task_engine import IntelligentTaskEngine
 from services.authorization_context import AuthorizationContext
@@ -16,9 +16,7 @@ def render_ai_brain(authorization_context: AuthorizationContext | None = None) -
     st.header("🧠 AI Brain")
     st.caption("Read-only suggestions. AI cannot modify tasks; every suggestion requires your decision.")
     settings = get_settings()
-    db = Database(settings.database_path)
-    repository = ProjectRepository(db)
-    repository.initialize()
+    repository = get_project_repository(settings.database_path)
     projects = [p for p in repository.list_projects() if p.get("status") == "active"]
     if authorization_context is not None:
         visible = []
