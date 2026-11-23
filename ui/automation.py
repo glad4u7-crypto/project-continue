@@ -1,15 +1,15 @@
 """Automation schedule and notification panel."""
 import streamlit as st
 from config import get_settings
-from database import Database,ProjectRepository
+from database.runtime import get_project_repository
 from services.automation_engine import AutomationEngine
 from services.authorization_context import AuthorizationContext
 def render_automation(authorization_context:AuthorizationContext|None=None):
  st.divider(); st.header("⚙️ Automation Engine")
  st.caption("A persistent host scheduler or manual invocation runs jobs; notifications are stored in SQLite.")
- db=Database(get_settings().database_path)
+ repo=get_project_repository(get_settings().database_path)
  try:
-  repo=ProjectRepository(db); repo.initialize(); e=AutomationEngine(repo,authorization_context=authorization_context)
+  e=AutomationEngine(repo,authorization_context=authorization_context)
   is_admin=authorization_context is None or authorization_context.principal.get("role")=="admin"
   if is_admin:
    with st.expander("Create scheduled check"):
@@ -29,4 +29,4 @@ def render_automation(authorization_context:AuthorizationContext|None=None):
   for n in e.list_notifications(limit=50):
    a,b=st.columns([5,1]); a.write(f"**{n['title']}** — {n['message']}")
    if not n["read_at"] and b.button("Mark read",key="read_"+n["id"]): e.mark_notification_read(n["id"]); st.rerun()
- finally: db.close()
+ finally: pass  # The shared Streamlit resource owns the database lifecycle.
