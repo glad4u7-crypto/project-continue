@@ -19,7 +19,7 @@ class ProjectRepository:
   """
   with self.database.connection() as c:
    try:
-    c.executescript("BEGIN IMMEDIATE;\\n" + SCHEMA_SQL)
+    c.executescript("BEGIN IMMEDIATE;\n" + SCHEMA_SQL)
     cols={r["name"] for r in c.execute("PRAGMA table_info(tasks)")}
     if "assignee" not in cols:
      c.execute("ALTER TABLE tasks ADD COLUMN assignee TEXT")
