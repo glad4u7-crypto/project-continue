@@ -7,7 +7,7 @@ import uuid
 import streamlit as st
 
 from config import settings
-from database import Database, ProjectRepository
+from database.runtime import get_project_repository
 from services.access_control import AccessControl
 from services.authorization import ProjectAuthorization
 from services.authorization_context import AuthorizationContext
@@ -16,8 +16,7 @@ from services.authorization_context import AuthorizationContext
 @st.cache_resource(show_spinner=False)
 def _access_control():
     key = os.environ.get("SESSION_SIGNING_KEY", "")
-    db = Database(settings.database_path)
-    ProjectRepository(db).initialize()
+    db = get_project_repository(settings.database_path).database
     access = AccessControl(db, key)
     with db.connection() as connection:
         count = connection.execute("SELECT COUNT(*) AS n FROM pc_users").fetchone()["n"]
