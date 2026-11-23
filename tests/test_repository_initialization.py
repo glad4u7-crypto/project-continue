@@ -14,7 +14,19 @@ def test_initialize_migrates_legacy_tasks_table(tmp_path):
             "CREATE TABLE schema_version (id INTEGER PRIMARY KEY CHECK(id=1), version INTEGER NOT NULL)"
         )
         connection.execute("INSERT INTO schema_version VALUES (1, 1)")
-        connection.execute("CREATE TABLE tasks (id TEXT PRIMARY KEY)")
+        connection.execute("""
+            CREATE TABLE tasks (
+                id TEXT PRIMARY KEY,
+                project_id TEXT NOT NULL,
+                title TEXT NOT NULL,
+                description TEXT NOT NULL DEFAULT '',
+                priority TEXT NOT NULL DEFAULT 'medium',
+                status TEXT NOT NULL DEFAULT 'todo',
+                due_at TEXT,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+        """)
 
     ProjectRepository(database).initialize()
 
