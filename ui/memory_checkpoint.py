@@ -145,6 +145,3 @@ def render_memory_checkpoint(authorization_context: AuthorizationContext | None 
                     st.write("Checkpoint verified; recovery preview is available above.")
     except (MemoryCheckpointError, AccessDenied) as exc:
         st.error(str(exc))
-    finally:
-        # The shared Streamlit resource owns the database lifecycle.
-        pass
