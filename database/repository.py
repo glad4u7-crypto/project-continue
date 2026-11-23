@@ -12,13 +12,26 @@ def _now()->str: return datetime.now(timezone.utc).isoformat()
 class ProjectRepository:
  def __init__(self,database:Database)->None: self.database=database
  def initialize(self)->None:
+  """Apply schema creation and migrations atomically under a write lock.
+
+  BEGIN IMMEDIATE serializes concurrent app workers before they inspect or
+  change the schema, preventing duplicate/racing migration attempts.
+  """
   with self.database.connection() as c:
-   c.executescript(SCHEMA_SQL)
-   cols={r["name"] for r in c.execute("PRAGMA table_info(tasks)")}
-   if "assignee" not in cols: c.execute("ALTER TABLE tasks ADD COLUMN assignee TEXT")
-   v=c.execute("SELECT version FROM schema_version WHERE id=1").fetchone()
-   if v is None or v["version"]>SCHEMA_VERSION: raise RuntimeError("Database schema version is newer than this application supports")
-   c.execute("UPDATE schema_version SET version=? WHERE id=1",(SCHEMA_VERSION,))
+   try:
+    c.executescript("BEGIN IMMEDIATE;\\n" + SCHEMA_SQL)
+    cols={r["name"] for r in c.execute("PRAGMA table_info(tasks)")}
+    if "assignee" not in cols:
+     c.execute("ALTER TABLE tasks ADD COLUMN assignee TEXT")
+    v=c.execute("SELECT version FROM schema_version WHERE id=1").fetchone()
+    if v is None or v["version"]>SCHEMA_VERSION:
+     raise RuntimeError("Database schema version is newer than this application supports")
+    c.execute("UPDATE schema_version SET version=? WHERE id=1",(SCHEMA_VERSION,))
+    c.commit()
+   except BaseException:
+    if c.in_transaction:
+     c.rollback()
+    raise
  def create_project(self,project_id:str,name:str,description:str="")->dict[str,Any]:
   project_id,name=validate_identifier(project_id),validate_project_name(name); now=_now()
   with self.database.transaction() as c: c.execute("INSERT INTO projects(id,name,description,created_at,updated_at) VALUES(?,?,?,?,?)",(project_id,name,description,now,now))
