@@ -215,7 +215,7 @@ def main() -> int:
                 process.kill()
                 process.wait(timeout=5)
 
-    print("PASS: Streamlit hydrated, project/task CRUD persisted across reload, and read-only self-check ran.")
+    print("PASS: Streamlit browser acceptance covered project/task CRUD and reload persistence, AI approval, automation schedule, memory, checkpoint preview, session/decision records, archive/restore, and read-only self-check.")
     return 0
 
 
