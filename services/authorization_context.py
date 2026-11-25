@@ -5,6 +5,7 @@ from inspect import signature
 from typing import Any, Callable
 from services.access_control import AccessDenied
 from services.authorization import ProjectAuthorization
+from database.postgres_connection import PostgresDatabase
 
 class AuthorizationContext:
     """Request-scoped policy and principal. Construct only from verify_session()."""
@@ -24,7 +25,8 @@ class AuthorizationContext:
         if self.principal.get("role") != "admin":
             raise AccessDenied("Administrator access required")
         with self.policy.access_control.database.connection() as c:
-            row=c.execute("SELECT enabled,role FROM pc_users WHERE id=?",(self.principal["id"],)).fetchone()
+            placeholder = "%s" if isinstance(self.policy.access_control.database, PostgresDatabase) else "?"
+            row=c.execute(f"SELECT enabled,role FROM pc_users WHERE id={placeholder}",(self.principal["id"],)).fetchone()
         if row is None or not row["enabled"] or row["role"] != "admin":
             raise AccessDenied("Administrator access required")
 

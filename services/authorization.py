@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 from services.access_control import AccessControl, AccessDenied
+from services.postgres_access_control import PostgresAccessControl
 
 
 class ProjectAuthorization:
@@ -18,8 +19,8 @@ class ProjectAuthorization:
     """
 
     def __init__(self, access_control: AccessControl) -> None:
-        if not isinstance(access_control, AccessControl):
-            raise TypeError("access_control must be an AccessControl instance")
+        if not isinstance(access_control, (AccessControl, PostgresAccessControl)):
+            raise TypeError("access_control must be a supported access-control adapter")
         self.access_control = access_control
 
     def require_principal(self, principal: Any) -> dict[str, Any]:
