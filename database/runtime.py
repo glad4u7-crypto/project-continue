@@ -14,6 +14,7 @@ from config import get_settings
 from database import Database, ProjectRepository
 from database.postgres_connection import PostgresDatabase
 from database.postgres_repository import PostgresProjectRepository
+from database.contracts import ProjectRepositoryProtocol
 
 
 @st.cache_resource(show_spinner=False)
@@ -39,7 +40,7 @@ def get_project_repository(
     *,
     backend: str | None = None,
     postgres_dsn: str | None = None,
-) -> Any:
+ ) -> ProjectRepositoryProtocol:
     """Return the cached repository selected by explicit arguments or settings.
 
     An explicit backend override is intended for isolated tests and controlled
