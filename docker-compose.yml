@@ -12,6 +12,7 @@ services:
       APP_ENV: production
       LOG_LEVEL: INFO
       PROJECT_CONTINUE_DB: /var/lib/project-continue/project_continue.sqlite3
+      PROJECT_CONTINUE_BACKUP_DIR: /var/backups/project-continue
       STREAMLIT_SERVER_ENABLE_CORS: "false"
       STREAMLIT_SERVER_ENABLE_XSRF_PROTECTION: "true"
     ports:
@@ -19,6 +20,7 @@ services:
       - "127.0.0.1:8501:8501"
     volumes:
       - project_continue_data:/var/lib/project-continue
+      - project_continue_backups:/var/backups/project-continue
     read_only: true
     tmpfs:
       - /tmp:size=64m,mode=1777
@@ -40,3 +42,5 @@ services:
 volumes:
   project_continue_data:
     name: project_continue_data
+  project_continue_backups:
+    name: project_continue_backups
