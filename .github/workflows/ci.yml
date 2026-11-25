@@ -40,6 +40,11 @@ jobs:
         run: python -m compileall -q .
       - name: Build production container
         run: docker build --pull --tag project-continue:ci .
+      - name: Validate Docker Compose configuration
+        run: |
+          cp .env.production.example .env.production
+          docker compose config --quiet
+          rm -f .env.production
       - name: Smoke test production container
         shell: bash
         run: |
