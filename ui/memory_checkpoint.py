@@ -74,20 +74,20 @@ def render_memory_checkpoint(authorization_context: AuthorizationContext | None 
                 chosen = st.selectbox("Saved checkpoint", [x["checkpoint_id"] for x in checkpoints],
                                       format_func=lambda x: next(f"{c['label']} · {x}" for c in checkpoints if c["checkpoint_id"] == x),
                                       key="memory_checkpoint_select")
-                cp = engine.get_checkpoint(chosen)
+                cp = engine.get_checkpoint(chosen, project_id=pid)
                 st.caption(f"SHA-256: {cp['payload_sha256']}")
                 if st.button("Preview recovery", key="memory_recovery_preview"):
                     st.session_state["memory_recovery_target"] = chosen
                 target = st.session_state.get("memory_recovery_target")
                 if target == chosen:
-                    preview = engine.recover_state(chosen, apply=False)
+                    preview = engine.recover_state(chosen, apply=False, project_id=pid)
                     st.write({"verified": preview["verified"], "missing_task_ids": preview["missing_task_ids"],
                               "existing_tasks_skipped": preview["skipped_existing_count"]})
                     st.warning("Applying recovery adds missing tasks only. Existing tasks and project details are not overwritten.")
                     can_recover = authorization_context is None or authorization_context.principal.get("role") in {"admin", "owner", "editor"}
                     if preview["missing_task_ids"] and can_recover and st.checkbox("I understand: restore missing tasks from this checkpoint", key="memory_recovery_confirm"):
                         if st.button("Apply additive recovery", type="primary", key="memory_recovery_apply"):
-                            result = engine.recover_state(chosen, apply=True)
+                            result = engine.recover_state(chosen, apply=True, project_id=pid)
                             st.success(f"Restored {len(result['restored_task_ids'])} task(s).")
                             st.session_state.pop("memory_recovery_target", None)
                             st.rerun()
@@ -134,7 +134,7 @@ def render_memory_checkpoint(authorization_context: AuthorizationContext | None 
                                     key="memory_resume_command")
             if st.button("Parse resume command", key="memory_parse_resume"):
                 try:
-                    result = engine.resume(command)
+                    result = engine.resume(command, project_id=pid)
                     st.session_state["memory_resume_result"] = result
                 except (ValueError, KeyError) as exc:
                     st.error(str(exc))
