@@ -29,6 +29,8 @@ jobs:
     env:
       TEST_POSTGRES_DSN: postgresql://postgres:postgres@localhost:5432/project_continue_test
       TEST_POSTGRES_MIGRATION_DSN: postgresql://postgres:postgres@localhost:5432/project_continue_migration_test
+      TEST_POSTGRES_BACKUP_DSN: postgresql://postgres:postgres@localhost:5432/project_continue_backup_test
+      TEST_POSTGRES_RESTORE_DSN: postgresql://postgres:postgres@localhost:5432/project_continue_restore_test
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -41,6 +43,14 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: createdb -h localhost -U postgres project_continue_migration_test
+      - name: Create isolated backup and restore test databases
+        env:
+          PGPASSWORD: postgres
+        run: |
+          createdb -h localhost -U postgres project_continue_backup_test
+          createdb -h localhost -U postgres project_continue_restore_test
+      - name: Install PostgreSQL client tools
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
       - name: Run full regression and PostgreSQL integration suite
