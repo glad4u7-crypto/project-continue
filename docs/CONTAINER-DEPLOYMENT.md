@@ -9,6 +9,7 @@ This is the provider-neutral production packaging for a single-host Docker Engin
 - Root filesystem is read-only; /tmp is a bounded tmpfs.
 - Linux capabilities are dropped and privilege escalation is disabled.
 - SQLite lives on the named persistent volume project_continue_data.
+- Verified SQLite backup files are written to a separate named volume project_continue_backups.
 - Container health is checked through Streamlit's /_stcore/health endpoint.
 - Host port binds to loopback by default. A trusted HTTPS reverse proxy must be configured before remote access.
 - The application remains SQLite-backed. The optional PostgreSQL adapter is not selected by this deployment.
@@ -70,9 +71,9 @@ Only after creating accounts and assigning each project's membership through the
 
 ## Persistence and backup
 
-The named Docker volume project_continue_data holds the SQLite database across container replacement. Confirm the volume exists and is backed up by the host's independent backup system. Do not treat a Docker volume as a backup.
+The named Docker volume project_continue_data holds the SQLite database across container replacement; project_continue_backups holds verified backup files separately. Both volumes remain on the same host unless independently replicated. Confirm both volumes are included in host disaster-recovery policy. Do not treat a Docker volume as an off-host backup.
 
-Set PROJECT_CONTINUE_BACKUP_DIR for the host scheduler and invoke python scripts/run_verified_backup.py from a controlled backup job. The backup destination must be separate from the application volume, access-controlled, encrypted and preferably off-host. Schedule and alerting are host responsibilities; Compose does not silently create a scheduler.
+The Compose service sets PROJECT_CONTINUE_BACKUP_DIR to /var/backups/project-continue on a separate named volume. A host scheduler can invoke the verified runner with:\n\n```bash\ndocker compose exec -T app python scripts/run_verified_backup.py\n```\n\nFor example, a host crontab entry for a daily 02:15 backup (adjust the checkout path and timezone):\n\n```cron\n15 2 * * * cd /opt/project-continue && docker compose exec -T app python scripts/run_verified_backup.py >> /var/log/project-continue-backup.log 2>&1\n```\n\nThe backup volume is separate from the application volume but remains on the same Docker host. Configure independent encrypted off-host replication and alerting; Compose does not create a scheduler or off-host copy.
 
 ## Upgrade and rollback
 
@@ -83,7 +84,7 @@ Set PROJECT_CONTINUE_BACKUP_DIR for the host scheduler and invoke python scripts
 5. Verify sign-in, database persistence and logs.
 6. If rollback is needed, redeploy the previous image while preserving the database. Database restore is a separate, explicitly approved recovery action.
 
-Commands such as docker compose down -v delete the named persistent volume and must never be used as a routine update or rollback step.
+Commands such as docker compose down -v delete both named volumes and must never be used as a routine update or rollback step.
 
 ## Security notes
 
