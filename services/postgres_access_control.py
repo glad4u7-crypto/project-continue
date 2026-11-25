@@ -11,6 +11,7 @@ import time
 from typing import Any
 
 from database.postgres_connection import PostgresDatabase
+from services.access_control import AccessDenied
 
 _ROLES = frozenset({"admin", "owner", "editor", "viewer"})
 _EMAIL = re.compile(r"^[^\s@]{1,64}@[^\s@]{1,255}$")
@@ -22,10 +23,6 @@ def _b64(data: bytes) -> str:
 
 def _unb64(value: str) -> bytes:
     return base64.urlsafe_b64decode(value + "=" * (-len(value) % 4))
-
-
-class AccessDenied(PermissionError):
-    """Raised when a principal lacks access to a project or operation."""
 
 
 class PostgresAccessControl:
