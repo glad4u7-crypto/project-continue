@@ -93,3 +93,18 @@ The release PR must record:
 - operator approval and rollback reference.
 
 A successful GitHub Actions run proves repository and CI-container behavior only. It does not substitute for the selected host's acceptance evidence.
+
+## Verified repository delivery — 2026-11-25
+
+- PR #47 merged into `main` as `e3242780daf0c1f83b70deab139052d1adbb2dee`.
+- Exact candidate SHA `c413a5de7f480c19ae5fec9adfe0c17242a32f75` passed:
+  - Project Continue CI #559: secret scan, dependency audit, compile, Docker image build, Docker Compose config validation, container health smoke test, focused categories and full regression.
+  - Phase 14 Production Operations #98: Python 3.11 and 3.13.
+  - Phase 13 Memory and Checkpoint Engine #99.
+  - Cloud Acceptance Lab #110: Python 3.11 and 3.13.
+  - PostgreSQL integration #45.
+- The container health smoke test used synthetic credentials and an isolated Docker volume. No user database or production host was accessed.
+- `scripts/manage_access.py` is included for authenticated operator account and membership provisioning; its regression tests are included in the full suite.
+- After merge, repository check showed zero open pull requests and zero open issues.
+
+**Repository delivery status:** PC-P16-S001 configuration contract/tests, PC-P16-S002 container package/CI smoke, and PC-P16-S005 through S007 documentation/tooling are delivered on main. PC-P16-S003/S004/S008 require an actual selected host, domain/TLS, host secrets/storage, live health and recovery evidence, and operator approval. These are not GitHub-only actions and must not be marked PASS without the real host.

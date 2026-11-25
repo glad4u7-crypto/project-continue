@@ -218,3 +218,51 @@ This section supersedes older Phase 14/16 statements above where they say projec
 5. Keep repository work separate from Colab unless the user explicitly asks to resume Colab.
 
 **Current status:** repository PR backlog (#41, #44, #45) is closed/merged; no open PRs/issues remained at this checkpoint. External host deployment and production acceptance are still not complete.
+
+
+## Canonical repository continuation — 2026-11-25 post-Phase-16 update
+
+This section supersedes the earlier repository-only checkpoint above.
+
+- Canonical repository: `glad4u7-crypto/project-continue`.
+- Current `main` release commit: `e3242780daf0c1f83b70deab139052d1adbb2dee`.
+- PR #45 merged checkpoint selected-project isolation and stale UI-state clearing as `ed702bea6ef782cd4b20ff7d6c8047f1545c6d1d`.
+- PR #44 merged optional PostgreSQL adapter, migration, backup and restore tooling as `510d90d8f7981f18d0957cf646db62f117f84ed0`; runtime remains SQLite and no user database was migrated.
+- PR #46 merged repository README and handoff reconciliation as `cb7447d3b83ec2ce79d41b1b0511ab129c7cf34c`.
+- PR #47 merged Phase 16 container deployment, operator access-provisioning CLI, docs and CI container smoke test as `e3242780daf0c1f83b70deab139052d1adbb2dee`.
+- PR #41 was closed as superseded. Repository search after PR #47 merge returned zero open PRs and zero open issues.
+
+### Exact PR #47 validation
+
+Candidate SHA: `c413a5de7f480c19ae5fec9adfe0c17242a32f75`.
+
+- Project Continue CI #559: SUCCESS — gitleaks secret scan, pip-audit dependency audit, Python compile, Docker build, Compose config validation, container health smoke test, focused tests and full suite.
+- Phase 14 #98: SUCCESS on Python 3.11 and 3.13.
+- Phase 13 #99: SUCCESS.
+- Cloud Acceptance Lab #110: SUCCESS on Python 3.11 and 3.13.
+- PostgreSQL integration #45: SUCCESS.
+- PR #47 merged as `e3242780daf0c1f83b70deab139052d1adbb2dee`.
+
+### Delivered Phase 16 repository assets
+
+- `Dockerfile`, `docker-compose.yml`, `.dockerignore`, `.env.production.example`.
+- Non-root container, read-only root filesystem, dropped capabilities, no-new-privileges, loopback-only port mapping, persistent SQLite volume, separate backup volume and healthcheck.
+- `scripts/manage_access.py` for admin-authenticated account creation, first-owner bootstrap, membership grants and user/project listing. Passwords are hidden prompts, not command-line arguments.
+- `tests/test_manage_access_cli.py` covers admin-only provisioning and membership setup.
+- `docs/CONTAINER-DEPLOYMENT.md` documents first deployment, HTTPS reverse proxy, user provisioning, scheduled backups, upgrades and rollback.
+- README, Phase 14/16 guides and authorization audit reconciled with current main implementation.
+
+### Remaining real-host acceptance
+
+The repository is prepared for a single-host Docker Compose deployment. A live host was not supplied or accessed. The following are host-specific actions, not repository code changes:
+
+1. Select/provision the Linux host and domain.
+2. Configure the HTTPS reverse proxy and firewall.
+3. Set real signing/bootstrap secrets in the host secret store and provision the initial admin.
+4. Verify durable volume behavior and independent encrypted off-host backup replication.
+5. Run the host scheduler and an isolated restore drill.
+6. Verify real HTTPS, sign-in, database persistence, monitoring and backup health; then record operator approval.
+
+Do not claim live deployment or host acceptance from CI alone. Do not use Colab for this deployment and do not alter the user's Colab runtime, Drive or dashboard as part of this repository workflow.
+
+**Repository state:** PR backlog and issue backlog are empty; Phase 16 repository packaging and CI evidence are merged on main. Real-host rollout and final host sign-off require the selected host.
