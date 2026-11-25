@@ -67,6 +67,24 @@ python -m compileall -q .
 python -m pytest -q
 ```
 
+## 3. Container installation (single-host production)
+
+For a reproducible Docker deployment, use the repository's Dockerfile and Compose definition. Follow `docs/CONTAINER-DEPLOYMENT.md` on the selected Linux host:
+
+```bash
+git clone https://github.com/glad4u7-crypto/project-continue.git
+cd project-continue
+cp .env.production.example .env.production
+chmod 600 .env.production
+# Edit .env.production using a secure editor; set unique admin credentials
+docker compose build --pull
+docker compose up -d
+docker compose ps
+curl --fail http://127.0.0.1:8501/_stcore/health
+```
+
+The service binds only to host loopback. Put a trusted HTTPS reverse proxy in front of it before remote access. SQLite and verified backups use separate named Docker volumes; configure independent off-host backup replication. Never run `docker compose down -v` during routine updates because it deletes persistent data.
+
 ## 3. Production configuration contract
 
 Production must be configured using the hosting platform's environment/secret manager, not a committed `.env` file.
