@@ -39,3 +39,16 @@ The PR #53 head must pass the Project Continue CI, PostgreSQL integration, and a
 Do not select PostgreSQL in production runtime or migrate user data until application-service compatibility, secrets/configuration, full security acceptance, dashboard acceptance, production backup/restore policy, and explicit operator approval are complete.
 
 No production database, Streamlit configuration, Colab runtime, Drive database, existing dashboard, or existing backup directory is changed by the feature branch CI.
+
+
+## Part 1 — Application Service Compatibility (CI acceptance passed)
+
+The stacked feature branch `feature/part-1-application-service-compatibility` adds a PostgreSQL connection compatibility layer for existing application services:
+
+- Translates the existing service-layer SQLite `?` bind markers to PostgreSQL `%s` markers while preserving native PostgreSQL statements.
+- Supports the simple semicolon-delimited DDL scripts used by Memory/Checkpoint and Automation services.
+- Normalizes PostgreSQL integrity exceptions to the service layer's existing integrity-error contract.
+- Adds live PostgreSQL acceptance for Project Service, Task Service, Authentication/Authorization Service, Memory/Checkpoint Service, and Automation Service.
+- The tests use a dedicated disposable PostgreSQL CI database. They do not connect to the user's production database.
+
+Acceptance passed on exact head SHA 5a1b711440edb0888c783775a0c7513155b2883f: PostgreSQL 16 integration (268 passed), Cloud Acceptance Lab (Python 3.11 and 3.13 passed), Project Continue CI (258 passed, 10 environment-gated PostgreSQL tests skipped in the non-PostgreSQL CI runner), and Phase 14 Production Operations (Python 3.11 and 3.13 passed). The PostgreSQL integration job runs the 268-test suite against disposable PostgreSQL 16 and includes the four new application-service acceptance tests. This work does not enable production PostgreSQL selection or change the running dashboard.

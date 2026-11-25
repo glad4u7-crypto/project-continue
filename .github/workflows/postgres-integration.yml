@@ -4,7 +4,9 @@ on:
   push:
     branches:
       - main
+      - feature/part-1-database-foundation
       - feature/postgresql-database-adapter
+      - feature/part-1-application-service-compatibility
   pull_request:
     branches:
       - main
