@@ -90,9 +90,11 @@ Use a cryptographically secure random generator to create a signing key; do not 
 python -c "import secrets; print(secrets.token_urlsafe(48))"
 ```
 
-The current production gate requires an admin account. Bootstrap variables should be removed from the host environment after the first account is created. Passwords must meet the application's 12-character minimum.
+The default production gate requires an administrator account. Bootstrap variables should be removed from the host environment after the first account is created. Passwords must meet the application's 12-character minimum.
 
-**Security release gate:** the current app is admin-gated, but project membership authorization is not yet integrated across every existing feature page/service. Do not publicly expose the app or enable multi-user use until this gap is closed and tested. A provider-specific production setup remains pending until the provider is selected.
+To deliberately enable the signed-in project-member workflow, set `AUTHORIZATION_ENFORCED=true` in the host environment. Then sign in as the administrator, bootstrap the first owner for each existing project, create enabled accounts and grant Owner/Editor/Viewer memberships. Do not enable this mode before configuring the signing key and reviewing the account-onboarding process.
+
+**Security release gate:** service-level project authorization is implemented in the repository, but exact-release CI, manual cross-project browser checks and host configuration remain required before public multi-user exposure. A provider-specific production setup remains pending until the provider is selected.
 
 ## 4. Persistent storage and permissions
 
