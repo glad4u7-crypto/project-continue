@@ -166,19 +166,25 @@ def main() -> int:
                     page.get_by_label("Session summary").fill(session_summary)
                     page.get_by_role("button", name="Record session").click()
                     decision_title = f"Browser decision {suffix}"
+                    history_expander = page.get_by_test_id("stExpander").filter(
+                        has_text="Session history and decisions"
+                    )
                     decision_title_input = page.get_by_label("Decision title")
                     if not decision_title_input.is_visible():
-                        page.get_by_text("Session history and decisions", exact=True).click()
+                        history_expander.locator("summary").click()
                     decision_title_input.wait_for(state="visible", timeout=15000)
                     decision_title_input.fill(decision_title)
                     page.get_by_role("textbox", name="Context").fill("Synthetic browser acceptance context")
                     page.get_by_role("textbox", name="Decision", exact=True).fill("Keep the isolated workflow")
                     page.get_by_label("Rationale").fill("Verify persistence without touching user data")
                     page.get_by_role("button", name="Record decision").click()
-                    decision_row = page.get_by_text(decision_title, exact=True)
-                    if not decision_row.is_visible():
-                        page.get_by_text("Session history and decisions", exact=True).click()
-                    decision_row.wait_for(state="visible", timeout=15000)
+                    history_expander = page.get_by_test_id("stExpander").filter(
+                        has_text="Session history and decisions"
+                    )
+                    history_expander.locator("summary").click()
+                    history_expander.get_by_text(decision_title, exact=True).wait_for(
+                        state="visible", timeout=15000
+                    )
 
                     # Exercise archive -> archived filter -> restore -> active filter.
                     page.get_by_role("button", name="Archive project").click()
