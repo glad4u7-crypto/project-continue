@@ -10,11 +10,11 @@ The application currently supports Streamlit + SQLite. A production deployment r
 - An external scheduler on an always-on host. A disconnected Colab runtime is not a scheduler.
 - A private backup destination with a separately defined retention and encryption policy.
 
-Do not publicly expose the app until login and server-side authorization have been integrated into every data-bearing page and service call.
+Do not publicly expose the app until the exact release passes browser role-matrix checks and the selected host's HTTPS, storage, secret and recovery controls are verified.
 
 ## Identity and authorization primitives
 
-`services/access_control.py` provides scrypt password hashes, HMAC-signed expiring sessions, project membership roles (owner/editor/viewer), admin role, access-denial exceptions and audit events. It is a server-side primitive, not a substitute for wiring a login gate and calling `require_project` at every service boundary. Production mode currently allows only admin-role operators through the global gate. The current Streamlit pages are not yet a complete authenticated multi-user application; project membership checks must be wired into every page/service before enabling multi-user access.
+`services/access_control.py` provides scrypt password hashes, HMAC-signed expiring sessions, project membership roles (owner/editor/viewer), admin role, access-denial exceptions and audit events. The current main branch wires signed-principal and project-membership checks into project, task, AI, automation and memory/checkpoint service operations. Production defaults to admin-only; `AUTHORIZATION_ENFORCED=true` deliberately enables member login. Before enabling it, provision enabled users, bootstrap each existing project's owner and grant memberships. Complete the two-project Owner/Editor/Viewer/Non-member browser matrix before public multi-user exposure.
 
 Provision the initial owner using a controlled operator process. `bootstrap_project_owner` is one-time per project and refuses to replace an existing owner. Never create a default password or commit session signing keys.
 
@@ -40,3 +40,4 @@ Never restore over the active database as an automated operation. For an actual 
 ## Acceptance boundaries
 
 CI and isolated tests do not establish that a public host is secure. Final release acceptance separately requires: all automated checks; manual browser authentication/authorization checks; provider-specific HTTPS, persistent storage, secret-store and backup evidence; a restore drill on the target host; and an operator-approved deployment.
+\n\n## Container deployment\n\nThe repository includes `Dockerfile`, `docker-compose.yml`, `.env.production.example` and `docs/CONTAINER-DEPLOYMENT.md`. The image runs as UID 10001 with a read-only root filesystem, a persistent named SQLite volume, a health probe and a loopback-only host binding. Use a trusted HTTPS reverse proxy; do not publish port 8501 directly to the internet. CI builds and smoke-tests the image with synthetic credentials. This does not verify a real host, TLS, external backup scheduling or restore.\n
