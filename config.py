@@ -1,7 +1,7 @@
 """Validated application configuration loaded from environment variables."""
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Mapping
 
@@ -29,7 +29,7 @@ class Settings:
     session_signing_key_configured: bool = False
     database_path: str = _DEFAULT_DATABASE_PATH
     database_backend: str = "sqlite"
-    postgres_dsn: str = ""
+    postgres_dsn: str = field(default="", repr=False)
 
     @classmethod
     def from_env(cls, environ: Mapping[str, str] | None = None) -> "Settings":
