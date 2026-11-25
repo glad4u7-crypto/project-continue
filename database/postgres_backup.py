@@ -94,7 +94,7 @@ def create_postgres_backup(dsn: str, archive_path: str | Path) -> dict[str, Any]
               "--file", str(temporary), "--dbname", safe_dsn], env)
         _run([_tool("pg_restore"), "--list", str(temporary)], env)
         checksum = _sha256(temporary)
-        with psycopg.connect(dsn) as connection:
+        with psycopg.connect(dsn, row_factory=dict_row) as connection:
             server_version = connection.info.server_version
             database_name = connection.info.dbname
         metadata = {
@@ -148,7 +148,7 @@ def restore_postgres_backup(archive_path: str | Path, target_dsn: str) -> dict[s
         raise RuntimeError("Restore target is not empty; refusing to overwrite existing objects")
     _run([_tool("pg_restore"), "--exit-on-error", "--no-owner", "--no-acl",
           "--dbname", safe_dsn, str(Path(archive_path).expanduser().resolve())], env)
-    with psycopg.connect(target_dsn) as connection:
+    with psycopg.connect(target_dsn, row_factory=dict_row) as connection:
         restored_tables = connection.execute(
             """SELECT COUNT(*) AS n FROM information_schema.tables
                 WHERE table_schema NOT IN ('pg_catalog', 'information_schema')"""
