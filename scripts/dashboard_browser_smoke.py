@@ -110,8 +110,12 @@ def main() -> int:
                     page.get_by_text(task_name, exact=True).wait_for(timeout=20000)
 
                     page.get_by_text("Edit task", exact=True).first.click()
-                    page.get_by_role("combobox", name="Status").last.click()
-                    page.get_by_role("option", name="done", exact=True).click()
+                    status_control = page.get_by_role("combobox", name="Status").last
+                    status_control.click()
+                    # Streamlit renders selectbox options in a transient portal;
+                    # keyboard selection is more reliable than querying that portal.
+                    status_control.press("End")
+                    status_control.press("Enter")
                     page.get_by_role("button", name="Save task changes").click()
                     page.get_by_text("Done", exact=True).first.wait_for(timeout=15000)
 
