@@ -69,11 +69,46 @@ The Compose service binds to 127.0.0.1:8501 by default and is not directly expos
 
 Only after creating accounts and assigning each project's membership through the application's approved operator process, set AUTHORIZATION_ENFORCED=true. The current repository enforces membership in service paths; browser acceptance across two projects and Owner/Editor/Viewer/Non-member identities is still a required release check. Never enable membership mode without provisioning users and memberships first.
 
+## Provision project members
+
+The initial administrator is created on first startup only when the identity table is empty and both bootstrap variables are set. After removing those bootstrap variables, use the authenticated operator CLI to create accounts and assign project roles. Run these commands interactively on the trusted host:
+
+```bash
+# List project IDs
+docker compose exec -it app python scripts/manage_access.py --admin-email admin@example.com list-projects
+
+# Create an account (the new password is entered twice through a hidden prompt)
+docker compose exec -it app python scripts/manage_access.py --admin-email admin@example.com create-user --email editor@example.com --role editor
+
+# Bootstrap the first owner for an existing project
+docker compose exec -it app python scripts/manage_access.py --admin-email admin@example.com bootstrap-owner --project-id PROJECT_ID
+
+# Grant an existing account access to a project
+docker compose exec -it app python scripts/manage_access.py --admin-email admin@example.com grant-project --project-id PROJECT_ID --email editor@example.com --role editor
+
+# Review enabled/disabled accounts
+docker compose exec -it app python scripts/manage_access.py --admin-email admin@example.com list-users
+```
+
+Each command prompts for the administrator password without echoing it. New account passwords are also entered through hidden prompts and are never command-line arguments. The CLI refuses non-admin operators and writes changes through the same access-control service used by the application. Bootstrap the first project owner before granting Editor or Viewer memberships. Enable AUTHORIZATION_ENFORCED=true only after all required project memberships exist.
+
 ## Persistence and backup
 
 The named Docker volume project_continue_data holds the SQLite database across container replacement; project_continue_backups holds verified backup files separately. Both volumes remain on the same host unless independently replicated. Confirm both volumes are included in host disaster-recovery policy. Do not treat a Docker volume as an off-host backup.
 
-The Compose service sets PROJECT_CONTINUE_BACKUP_DIR to /var/backups/project-continue on a separate named volume. A host scheduler can invoke the verified runner with:\n\n```bash\ndocker compose exec -T app python scripts/run_verified_backup.py\n```\n\nFor example, a host crontab entry for a daily 02:15 backup (adjust the checkout path and timezone):\n\n```cron\n15 2 * * * cd /opt/project-continue && docker compose exec -T app python scripts/run_verified_backup.py >> /var/log/project-continue-backup.log 2>&1\n```\n\nThe backup volume is separate from the application volume but remains on the same Docker host. Configure independent encrypted off-host replication and alerting; Compose does not create a scheduler or off-host copy.
+The Compose service sets PROJECT_CONTINUE_BACKUP_DIR to /var/backups/project-continue on a separate named volume. A host scheduler can invoke the verified runner with:
+
+```bash
+docker compose exec -T app python scripts/run_verified_backup.py
+```
+
+For example, a host crontab entry for a daily 02:15 backup (adjust the checkout path and timezone):
+
+```cron
+15 2 * * * cd /opt/project-continue && docker compose exec -T app python scripts/run_verified_backup.py >> /var/log/project-continue-backup.log 2>&1
+```
+
+The backup volume is separate from the application volume but remains on the same Docker host. Configure independent encrypted off-host replication and alerting; Compose does not create a scheduler or off-host copy.
 
 ## Upgrade and rollback
 
