@@ -21,7 +21,7 @@ Project Continue organizes projects, tasks and dependencies, recommends actionab
 | 13 | Memory & Checkpoint Engine | Merged; Colab acceptance evidence recorded; manual dashboard check pending |
 | 14 | Production Deployment & Operations | PR #35 merged; feature CI passed; host-specific acceptance pending |
 | 15 | Complete Integration | Merged to main; Colab acceptance: 170 focused test executions and 217 full-suite tests passed; manual browser/host gates pending |
-| 16 | Deployment & Final Delivery | Documentation integrated; live deployment, host health checks, authorization remediation and final sign-off remain gated |
+| 16 | Deployment & Final Delivery | Authorization service/UI wiring implemented on main; selected-project checkpoint binding and regression coverage added in review branch; live deployment, host health checks and final sign-off remain gated |
 
 ## Technology
 
@@ -57,6 +57,10 @@ The dashboard supports project registration, search, lifecycle management, task 
 ## GitHub integration
 
 The GitHub panel is read-only. Public repositories can be inspected without a token; private repositories require a fine-grained token with read-only Contents and Metadata permissions. Configure `GITHUB_REPOSITORY` and optional `GITHUB_TOKEN` in an untracked `.env` file.
+
+## Security and project membership
+
+Production defaults to an administrator-only sign-in gate. To enable the signed-in Owner/Editor/Viewer membership workflow, explicitly set `AUTHORIZATION_ENFORCED=true` and configure a high-entropy `SESSION_SIGNING_KEY` (at least 32 bytes) through the host secret manager. Provision the initial administrator on a fresh database, then bootstrap ownership and grant memberships for existing projects. Do not expose the application publicly until exact-release CI, browser authorization checks, and host controls have been accepted. See `docs/security/PROJECT-MEMBERSHIP-AUTHORIZATION.md` and `docs/SECURITY-AUTHORIZATION-WIRING-AUDIT.md`.
 
 ## Phase 13 — Memory and recovery
 

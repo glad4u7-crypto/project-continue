@@ -3,7 +3,7 @@
 **Repository:** `glad4u7-crypto/project-continue`  
 **Branch:** `feature/phase-16-deployment-final-delivery`  
 **Baseline:** `68466e2eacae26535c115e3984d105a2c4fb14b9`  
-**Status:** PARTIAL DELIVERY — S005/S006/S007 documentation drafted; S001 configuration contract audited; S002–S004 and S008 remain blocked on provider, authorization and real-host evidence.
+**Status:** PARTIAL DELIVERY — authorization service/UI wiring is implemented on main; selected-project checkpoint binding is under review; S001/S002 remain provider-dependent; S003/S004 and S008 require real-host evidence.
 
 ## Objective
 
@@ -37,9 +37,9 @@ Existing repository contract observed at the baseline:
 
 ### Critical pre-deployment security gate
 
-Phase 14 documentation explicitly records that the production login gate is admin-only and project membership checks are not yet wired through every data-bearing page/service operation. Therefore:
+The current repository now includes signed-principal verification and project-membership enforcement in project, task, AI, automation and memory/checkpoint service paths. Production remains administrator-only by default. The operator must deliberately set `AUTHORIZATION_ENFORCED=true` to enable Owner/Editor/Viewer membership mode, provision accounts, bootstrap ownership and grant project memberships.
 
-**Do not expose this application publicly or enable multi-user production access until end-to-end server-side authorization is implemented and tested.** A private single-operator deployment is still subject to a reviewed access boundary and operator approval; it is not automatically safe merely because login exists.
+**Do not expose this application publicly until exact-release CI, manual cross-project browser checks and the selected host's HTTPS, durable storage, secret-management and recovery controls are evidenced.** Source-level authorization does not certify a live deployment.
 
 ### Outstanding configuration decisions
 
@@ -61,7 +61,7 @@ Phase 14 documentation explicitly records that the production login gate is admi
 6. Review Phase 14 authorization gaps before approving public exposure.
 7. Record exact SHA, focused tests, full regression, and reviewer decision.
 
-**S001 current result:** PARTIAL / IN PROGRESS. The existing configuration contract is documented above; provider-specific values and full production authorization acceptance are outstanding.
+**S001 current result:** PARTIAL / IN PROGRESS. The source-level authentication and authorization contract is implemented and documented; synthetic exact-release acceptance, provider-specific values and host secret mapping remain outstanding.
 
 ## Global safety rules
 
