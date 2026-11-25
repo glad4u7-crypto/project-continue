@@ -38,7 +38,7 @@ jobs:
           python -m pip install playwright
           python -m playwright install --with-deps chromium
       - name: Compile application
-        run: python -m compileall -q app.py config core database integrations services ui
+        run: python -m compileall -q app.py config.py core database integrations services ui
       - name: Launch Streamlit and test the actual browser UI
         run: python scripts/dashboard_browser_smoke.py
       - name: Upload browser evidence and server log
