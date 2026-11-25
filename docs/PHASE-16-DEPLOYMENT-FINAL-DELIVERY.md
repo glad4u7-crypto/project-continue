@@ -38,6 +38,8 @@ Delivered assets:
 - `docker-compose.yml`: read-only root filesystem, bounded temporary filesystem, dropped Linux capabilities, no-new-privileges, persistent named SQLite volume and loopback-only port binding.
 - `.env.production.example`: safe placeholder template.
 - `docs/CONTAINER-DEPLOYMENT.md`: build, first admin bootstrap, HTTPS reverse proxy, backup, upgrade and rollback instructions.
+- `scripts/manage_access.py`: authenticated admin CLI to list projects/users, create Owner/Editor/Viewer accounts with hidden password prompts, bootstrap the first project owner and grant memberships.
+- `tests/test_manage_access_cli.py`: isolated tests for admin-only provisioning, owner bootstrap, membership grants and password confirmation.
 - `.github/workflows/ci.yml`: image build and synthetic-credential container health smoke test.
 
 The application remains on SQLite. The optional PostgreSQL adapter is not selected by the container deployment. The SQLite volume is single-instance and must reside on durable local storage.
@@ -61,7 +63,7 @@ No provider, domain, credentials or host has been supplied/selected in this repo
 - Backup, retention and isolated restore: `docs/BACKUP-AND-RECOVERY-GUIDE.md`.
 - Operations and security: `docs/PHASE-14-OPERATIONS-RUNBOOK.md` and `docs/SECURITY-AUTHORIZATION-WIRING-AUDIT.md`.
 
-The repository's backup helper is scheduler-callable but does not install a scheduler or provision off-host encrypted storage. A Docker named volume is persistence, not a backup.
+The repository's backup helper is scheduler-callable; Compose mounts a separate backup volume and the runbook gives a host-cron invocation. The repository does not install a host scheduler or provision off-host encrypted storage. A Docker named volume is persistence, not a backup.
 
 ## Security release gate
 
