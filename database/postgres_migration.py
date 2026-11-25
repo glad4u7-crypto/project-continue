@@ -121,8 +121,11 @@ def migrate_sqlite_to_postgres(
     if not isinstance(dry_run, bool):
         raise TypeError("dry_run must be a bool")
 
-    with _open_sqlite_readonly(sqlite_path) as source:
+    source = _open_sqlite_readonly(sqlite_path)
+    try:
         source_version, snapshot = _source_snapshot(source)
+    finally:
+        source.close()
 
     source_report = {
         table: {"rows": len(rows), "sha256": _checksum(rows)}
