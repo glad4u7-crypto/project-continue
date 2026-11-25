@@ -8,60 +8,56 @@ Branch: `feature/postgresql-database-adapter`
   dictionary rows, bounded connection timeout, short-lived connection context,
   explicit transaction context, and a read-only `SELECT 1` health check.
 - Added `psycopg[binary]>=3.2,<4` to runtime dependencies.
-- Added isolated constructor/validation tests.
-
-
-- Added `database/postgres_schema.py` with a separate idempotent initial schema
-  for projects, tasks, dependencies, activity, users, memberships, audit events,
-  and login attempts. PostgreSQL trigger guards preserve dependency-cycle,
-  same-project activity/dependency, and immutable-audit invariants.
-- Added static schema coverage tests in `tests/test_postgres_schema.py`.
-
-- Added `database/postgres_repository.py`, implementing the existing
-  project/task repository method surface with PostgreSQL placeholders,
-  transactions, recursive dependency checks, and `RETURNING id` for activity.
-- Added contract/source-level checks in `tests/test_postgres_repository.py`.
-
+- Added `database/postgres_schema.py` with a separate idempotent schema for
+  projects, tasks, dependencies, activity, users, memberships, audit events,
+  and login attempts.
+- PostgreSQL schema version is now explicitly aligned with SQLite
+  `SCHEMA_VERSION = 2`; a regression test checks this parity.
+- PostgreSQL trigger guards enforce same-project dependencies/activity,
+  dependency-cycle prevention, and immutable audit events.
+- Added `database/postgres_repository.py` for the project/task repository
+  surface, including PostgreSQL placeholders, transactions, recursive
+  dependency checks, and `RETURNING id`.
 - Added `services/postgres_access_control.py` for password hashing,
-  login throttling, signed sessions, project membership checks and immutable
-  audit-event writes using PostgreSQL SQL.
-- Added `tests/test_postgres_access_control.py` contract checks.
-- Activated the PostgreSQL task-dependency integrity trigger. The schema now
-  wires the previously defined dependency guard function to INSERT/UPDATE.
+  login throttling, signed sessions, project membership checks, and audit
+  writes using PostgreSQL SQL.
+- Updated the authorization policy/context to accept the PostgreSQL adapter
+  without changing the runtime database selection.
+- Added static contract tests and opt-in live tests in
+  `tests/test_postgres_integration.py`. Live tests require
+  `TEST_POSTGRES_DSN` and use a dedicated disposable PostgreSQL database.
+- Added `.github/workflows/postgres-integration.yml`, which provisions
+  PostgreSQL 16 and runs the complete pytest suite on pushes to main/this
+  feature branch and pull requests targeting main.
 
 ## Verification status
 
-The branch has been reviewed through GitHub file retrieval and commit comparison.
-No PostgreSQL server/DSN is configured in this task, so neither a live schema
-initialization nor PostgreSQL integration tests have been run. Static tests
-have been added but are not represented as passing until executed in CI or an
-isolated test environment.
+The code and test workflow have been committed to this feature branch.
+The live integration tests have **not** been reported as passing until the
+GitHub Actions run completes successfully. When run without
+`TEST_POSTGRES_DSN`, live database tests skip explicitly; they never fall
+back to the application's SQLite database.
 
 ## Deliberate safety boundary
 
-This is **not yet a drop-in replacement** for the current SQLite `Database`.
-The current `ProjectRepository`, `AccessControl`, schema migrations, and
-backup/restore code use SQLite-specific SQL and behavior, including
-`PRAGMA`, `executescript`, `INSERT OR IGNORE`, `AUTOINCREMENT`,
-SQLite triggers, qmark parameters, and `lastrowid`.
+This is **not yet a drop-in replacement** for the current SQLite
+`Database`. The running application still initializes
+`database/runtime.py` with the SQLite `Database` and
+`ProjectRepository`. Do not select `PostgresDatabase` in runtime, point
+production traffic at it, or migrate user data until compatibility, migration,
+backup/restore, and full acceptance gates are implemented and verified.
 
-Do not select `PostgresDatabase` in `database/runtime.py`, point production
-traffic at it, or migrate user data until the compatibility layer, PostgreSQL
-schema/migrations, access-control schema, backup strategy, and full acceptance
-suite are implemented and verified.
+No production database, Streamlit configuration, Colab runtime, Drive
+database, existing dashboard, or backup directory is changed by this branch.
 
 ## Remaining implementation gates
 
-1. Define a small backend protocol and SQL dialect boundary.
-2. Port repository SQL and schema to PostgreSQL, preserving constraints and
-   recursive dependency-cycle protections.
-3. Port identity, session, membership, and immutable audit tables/triggers.
-4. Add backend selection using an explicit secret/URL; never infer a provider
-   from unrelated secret names.
-5. Add PostgreSQL integration tests against an isolated disposable database.
-6. Implement a verified, repeatable SQLite-to-PostgreSQL migration with row
-   counts, foreign-key checks, checksums, and rollback/restore rehearsal.
-7. Run the complete regression and acceptance suite before any deployment.
-
-No production database, Streamlit configuration, Colab runtime, Drive database,
-existing dashboard, or backup directory is changed by this branch.
+1. Complete and test the PostgreSQL migration path for all SQLite tables and
+   current schema versions, including row counts, foreign-key checks,
+   checksums, and rollback/restore rehearsal.
+2. Run the new PostgreSQL service-backed GitHub Actions workflow and fix any
+   failures; verify the full existing regression suite as well as live tests.
+3. Add operational backup/restore and connection-secret configuration with
+   explicit opt-in selection, without inferring a database provider from
+   unrelated secret names.
+4. Run full acceptance before any production switch.
