@@ -171,7 +171,7 @@ def main() -> int:
                         page.get_by_text("Session history and decisions", exact=True).click()
                     decision_title_input.wait_for(state="visible", timeout=15000)
                     decision_title_input.fill(decision_title)
-                    page.get_by_label("Context").fill("Synthetic browser acceptance context")
+                    page.get_by_role("textbox", name="Context").fill("Synthetic browser acceptance context")
                     page.get_by_label("Decision").fill("Keep the isolated workflow")
                     page.get_by_label("Rationale").fill("Verify persistence without touching user data")
                     page.get_by_role("button", name="Record decision").click()
