@@ -126,6 +126,69 @@ def main() -> int:
                     page.get_by_role("button", name="Open details").click()
                     page.get_by_text(task_name, exact=True).wait_for(timeout=15000)
 
+                    # Exercise the mock AI advisory and its explicit approval gate.
+                    ai_task_name = f"AI action {suffix}"
+                    page.get_by_text("Create task", exact=False).first.click()
+                    page.get_by_label("Task title").fill(ai_task_name)
+                    page.get_by_role("group").filter(has_text="Create task").get_by_label("Description").fill("Synthetic task for advisory acceptance.")
+                    page.get_by_role("button", name="Create task").click()
+                    page.get_by_text(ai_task_name, exact=True).wait_for(timeout=20000)
+                    page.get_by_role("button", name="Generate next-step suggestion").click()
+                    page.get_by_role("button", name="Approve suggestion").wait_for(timeout=20000)
+                    page.get_by_role("button", name="Approve suggestion").click()
+                    page.get_by_text("Decision recorded: approved", exact=False).wait_for(timeout=15000)
+
+                    # Exercise schedule creation and pause using the allow-listed health check.
+                    schedule_name = f"Browser health {suffix}"
+                    page.get_by_text("Create scheduled check", exact=True).click()
+                    page.get_by_label("Schedule name").fill(schedule_name)
+                    page.get_by_role("button", name="Save schedule").click()
+                    page.get_by_text(schedule_name, exact=True).wait_for(timeout=15000)
+                    page.get_by_role("button", name="Pause").click()
+                    page.get_by_role("button", name="Enable").wait_for(timeout=15000)
+
+                    # Exercise project memory, checkpoint preview, session and decision records.
+                    memory_key = f"browser-memory-{suffix}"
+                    page.get_by_label("Memory key").fill(memory_key)
+                    page.get_by_label("Memory value (plain text or JSON)").fill("synthetic acceptance value")
+                    page.get_by_role("button", name="Save memory").click()
+                    page.get_by_text(memory_key, exact=True).wait_for(timeout=15000)
+
+                    checkpoint_label = f"Browser checkpoint {suffix}"
+                    page.get_by_label("Checkpoint label").fill(checkpoint_label)
+                    page.get_by_role("button", name="Create verified checkpoint").click()
+                    page.get_by_label("Saved checkpoint").wait_for(timeout=15000)
+                    page.get_by_role("button", name="Preview recovery").click()
+                    page.get_by_text("No missing tasks", exact=False).wait_for(timeout=15000)
+
+                    page.get_by_text("Session history and decisions", exact=True).click()
+                    session_summary = f"Browser session {suffix}"
+                    page.get_by_label("Session summary").fill(session_summary)
+                    page.get_by_role("button", name="Record session").click()
+                    page.get_by_text("Session history and decisions", exact=True).click()
+                    decision_title = f"Browser decision {suffix}"
+                    page.get_by_label("Decision title").fill(decision_title)
+                    page.get_by_label("Context").fill("Synthetic browser acceptance context")
+                    page.get_by_label("Decision").fill("Keep the isolated workflow")
+                    page.get_by_label("Rationale").fill("Verify persistence without touching user data")
+                    page.get_by_role("button", name="Record decision").click()
+                    page.get_by_text(decision_title, exact=True).wait_for(timeout=15000)
+
+                    # Exercise archive -> archived filter -> restore -> active filter.
+                    page.get_by_role("button", name="Archive project").click()
+                    status_filter = page.get_by_role("combobox", name="Project status")
+                    status_filter.click()
+                    status_filter.press("End")
+                    status_filter.press("Enter")
+                    page.get_by_text(project_name, exact=True).wait_for(timeout=15000)
+                    page.get_by_role("button", name="Open details").click()
+                    page.get_by_role("button", name="Restore project").click()
+                    status_filter = page.get_by_role("combobox", name="Project status")
+                    status_filter.click()
+                    status_filter.press("Home")
+                    status_filter.press("Enter")
+                    page.get_by_text(project_name, exact=True).wait_for(timeout=15000)
+
                     # Diagnostics remain read-only and are tested after the CRUD flow.
                     page.get_by_text("Automated self-check", exact=False).first.click()
                     page.get_by_role("button", name="Run self-check").click()
