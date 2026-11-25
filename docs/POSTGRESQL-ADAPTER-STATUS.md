@@ -17,6 +17,11 @@ Branch: `feature/postgresql-database-adapter`
   same-project activity/dependency, and immutable-audit invariants.
 - Added static schema coverage tests in `tests/test_postgres_schema.py`.
 
+- Added `database/postgres_repository.py`, implementing the existing
+  project/task repository method surface with PostgreSQL placeholders,
+  transactions, recursive dependency checks, and `RETURNING id` for activity.
+- Added contract/source-level checks in `tests/test_postgres_repository.py`.
+
 ## Verification status
 
 The branch has been reviewed through GitHub file retrieval and commit comparison.
