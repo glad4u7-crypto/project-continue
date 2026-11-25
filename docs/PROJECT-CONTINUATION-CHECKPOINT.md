@@ -204,7 +204,7 @@ This section supersedes older Phase 14/16 statements above where they say projec
 - Pull request: [#45 — selected-project checkpoint isolation and release-documentation reconciliation](https://github.com/glad4u7-crypto/project-continue/pull/45).
 - Candidate branch is based directly on current `main` with no divergence; the pull request page records the latest head SHA and commit count.
 - PR #45 adds selected-project scoping to checkpoint lookup, recovery preview/apply and resume; clears memory/checkpoint UI state when project or signed-in principal changes; adds a cross-project checkpoint regression test; and refreshes stale Phase 14/16 security documentation.
-- PR #45 is open and not merged. GitHub Actions runs for Project Continue CI, Phase 13, Phase 14 and Cloud Acceptance Lab were observed in progress; no PASS is claimed until the latest head SHA checks complete.
+- PR #45 is open and not merged. On candidate SHA `078a9c19434f5a339d1d3ada6b340e7a9ab4205d`, Project Continue CI (run #547), Phase 13 (run #90), Phase 14 (run #86; Python 3.11 and 3.13), and Cloud Acceptance Lab (run #98; Python 3.11 and 3.13) all completed SUCCESS. This evidence is for that exact candidate SHA; any later source/doc commit requires its own checks.
 - PR #41 is based on a pre-authorization branch and must not be merged wholesale. Its checkpoint-scoping intent is being implemented on top of current main in PR #45.
 - PR #44 is a separate draft PostgreSQL adapter/migration proposal. The application remains SQLite; do not switch databases or merge that proposal without its own acceptance.
 - No open repository issues were found at the time of this update.
