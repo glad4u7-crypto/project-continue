@@ -202,7 +202,7 @@ This section supersedes older Phase 14/16 statements above where they say projec
 - Authorization service/UI wiring is present on `main` from `18d5b4320163cd17bbb01f9b610887ed4d3d9fdc`.
 - Current follow-up branch: `fix/phase16-auth-checkpoint-docs`.
 - Pull request: [#45 — selected-project checkpoint isolation and release-documentation reconciliation](https://github.com/glad4u7-crypto/project-continue/pull/45).
-- Candidate head at checkpoint update: `3964d81ded8f35019f42fc07121e6d534f07dffe`; compare result: 10 commits ahead of main, no divergence.
+- Candidate branch is based directly on current `main` with no divergence; the pull request page records the latest head SHA and commit count.
 - PR #45 adds selected-project scoping to checkpoint lookup, recovery preview/apply and resume; clears memory/checkpoint UI state when project or signed-in principal changes; adds a cross-project checkpoint regression test; and refreshes stale Phase 14/16 security documentation.
 - PR #45 is open and not merged. GitHub Actions runs for Project Continue CI, Phase 13, Phase 14 and Cloud Acceptance Lab were observed in progress; no PASS is claimed until the latest head SHA checks complete.
 - PR #41 is based on a pre-authorization branch and must not be merged wholesale. Its checkpoint-scoping intent is being implemented on top of current main in PR #45.
