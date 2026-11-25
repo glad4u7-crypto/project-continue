@@ -1,6 +1,7 @@
 streamlit>=1.39,<2
 python-dotenv>=1,<2
 requests>=2.32,<3
+psycopg[binary]>=3.2,<4
 
 # Development and automated tests
 pytest>=9.0.3,<10
