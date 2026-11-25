@@ -5,7 +5,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+    branches: [main, "feature/part-1-database-foundation"]
   schedule:
     - cron: "23 3 * * 1"
 
