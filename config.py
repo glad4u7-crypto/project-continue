@@ -61,6 +61,10 @@ class Settings:
             raise ConfigurationError("PROJECT_CONTINUE_DB_BACKEND must be sqlite or postgresql")
         if not database_path or "\x00" in database_path:
             raise ConfigurationError("PROJECT_CONTINUE_DB must be a valid non-empty path")
+        if database_backend == "postgresql" and app_env == "production":
+            raise ConfigurationError(
+                "PostgreSQL production selection is blocked until full application acceptance passes"
+            )
         if database_backend == "postgresql" and not postgres_dsn:
             raise ConfigurationError(
                 "PROJECT_CONTINUE_POSTGRES_DSN is required when PostgreSQL is selected"
