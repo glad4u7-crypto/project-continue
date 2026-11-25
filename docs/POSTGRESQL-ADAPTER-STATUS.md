@@ -1,7 +1,7 @@
 # PostgreSQL adapter — implementation status
 
-Branch: `feature/postgresql-database-adapter`
 Merged into `main` by PR #44: `510d90d8f7981f18d0957cf646db62f117f84ed0` (2026-11-25)
+Candidate branch: `feature/postgresql-database-adapter`
 
 ## Implemented foundation
 
@@ -14,12 +14,14 @@ Merged into `main` by PR #44: `510d90d8f7981f18d0957cf646db62f117f84ed0` (2026-1
 
 ## Verified CI evidence (2026-11-25)
 
+Candidate SHA: `a4d03397e25d161bf21e4820f7e88d668b0a8bec`.
+
 The adapter and migration tooling are now merged into `main` as optional infrastructure. The application runtime remains on SQLite; this merge did not select PostgreSQL as the production database or migrate any user data.
 
-- PostgreSQL integration workflow run #33, commit `3ce427eef53630e65eb9eeb5c0570cdb36c4ee3b`: **252 passed**. The job provisioned PostgreSQL 16 and configured separate DSNs for general integration, migration, backup, and restore tests. The full regression and PostgreSQL integration suite completed successfully.
-- Project Continue CI run #540 on the same commit: **248 passed, 4 skipped**. The four skips are expected in this general workflow because it does not configure the dedicated PostgreSQL test DSNs; the PostgreSQL-specific workflow above does.
-- Cloud Acceptance Lab #92: successful on the same commit, Python 3.11 and 3.13.
-- Phase 13 run #84 and Phase 14 run #80: successful on the same commit.
+- PostgreSQL integration workflow run #35, candidate commit `a4d03397e25d161bf21e4820f7e88d668b0a8bec`: **full regression and PostgreSQL integration suite SUCCESS**. The job provisioned PostgreSQL 16 and configured separate DSNs for general integration, migration, backup, and restore tests. The full regression and PostgreSQL integration suite completed successfully.
+- Project Continue CI run #542 on the same candidate: **SUCCESS**. The four skips are expected in this general workflow because it does not configure the dedicated PostgreSQL test DSNs; the PostgreSQL-specific workflow above does.
+- Cloud Acceptance Lab #93: SUCCESS on the same candidate, Python 3.11 and 3.13.
+- Phase 13 run #85 and Phase 14 run #81: SUCCESS on the same candidate.
 - The previous PostgreSQL restore failure caused by client/server major-version mismatch was addressed by pinning the backup helper to PostgreSQL 16 client binaries through `PG_CLIENT_MAJOR=16`.
 
 ## Remaining acceptance boundaries
