@@ -31,6 +31,12 @@ def render_memory_checkpoint(authorization_context: AuthorizationContext | None 
         labels = {f"{p['name']} · {p['id']}": p["id"] for p in projects}
         selected = st.selectbox("Project", list(labels), key="memory_project")
         pid = labels[selected]
+        principal_id = authorization_context.principal["id"] if authorization_context is not None else "legacy"
+        memory_scope = f"{pid}:{principal_id}"
+        if st.session_state.get("_memory_checkpoint_scope") != memory_scope:
+            for state_key in ("memory_recovery_target", "memory_resume_result", "memory_recovery_confirm"):
+                st.session_state.pop(state_key, None)
+            st.session_state["_memory_checkpoint_scope"] = memory_scope
 
         with st.expander("Project memory", expanded=True):
             with st.form("memory_save_form", clear_on_submit=True):
