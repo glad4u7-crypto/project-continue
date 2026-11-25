@@ -6,7 +6,6 @@ configuration; no migration or production switch is performed here.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 import streamlit as st
 
@@ -40,7 +39,7 @@ def get_project_repository(
     *,
     backend: str | None = None,
     postgres_dsn: str | None = None,
- ) -> ProjectRepositoryProtocol:
+) -> ProjectRepositoryProtocol:
     """Return the cached repository selected by explicit arguments or settings.
 
     An explicit backend override is intended for isolated tests and controlled
