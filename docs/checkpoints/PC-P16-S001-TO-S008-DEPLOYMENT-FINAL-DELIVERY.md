@@ -21,13 +21,13 @@
 2. Build a setting-to-secret-source matrix.
 3. Add/verify production configuration tests with synthetic values.
 4. Verify fail-closed behavior for weak/missing signing key, invalid DB path and unsafe log level.
-5. Review Phase 14 admin-only authentication and incomplete page/service project authorization.
+5. Review signed-session verification and project-membership enforcement. Production is admin-only by default; `AUTHORIZATION_ENFORCED=true` deliberately enables Owner/Editor/Viewer membership mode.
 
 **Evidence:** sanitized configuration matrix, test output, exact SHA, secret scan, reviewer sign-off.
 
 **Safety:** Never paste actual secret values. Do not publicly expose the application while any data-bearing service path lacks server-side authorization.
 
-**Current status:** PARTIAL — contract audited and guides drafted; synthetic production config test evidence and provider-specific secret mapping remain pending.
+**Current status:** PARTIAL — source-level authentication/authorization and the production configuration contract are implemented; exact-SHA acceptance evidence and provider-specific secret mapping remain pending.
 
 ---
 
@@ -89,7 +89,7 @@
 
 **Acceptance:** timestamped sanitized results, host/release SHA, screenshots or logs without credentials, failure/rollback record.
 
-**Status:** BLOCKED — requires merged release, provider/host evidence, end-to-end authorization review and verified isolated restore drill.
+**Status:** BLOCKED — requires an approved release, provider/host evidence, manual browser authorization acceptance, and a verified isolated restore drill.
 
 ---
 
