@@ -39,6 +39,10 @@ Resource authorization derives the project ID from canonical database records, n
 
 PR #45 merged the selected-project `project_id` scoping for checkpoint lookup, recovery and resume, plus a regression test proving a checkpoint identifier cannot be used through a different selected project. It also clears stale memory/checkpoint UI state when the selected project or signed-in principal changes. PR #41 was closed as superseded because it was based on pre-authorization code.
 
+## Operator provisioning
+
+The repository includes `scripts/manage_access.py`. Every command requires a valid administrator login; passwords are read through hidden terminal prompts, never command-line arguments. It supports account creation, first-owner bootstrap, project-role grants, and admin-only user/project listing. `tests/test_manage_access_cli.py` covers the admin boundary and membership setup with isolated databases. This is an operator CLI, not a public self-service registration endpoint.
+
 ## Remaining release gates
 
 1. The exact merged release must retain passing full regression, dependency audit and secret scan evidence; rerun on each release candidate.
