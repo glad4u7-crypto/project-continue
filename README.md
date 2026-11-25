@@ -19,9 +19,9 @@ Project Continue organizes projects, tasks and dependencies, recommends actionab
 | 11 | AI Brain | Merged; safe provider/advisory architecture and explicit approval gate |
 | 12 | Automation Engine | Merged; schedules, bounded retries, notifications and automated checks |
 | 13 | Memory & Checkpoint Engine | Merged; Colab acceptance evidence recorded; manual dashboard check pending |
-| 14 | Production Deployment & Operations | PR #35 merged; feature CI passed; host-specific acceptance pending |
+| 14 | Production Deployment & Operations | Authentication, signed sessions, project membership enforcement, verified SQLite backup/restore and health diagnostics merged; real-host acceptance remains separate |
 | 15 | Complete Integration | Merged to main; Colab acceptance: 170 focused test executions and 217 full-suite tests passed; manual browser/host gates pending |
-| 16 | Deployment & Final Delivery | Authorization service/UI wiring implemented on main; selected-project checkpoint binding and regression coverage added in review branch; live deployment, host health checks and final sign-off remain gated |
+| 16 | Deployment & Final Delivery | Project-scoped checkpoint isolation merged; provider-neutral Docker/Compose deployment package and CI container smoke test added; live-host, HTTPS, durable-volume and restore evidence remain host-specific |
 
 ## Technology
 
@@ -97,4 +97,5 @@ The Phase 15 Colab acceptance run passed all six focused integration groups (170
 - Phase 16 installation guide: `docs/INSTALLATION-GUIDE.md`
 - Phase 16 backup & recovery guide: `docs/BACKUP-AND-RECOVERY-GUIDE.md`
 - Phase 16 checkpoint instructions: `docs/checkpoints/PC-P16-S001-TO-S008-DEPLOYMENT-FINAL-DELIVERY.md`
+- Container deployment: `docs/CONTAINER-DEPLOYMENT.md`
 - Authorization wiring audit / production release gate: `docs/SECURITY-AUTHORIZATION-WIRING-AUDIT.md`
