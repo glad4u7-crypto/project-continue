@@ -97,7 +97,7 @@ def render_project_authentication() -> bool:
     with st.form("pc_member_login", clear_on_submit=True):
         email = st.text_input("Email", max_chars=320)
         password = st.text_input("Password", type="password", max_chars=1024)
-        submitted = st.form_submit_button("Sign in")
+        submitted = st.form_submit_button("Sign in", type="primary")
     if submitted:
         principal = access.authenticate(email, password)
         if principal is None:
