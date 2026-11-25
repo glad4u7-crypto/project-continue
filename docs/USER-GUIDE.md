@@ -8,9 +8,11 @@ The exact features visible depend on the release and enabled configuration. AI f
 
 ## 2. Sign-in and access
 
-In production, the current application presents an administrator sign-in gate. Use only the account provisioned by the system operator. Sign out from the sidebar when finished.
+In production, the application requires a signed-in administrator by default. The operator may explicitly enable the project-member sign-in flow by setting `AUTHORIZATION_ENFORCED=true`. In that mode, Owner, Editor and Viewer accounts can access only projects where they have membership, with role-specific permissions. Sign out from the sidebar when finished.
 
-**Important current limitation:** the Phase 14 access-control service contains project membership roles, but existing feature pages are not yet comprehensively wired to enforce project membership at every data operation. The current login gate is admin-only; this is not a certified multi-user/tenant application. Keep any deployment private and restricted to the approved operator until end-to-end authorization is completed and independently tested.
+The operator must configure `SESSION_SIGNING_KEY` (at least 32 bytes, stored only in the host secret manager), provision the initial administrator, bootstrap ownership for existing projects, and grant memberships before enabling multi-user access. A successful sign-in does not grant access to every project.
+
+**Release limitation:** service-level authorization wiring is implemented in the repository. Exact-release CI, manual browser checks across two projects/roles, and host-specific configuration are still required before a public multi-user production approval.
 
 Do not share passwords, session tokens, API keys, database files or backup files.
 
@@ -77,6 +79,6 @@ Keep the SQLite database and backups in private storage with restricted filesyst
 ## 11. Current release limitations
 
 - Production hosting/provider and live URL are deployment-specific and are not implied by CI success.
-- Admin-only production login exists; comprehensive multi-user project authorization is not yet certified.
+- Signed-session and project-membership enforcement are implemented; production defaults to admin-only, while multi-user mode is opt-in and still requires exact-release/browser/host acceptance.
 - Host HTTPS, durable volume, secret manager, external backup scheduler, monitoring and restore drill require real-host evidence.
 - GitHub integration is read-only.
