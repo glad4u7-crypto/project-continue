@@ -16,8 +16,13 @@ from services.authorization_context import AuthorizationContext
 @st.cache_resource(show_spinner=False)
 def _access_control():
     key = os.environ.get("SESSION_SIGNING_KEY", "")
-    db = get_project_repository(settings.database_path).database
-    access = AccessControl(db, key)
+    repository = get_project_repository(settings.database_path)
+    db = repository.database
+    if settings.database_backend == "postgresql":
+        from services.postgres_access_control import PostgresAccessControl
+        access = PostgresAccessControl(db, key)
+    else:
+        access = AccessControl(db, key)
     with db.connection() as connection:
         count = connection.execute("SELECT COUNT(*) AS n FROM pc_users").fetchone()["n"]
     if count == 0:
@@ -92,7 +97,7 @@ def render_project_authentication() -> bool:
     with st.form("pc_member_login", clear_on_submit=True):
         email = st.text_input("Email", max_chars=320)
         password = st.text_input("Password", type="password", max_chars=1024)
-        submitted = st.form_submit_button("Sign in", type="primary")
+        submitted = st.form_submit_button("Sign in")
     if submitted:
         principal = access.authenticate(email, password)
         if principal is None:
