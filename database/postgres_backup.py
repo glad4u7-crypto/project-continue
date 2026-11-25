@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any
 
 import psycopg
+from psycopg.rows import dict_row
 from psycopg.conninfo import conninfo_to_dict, make_conninfo
 
 
@@ -60,7 +61,7 @@ def _manifest_path(archive: Path) -> Path:
 
 
 def _database_is_empty(dsn: str) -> bool:
-    with psycopg.connect(dsn) as connection:
+    with psycopg.connect(dsn, row_factory=dict_row) as connection:
         row = connection.execute(
             """SELECT COUNT(*) AS n
                  FROM pg_class c
