@@ -1,9 +1,8 @@
 """PostgreSQL connection foundation.
 
-This module deliberately provides connectivity and transaction primitives only.
-The current ProjectRepository and AccessControl still contain SQLite-specific
-SQL and must not be switched to this backend until their SQL/schema migrations
-and cross-backend acceptance tests are complete.
+The PostgreSQL adapter has separate repository and access-control implementations.
+Runtime selection is explicit and production selection remains blocked until
+application-service and dashboard acceptance are complete.
 """
 from __future__ import annotations
 
