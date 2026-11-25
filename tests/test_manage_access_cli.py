@@ -26,7 +26,7 @@ def provisioned_db(tmp_path, monkeypatch):
 
 
 def test_cli_bootstraps_owner_and_grants_membership(provisioned_db, monkeypatch, capsys):
-    answers = iter(["admin-password-123", "viewer-password-123", "viewer-password-123"])
+    answers = iter(["admin-password-123", "admin-password-123", "admin-password-123", "viewer-password-123", "viewer-password-123"])
     monkeypatch.setattr(manage_access.getpass, "getpass", lambda _prompt: next(answers))
 
     assert manage_access.main([
