@@ -97,28 +97,33 @@ POSTGRES_SCHEMA_STATEMENTS = (
          IF project_a IS NULL OR project_b IS NULL OR project_a <> project_b THEN
            RAISE EXCEPTION 'task dependencies must belong to the same project';
          END IF;
-         WITH RECURSIVE reachable(id) AS (
-           SELECT NEW.depends_on_task_id
-           UNION
-           SELECT d.depends_on_task_id
-             FROM task_dependencies d JOIN reachable r ON d.task_id = r.id
-            WHERE TG_OP <> 'UPDATE'
-               OR (d.task_id, d.depends_on_task_id) <>
-                  (OLD.task_id, OLD.depends_on_task_id)
-         )
-         SELECT EXISTS(SELECT 1 FROM reachable WHERE id = NEW.task_id)
-           INTO has_cycle;
+         IF TG_OP = 'UPDATE' THEN
+           WITH RECURSIVE reachable(id) AS (
+             SELECT NEW.depends_on_task_id
+             UNION
+             SELECT d.depends_on_task_id
+               FROM task_dependencies d JOIN reachable r ON d.task_id = r.id
+              WHERE NOT (d.task_id = OLD.task_id
+                         AND d.depends_on_task_id = OLD.depends_on_task_id)
+           )
+           SELECT EXISTS(SELECT 1 FROM reachable WHERE id = NEW.task_id)
+             INTO has_cycle;
+         ELSE
+           WITH RECURSIVE reachable(id) AS (
+             SELECT NEW.depends_on_task_id
+             UNION
+             SELECT d.depends_on_task_id
+               FROM task_dependencies d JOIN reachable r ON d.task_id = r.id
+           )
+           SELECT EXISTS(SELECT 1 FROM reachable WHERE id = NEW.task_id)
+             INTO has_cycle;
+         END IF;
          IF has_cycle THEN
            RAISE EXCEPTION 'task dependency would create a cycle';
          END IF;
          RETURN NEW;
        END
        $$""",
-    """DROP TRIGGER IF EXISTS trg_pc_task_dependency_guard ON task_dependencies""",
-    """CREATE TRIGGER trg_pc_task_dependency_guard
-       BEFORE INSERT OR UPDATE OF task_id, depends_on_task_id
-       ON task_dependencies FOR EACH ROW
-       EXECUTE FUNCTION pc_guard_task_dependency()""",
     """CREATE OR REPLACE FUNCTION pc_guard_activity_project() RETURNS trigger
        LANGUAGE plpgsql AS $$
        DECLARE task_project TEXT;
