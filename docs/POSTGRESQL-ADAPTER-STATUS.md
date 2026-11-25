@@ -10,6 +10,21 @@ Branch: `feature/postgresql-database-adapter`
 - Added `psycopg[binary]>=3.2,<4` to runtime dependencies.
 - Added isolated constructor/validation tests.
 
+
+- Added `database/postgres_schema.py` with a separate idempotent initial schema
+  for projects, tasks, dependencies, activity, users, memberships, audit events,
+  and login attempts. PostgreSQL trigger guards preserve dependency-cycle,
+  same-project activity/dependency, and immutable-audit invariants.
+- Added static schema coverage tests in `tests/test_postgres_schema.py`.
+
+## Verification status
+
+The branch has been reviewed through GitHub file retrieval and commit comparison.
+No PostgreSQL server/DSN is configured in this task, so neither a live schema
+initialization nor PostgreSQL integration tests have been run. Static tests
+have been added but are not represented as passing until executed in CI or an
+isolated test environment.
+
 ## Deliberate safety boundary
 
 This is **not yet a drop-in replacement** for the current SQLite `Database`.
