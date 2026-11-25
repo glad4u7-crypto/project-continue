@@ -105,7 +105,7 @@ def main() -> int:
 
                     page.get_by_text("Create task", exact=False).first.click()
                     page.get_by_label("Task title").fill(task_name)
-                    page.get_by_label("Description").fill("Disposable task used only by CI.")
+                    page.get_by_role("group").filter(has_text="Create task").get_by_label("Description").fill("Disposable task used only by CI.")
                     page.get_by_role("button", name="Create task").click()
                     page.get_by_text(task_name, exact=True).wait_for(timeout=20000)
 
