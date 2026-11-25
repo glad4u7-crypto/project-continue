@@ -22,6 +22,13 @@ Branch: `feature/postgresql-database-adapter`
   transactions, recursive dependency checks, and `RETURNING id` for activity.
 - Added contract/source-level checks in `tests/test_postgres_repository.py`.
 
+- Added `services/postgres_access_control.py` for password hashing,
+  login throttling, signed sessions, project membership checks and immutable
+  audit-event writes using PostgreSQL SQL.
+- Added `tests/test_postgres_access_control.py` contract checks.
+- Activated the PostgreSQL task-dependency integrity trigger. The schema now
+  wires the previously defined dependency guard function to INSERT/UPDATE.
+
 ## Verification status
 
 The branch has been reviewed through GitHub file retrieval and commit comparison.
