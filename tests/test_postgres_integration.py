@@ -58,6 +58,14 @@ def test_postgres_repository_crud_dependencies_and_database_guards(postgres_env)
     assert repo.list_dependencies(f"pgtest-{suffix}-a") == [f"pgtest-{suffix}-b"]
     with pytest.raises(ValueError, match="cycle"):
         repo.add_dependency(f"pgtest-{suffix}-c", f"pgtest-{suffix}-a")
+    # Bypass repository validation and prove the PostgreSQL trigger rejects cycles.
+    with pytest.raises(psycopg.errors.RaiseException, match="cycle"):
+        with database.transaction() as connection:
+            connection.execute(
+                "INSERT INTO task_dependencies(task_id, depends_on_task_id, created_at) "
+                "VALUES (%s, %s, %s)",
+                (f"pgtest-{suffix}-c", f"pgtest-{suffix}-a", "test"),
+            )
 
     repo.record_activity(project_id, "integration.test", task_id=f"pgtest-{suffix}-a",
                          payload={"source": "pytest"})
@@ -75,6 +83,13 @@ def test_postgres_repository_crud_dependencies_and_database_guards(postgres_env)
                 "INSERT INTO task_dependencies(task_id, depends_on_task_id, created_at) "
                 "VALUES (%s, %s, %s)",
                 (f"pgtest-{suffix}-a", f"pgtest-{suffix}-d", "test"),
+            )
+    with pytest.raises(psycopg.errors.RaiseException, match="same project"):
+        with database.transaction() as connection:
+            connection.execute(
+                "INSERT INTO activity_history(project_id, task_id, event_type, payload_json, created_at) "
+                "VALUES (%s, %s, %s, %s, %s)",
+                (other_project_id, f"pgtest-{suffix}-a", "invalid", "{}", "test"),
             )
 
 
