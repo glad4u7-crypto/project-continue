@@ -22,6 +22,19 @@ from psycopg.conninfo import conninfo_to_dict, make_conninfo
 
 
 def _tool(name: str) -> str:
+    # CI and operators may pin the client major to the target server major.
+    # Debian/Ubuntu keep versioned binaries outside PATH (for example
+    # /usr/lib/postgresql/16/bin/pg_restore); prefer that exact binary when set.
+    client_major = os.getenv("PG_CLIENT_MAJOR", "").strip()
+    if client_major:
+        if not client_major.isdigit():
+            raise ValueError("PG_CLIENT_MAJOR must contain a numeric PostgreSQL major version")
+        versioned = Path("/usr/lib/postgresql") / client_major / "bin" / name
+        if versioned.is_file():
+            return str(versioned)
+        raise RuntimeError(
+            f"PostgreSQL {client_major} client tool not found: {versioned}"
+        )
     path = shutil.which(name)
     if not path:
         raise RuntimeError(f"Required PostgreSQL client tool not found: {name}")
