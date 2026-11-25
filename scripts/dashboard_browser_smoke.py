@@ -165,14 +165,20 @@ def main() -> int:
                     session_summary = f"Browser session {suffix}"
                     page.get_by_label("Session summary").fill(session_summary)
                     page.get_by_role("button", name="Record session").click()
-                    page.get_by_text("Session history and decisions", exact=True).click()
                     decision_title = f"Browser decision {suffix}"
-                    page.get_by_label("Decision title").fill(decision_title)
+                    decision_title_input = page.get_by_label("Decision title")
+                    if not decision_title_input.is_visible():
+                        page.get_by_text("Session history and decisions", exact=True).click()
+                    decision_title_input.wait_for(state="visible", timeout=15000)
+                    decision_title_input.fill(decision_title)
                     page.get_by_label("Context").fill("Synthetic browser acceptance context")
                     page.get_by_label("Decision").fill("Keep the isolated workflow")
                     page.get_by_label("Rationale").fill("Verify persistence without touching user data")
                     page.get_by_role("button", name="Record decision").click()
-                    page.get_by_text(decision_title, exact=True).wait_for(timeout=15000)
+                    decision_row = page.get_by_text(decision_title, exact=True)
+                    if not decision_row.is_visible():
+                        page.get_by_text("Session history and decisions", exact=True).click()
+                    decision_row.wait_for(state="visible", timeout=15000)
 
                     # Exercise archive -> archived filter -> restore -> active filter.
                     page.get_by_role("button", name="Archive project").click()
