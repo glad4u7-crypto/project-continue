@@ -27,6 +27,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
+      PG_CLIENT_MAJOR: "16"
       TEST_POSTGRES_DSN: postgresql://postgres:postgres@localhost:5432/project_continue_test
       TEST_POSTGRES_MIGRATION_DSN: postgresql://postgres:postgres@localhost:5432/project_continue_migration_test
       TEST_POSTGRES_BACKUP_DSN: postgresql://postgres:postgres@localhost:5432/project_continue_backup_test
