@@ -1,0 +1,42 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: project-continue:local
+    container_name: project-continue
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      APP_ENV: production
+      LOG_LEVEL: INFO
+      PROJECT_CONTINUE_DB: /var/lib/project-continue/project_continue.sqlite3
+      STREAMLIT_SERVER_ENABLE_CORS: "false"
+      STREAMLIT_SERVER_ENABLE_XSRF_PROTECTION: "true"
+    ports:
+      # Keep the app private; terminate HTTPS at a trusted reverse proxy.
+      - "127.0.0.1:8501:8501"
+    volumes:
+      - project_continue_data:/var/lib/project-continue
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health', timeout=3)"
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+volumes:
+  project_continue_data:
+    name: project_continue_data
