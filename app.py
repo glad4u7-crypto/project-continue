@@ -9,12 +9,13 @@ from ui.project_management import render_project_management
 from ui.ai_brain import render_ai_brain
 from ui.automation import render_automation
 from ui.memory_checkpoint import render_memory_checkpoint
+from ui.self_check import render_self_check
 
 st.set_page_config(page_title=settings.app_name, page_icon="🧭", layout="wide")
 
 # Initialize the shared database/repository once per configured path. All UI
 # modules and authentication borrow this cached resource on every rerun.
-get_project_repository(settings.database_path)
+repository = get_project_repository(settings.database_path)
 
 # Development/Colab behavior is unchanged. Production fails closed behind login.
 membership_enforced = os.environ.get("AUTHORIZATION_ENFORCED", "").strip().lower() in {"1", "true", "yes"}
@@ -29,6 +30,8 @@ elif membership_enforced and not render_project_authentication():
 
 authorization_context = current_authorization_context() if (settings.app_env == "production" or membership_enforced) else None
 render_project_management(authorization_context)
+if authorization_context is None or authorization_context.principal.get("role") == "admin":
+    render_self_check(repository, settings)
 render_ai_brain(authorization_context)
 render_automation(authorization_context)
 render_memory_checkpoint(authorization_context)
