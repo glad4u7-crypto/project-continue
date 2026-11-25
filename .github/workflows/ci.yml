@@ -38,6 +38,39 @@ jobs:
           pip-audit -r requirements.txt
       - name: Compile Python files
         run: python -m compileall -q .
+      - name: Build production container
+        run: docker build --pull --tag project-continue:ci .
+      - name: Smoke test production container
+        shell: bash
+        run: |
+          set -euo pipefail
+          signing_key="$(python -c 'import secrets; print(secrets.token_urlsafe(48))')"
+          docker volume create project-continue-ci-data >/dev/null
+          cleanup() {
+            docker rm --force project-continue-ci >/dev/null 2>&1 || true
+            docker volume rm project-continue-ci-data >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+          docker run --detach --name project-continue-ci \
+            --publish 127.0.0.1:18501:8501 \
+            --mount type=volume,source=project-continue-ci-data,target=/var/lib/project-continue \
+            --env APP_ENV=production \
+            --env LOG_LEVEL=INFO \
+            --env PROJECT_CONTINUE_DB=/var/lib/project-continue/project_continue.sqlite3 \
+            --env SESSION_SIGNING_KEY="$signing_key" \
+            --env INITIAL_ADMIN_EMAIL=ci@example.invalid \
+            --env INITIAL_ADMIN_PASSWORD='CI-only-password-123!' \
+            project-continue:ci
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:18501/_stcore/health >/dev/null; then
+              echo "CONTAINER HEALTH: PASS"
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs project-continue-ci
+          echo "CONTAINER HEALTH: FAIL"
+          exit 1
       - name: Run focused test categories
         run: |
           python -m pytest -m unit -q
