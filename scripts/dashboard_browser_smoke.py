@@ -190,15 +190,13 @@ def main() -> int:
                     page.get_by_role("button", name="Archive project").click()
                     status_filter = page.get_by_role("combobox", name="Project status")
                     status_filter.click()
-                    status_filter.press("End")
-                    status_filter.press("Enter")
+                    page.get_by_role("option", name="archived", exact=True).click()
                     page.get_by_text(project_name, exact=True).first.wait_for(timeout=15000)
                     page.get_by_role("button", name="Open details").click()
                     page.get_by_role("button", name="Restore project").click()
                     status_filter = page.get_by_role("combobox", name="Project status")
                     status_filter.click()
-                    status_filter.press("Home")
-                    status_filter.press("Enter")
+                    page.get_by_role("option", name="active", exact=True).click()
                     page.get_by_text(project_name, exact=True).first.wait_for(timeout=15000)
 
                     # Diagnostics remain read-only and are tested after the CRUD flow.
