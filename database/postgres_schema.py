@@ -8,12 +8,14 @@ from __future__ import annotations
 
 from database.postgres_connection import PostgresDatabase
 
+POSTGRES_SCHEMA_VERSION = 2
+
 POSTGRES_SCHEMA_STATEMENTS = (
     """CREATE TABLE IF NOT EXISTS pc_schema_version (
         id SMALLINT PRIMARY KEY CHECK (id = 1),
         version INTEGER NOT NULL
     )""",
-    """INSERT INTO pc_schema_version (id, version) VALUES (1, 1)
+    """INSERT INTO pc_schema_version (id, version) VALUES (1, 2)
        ON CONFLICT (id) DO NOTHING""",
     """CREATE TABLE IF NOT EXISTS projects (
         id TEXT PRIMARY KEY,
@@ -168,10 +170,11 @@ def initialize_postgres_schema(database: PostgresDatabase) -> None:
         row = connection.execute(
             "SELECT version FROM pc_schema_version WHERE id = 1"
         ).fetchone()
-        if row is None or row["version"] > 1:
+        if row is None or row["version"] > POSTGRES_SCHEMA_VERSION:
             raise RuntimeError(
                 "PostgreSQL schema version is newer than this application supports"
             )
         connection.execute(
-            "UPDATE pc_schema_version SET version = 1 WHERE id = 1"
+            "UPDATE pc_schema_version SET version = %s WHERE id = 1",
+            (POSTGRES_SCHEMA_VERSION,),
         )
