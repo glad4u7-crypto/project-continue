@@ -42,3 +42,21 @@ Keep backups outside the repository and outside the live database directory. Pro
 - Off-site replication and encryption-at-rest must be provided by the deployment/storage platform.
 - A successful SQLite integrity check does not prove that a backup is recent or that every business-level record is correct.
 - This repository does not currently implement a one-click restore UI.
+
+
+## Runtime backend selection (Part 1)
+
+SQLite remains the default and is selected when `PROJECT_CONTINUE_DB_BACKEND` is unset.
+
+For an isolated PostgreSQL environment, explicitly set:
+
+```bash
+PROJECT_CONTINUE_DB_BACKEND=postgresql
+PROJECT_CONTINUE_POSTGRES_DSN='postgresql://USER:PASSWORD@HOST:5432/DATABASE'
+```
+
+Keep the DSN in the host secret manager or an untracked environment file. Never commit it.
+The runtime selector only chooses a backend; it does not migrate data, copy SQLite records,
+create backups, or change a running deployment. Run PostgreSQL integration and migration
+acceptance against a disposable database before any production decision. The current live
+application remains on SQLite until all application services and acceptance gates pass.
