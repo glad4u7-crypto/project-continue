@@ -82,8 +82,12 @@ class MemoryCheckpointEngine:
                       (self._id("cp"),pid,cid,label,raw,digest,self.clock()))
         return self.get_checkpoint(cid)
     @requires_project("read", resource_arg="cid", resolver="get_checkpoint")
-    def get_checkpoint(self,cid):
-        with self.db.connection() as c:row=c.execute("SELECT * FROM project_checkpoints WHERE checkpoint_id=?",(cid,)).fetchone()
+    def get_checkpoint(self,cid,*,project_id=None):
+        with self.db.connection() as c:
+            if project_id is None:
+                row=c.execute("SELECT * FROM project_checkpoints WHERE checkpoint_id=?",(cid,)).fetchone()
+            else:
+                row=c.execute("SELECT * FROM project_checkpoints WHERE checkpoint_id=? AND project_id=?",(cid,project_id)).fetchone()
         if row is None:return None
         item=dict(row);raw=item["payload_json"]
         if hashlib.sha256(raw.encode()).hexdigest()!=item["payload_sha256"]:raise MemoryCheckpointError("Checkpoint integrity verification failed")
@@ -152,9 +156,9 @@ class MemoryCheckpointEngine:
         if verb=="checkpoint" and len(parts)!=2:raise MemoryCheckpointError("checkpoint requires a label")
         return {"command":verb,"argument":parts[1] if len(parts)==2 else None}
     # PC-P13-S007
-    def recover_state(self,cid,*,apply=False):
+    def recover_state(self,cid,*,apply=False,project_id=None):
         if not isinstance(apply,bool):raise MemoryCheckpointError("apply must be boolean")
-        cp=self.get_checkpoint(cid)
+        cp=self.get_checkpoint(cid,project_id=project_id)
         if cp is None:raise KeyError(cid)
         payload=cp["payload"]
         if payload.get("schema_version")!=1 or not isinstance(payload.get("tasks"),list):raise MemoryCheckpointError("Unsupported checkpoint payload")
@@ -174,12 +178,12 @@ class MemoryCheckpointEngine:
                     try:self.repository.add_dependency(dep["task_id"],dep["depends_on_task_id"])
                     except Exception:pass
         return {"checkpoint_id":cid,"verified":True,"apply":apply,"missing_task_ids":[t["id"] for t in missing],"restored_task_ids":restored,"skipped_existing_count":len(existing.intersection(t["id"] for t in tasks))}
-    def resume(self,command):
+    def resume(self,command,*,project_id=None):
         parsed=self.parse_resume_command(command);verb,arg=parsed["command"],parsed["argument"]
         if verb=="resume":
-            cp=self.get_checkpoint(arg)
+            cp=self.get_checkpoint(arg,project_id=project_id)
             if cp is None:raise KeyError(arg)
-            return {"command":verb,"checkpoint":cp,"recovery_preview":self.recover_state(arg,apply=False)}
+            return {"command":verb,"checkpoint":cp,"recovery_preview":self.recover_state(arg,apply=False,project_id=project_id)}
         if verb in {"status","handoff"} and self.authorization_context is not None:
             self.authorization_context.require_admin()
         if verb=="status":return {"command":verb,"projects":len(self.repository.list_projects())}
