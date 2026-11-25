@@ -192,3 +192,29 @@ Phase 10 did not establish public multi-user production certification. Phase 14 
 - Final Colab check: clean working tree; no commit/push/merge; no runtime reboot; no Streamlit dashboard restart.
 - Evidence is user-supplied Colab output on the stated baseline. It does not substitute for GitHub PR CI, post-merge CI, manual browser acceptance or Phase 14 host-specific acceptance.
 - Do not reboot Colab or stop/restart the running dashboard for follow-up checks.
+
+## Repository-only continuation update — 2026-11-25
+
+This section supersedes older Phase 14/16 statements above where they say project membership authorization is not yet wired. The older Colab/runtime instructions are historical acceptance records, not the next task for this repository-only continuation.
+
+- Canonical repository: `glad4u7-crypto/project-continue`.
+- Current `main` baseline: `20bc8759bbf22effb02a56abfd10c9fdcb3d52d9`.
+- Authorization service/UI wiring is present on `main` from `18d5b4320163cd17bbb01f9b610887ed4d3d9fdc`.
+- Current follow-up branch: `fix/phase16-auth-checkpoint-docs`.
+- Pull request: [#45 — selected-project checkpoint isolation and release-documentation reconciliation](https://github.com/glad4u7-crypto/project-continue/pull/45).
+- Candidate head at checkpoint update: `3964d81ded8f35019f42fc07121e6d534f07dffe`; compare result: 10 commits ahead of main, no divergence.
+- PR #45 adds selected-project scoping to checkpoint lookup, recovery preview/apply and resume; clears memory/checkpoint UI state when project or signed-in principal changes; adds a cross-project checkpoint regression test; and refreshes stale Phase 14/16 security documentation.
+- PR #45 is open and not merged. GitHub Actions runs for Project Continue CI, Phase 13, Phase 14 and Cloud Acceptance Lab were observed in progress; no PASS is claimed until the latest head SHA checks complete.
+- PR #41 is based on a pre-authorization branch and must not be merged wholesale. Its checkpoint-scoping intent is being implemented on top of current main in PR #45.
+- PR #44 is a separate draft PostgreSQL adapter/migration proposal. The application remains SQLite; do not switch databases or merge that proposal without its own acceptance.
+- No open repository issues were found at the time of this update.
+
+### Remaining repository / release work
+
+1. Complete PR #45 exact-head CI and review; merge only after required checks and review are successful.
+2. Close or supersede stale PR #41 after PR #45's checkpoint fix is accepted.
+3. Keep PR #44 separate until PostgreSQL integration, migration and backup/restore CI evidence is accepted and a database change is explicitly selected.
+4. Phase 16 provider-specific preparation, deployment, production health and final sign-off remain blocked until the operator selects a host and supplies the required deployment/secret/storage decisions. Do not invent a provider or claim a live deployment.
+5. Keep the GitHub repository work separate from Colab. Do not use Colab as the next execution environment for this continuation.
+
+**Current status:** repository code/documentation follow-up is in PR #45; final merge and external host acceptance are not yet complete.
