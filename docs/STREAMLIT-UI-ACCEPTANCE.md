@@ -1,67 +1,47 @@
-# Streamlit UI — Manual End-to-End Acceptance
+# Streamlit UI — Automated and Environment Acceptance
 
-**Purpose:** verify the real Streamlit dashboard in the intended Google Colab/browser environment. Automated AppTest startup coverage does not replace this manual audit.
+**Purpose:** distinguish repeatable CI acceptance from checks that require a specifically selected deployment host. CI browser tests use a disposable SQLite database and must never touch a user's live database or running dashboard.
 
-## Checkpoint register
+## Automated CI acceptance
 
-| Checkpoint | Manual workflow | Required evidence |
+The Dashboard Browser Acceptance workflow launches Streamlit on an ephemeral local port and uses Chromium against a temporary database. It currently exercises:
+
+- Dashboard hydration and required sections.
+- Project create, search, open, archive and restore.
+- Task create, edit, status change and persistence after page reload.
+- Mock AI suggestion with explicit approval.
+- Automation schedule create and pause.
+- Project memory save.
+- Checkpoint create and preview-only recovery.
+- Session history and decision recording.
+- Read-only self-check diagnostics.
+
+The workflow must pass on the exact pull-request head commit. Its success is evidence for the workflows above only; it is not evidence that an external Colab/production host is configured or deployed.
+
+Other CI workflows cover Python 3.11/3.13 regression, security/operations, container build and smoke checks, and isolated PostgreSQL integration. Report skipped tests separately; never count them as passing.
+
+## Acceptance boundaries still requiring a selected host
+
+| Gate | Required evidence | Current interpretation |
 |---|---|---|
-| PC-UI-001 | Start and stop Streamlit app | App URL opens; dashboard renders; process stops cleanly |
-| PC-UI-002 | Project create, search, edit, archive and restore | Each action visible after rerun; filters and empty state behave |
-| PC-UI-003 | Task create, edit, status, priority and assignment | Values persist and are shown correctly |
-| PC-UI-004 | Dependency add/remove and blocked completion | Cycle/cross-project errors are safe; dependent task cannot complete early |
-| PC-UI-005 | GitHub integration panel | Configured repository connection check succeeds or safe actionable error appears |
-| PC-UI-006 | Restart persistence | Project/task data remains after stopping and restarting Streamlit |
-| PC-UI-007 | Backup and restore | Backup verifies; restored database has expected records and integrity |
-| PC-UI-008 | Error, empty and loading states | Empty registry, invalid input, API failure and loading feedback render safely |
+| Role/authorization matrix | Two synthetic users/projects; prove cross-project reads and writes are denied | Not covered by the current Chromium smoke workflow |
+| Dependency UI edge cases | Add/remove, cycle rejection, cross-project rejection and blocked completion in the rendered UI | Service-level coverage is not UI acceptance |
+| GitHub integration panel/API | Real configured repository connection or safe actionable failure on the selected host | CI configuration is not live integration verification |
+| Deployment/release identity | Exact deployed commit SHA matches the approved release SHA | Cannot be inferred from GitHub CI |
+| Host operations | HTTPS, secret management, persistent storage, scheduler and off-host backup evidence | Requires the chosen host/operator environment |
+| Restore drill | Restore an isolated backup copy and verify records/integrity without overwriting live data | Production restore is not implied by unit/CI tests |
 
-## Colab preparation
+Mark unavailable host gates BLOCKED — host evidence not supplied, not PASS. These are deployment/operator acceptance gates; they are not instructions for the user to perform manual QA.
 
-Sync to the exact main SHA first. Keep the existing user database safe; use a separate acceptance database for destructive experiments.
+## Safety requirements
 
-```bash
-cd /content/project-continue
-git fetch origin
-git checkout main
-git pull --ff-only origin main
-git rev-parse HEAD
-python -m pip install -r requirements.txt
-python -m compileall -q .
-python -m pytest -q
-```
+- Do not reboot or restart the existing Colab runtime or stop/restart an already-running Streamlit dashboard without explicit authorization.
+- Do not run destructive acceptance against the live database.
+- Use disposable test databases and isolated backup/restore copies.
+- Do not modify existing backup folders; new backups must use the project's single approved destination.
+- Do not expose secrets, database paths, personal project/task contents, or unredacted diagnostic artifacts.
+- Do not claim a release is production-ready while any required host gate remains blocked.
 
-Set the app database path to a dedicated test file before launching:
+## Release decision
 
-```bash
-export APP_ENV=test
-export PROJECT_CONTINUE_DB=/content/project-continue/.data/ui-acceptance.sqlite3
-mkdir -p .data
-streamlit run app.py --server.address 0.0.0.0 --server.port 8501
-```
-
-Open the forwarded Streamlit URL from Colab. Perform the eight workflows above. For persistence, stop Streamlit with Ctrl+C and start it again using the same database path. For backup/restore, use a separate copy and never overwrite the original user database.
-
-## Evidence format
-
-For each checkpoint, capture:
-- Checkpoint ID.
-- Exact `git rev-parse HEAD` SHA and Python version.
-- Action performed and visible result.
-- Any error text and whether it was expected/safely handled.
-- PASS or FAIL. Do not mark a checkpoint PASS from source inspection alone.
-
-Final sentinel after all eight manual checks:
-
-```text
-PC-UI-001: PASS
-PC-UI-002: PASS
-PC-UI-003: PASS
-PC-UI-004: PASS
-PC-UI-005: PASS
-PC-UI-006: PASS
-PC-UI-007: PASS
-PC-UI-008: PASS
-STREAMLIT UI END-TO-END ACCEPTANCE: PASS
-```
-
-Do not print the final sentinel unless all eight checkpoints have actually passed.
+A green CI run establishes code-level acceptance for the automated coverage listed above. A release may be called production-ready only after the selected host's deployment identity, security, persistence, integration, backup and restore evidence has been recorded and all required acceptance gates are satisfied.
