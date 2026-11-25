@@ -1,7 +1,7 @@
 """Validated application configuration loaded from environment variables."""
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Mapping
 
@@ -13,6 +13,7 @@ load_dotenv()
 
 _ALLOWED_ENVIRONMENTS = frozenset({"development", "test", "production"})
 _ALLOWED_LOG_LEVELS = frozenset({"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"})
+_ALLOWED_DATABASE_BACKENDS = frozenset({"sqlite", "postgresql"})
 _DEFAULT_DATABASE_PATH = ".data/project_continue.sqlite3"
 
 
@@ -27,6 +28,8 @@ class Settings:
     github_token_configured: bool = False
     session_signing_key_configured: bool = False
     database_path: str = _DEFAULT_DATABASE_PATH
+    database_backend: str = "sqlite"
+    postgres_dsn: str = field(default="", repr=False)
 
     @classmethod
     def from_env(cls, environ: Mapping[str, str] | None = None) -> "Settings":
@@ -43,6 +46,8 @@ class Settings:
             raise ConfigurationError("PROJECT_CONTINUE_DB must be a filesystem path")
         database_path = raw_database_path.strip()
         expanded_database_path = Path(database_path).expanduser()
+        database_backend = source.get("PROJECT_CONTINUE_DB_BACKEND", "sqlite").strip().lower()
+        postgres_dsn = source.get("PROJECT_CONTINUE_POSTGRES_DSN", "").strip()
 
         if not app_name:
             raise ConfigurationError("APP_NAME must not be empty")
@@ -52,12 +57,22 @@ class Settings:
             raise ConfigurationError("APP_ENV must be development, test, or production")
         if log_level not in _ALLOWED_LOG_LEVELS:
             raise ConfigurationError("LOG_LEVEL must be a standard Python logging level")
+        if database_backend not in _ALLOWED_DATABASE_BACKENDS:
+            raise ConfigurationError("PROJECT_CONTINUE_DB_BACKEND must be sqlite or postgresql")
         if not database_path or "\x00" in database_path:
             raise ConfigurationError("PROJECT_CONTINUE_DB must be a valid non-empty path")
+        if database_backend == "postgresql" and app_env == "production":
+            raise ConfigurationError(
+                "PostgreSQL production selection is blocked until full application acceptance passes"
+            )
+        if database_backend == "postgresql" and not postgres_dsn:
+            raise ConfigurationError(
+                "PROJECT_CONTINUE_POSTGRES_DSN is required when PostgreSQL is selected"
+            )
         if app_env == "production":
             if log_level == "DEBUG":
                 raise ConfigurationError("LOG_LEVEL=DEBUG is not allowed in production")
-            if not expanded_database_path.is_absolute():
+            if database_backend == "sqlite" and not expanded_database_path.is_absolute():
                 raise ConfigurationError(
                     "PROJECT_CONTINUE_DB must be an absolute path in production"
                 )
@@ -79,6 +94,8 @@ class Settings:
             github_token_configured=github_token_configured,
             session_signing_key_configured=len(session_signing_key.encode("utf-8")) >= 32,
             database_path=str(expanded_database_path),
+            database_backend=database_backend,
+            postgres_dsn=postgres_dsn,
         )
 
 

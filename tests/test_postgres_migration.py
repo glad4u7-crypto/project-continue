@@ -70,3 +70,44 @@ def test_sqlite_to_postgres_migration_verifies_all_rows(tmp_path):
         assert report["tables"]["tasks"]["rows"] == 2
     finally:
         source.close()
+
+
+@pytest.mark.integration
+def test_sqlite_to_postgres_migration_rolls_back_target_on_verification_failure(
+    tmp_path, monkeypatch
+):
+    """A failed post-copy checksum must leave every target data table empty."""
+    dsn = os.getenv("TEST_POSTGRES_ROLLBACK_DSN")
+    if not dsn:
+        pytest.skip("TEST_POSTGRES_ROLLBACK_DSN is not configured")
+
+    import database.postgres_migration as migration
+    from database.postgres_connection import PostgresDatabase
+
+    source_path = tmp_path / "source-rollback.sqlite3"
+    source = _make_source_database(source_path)
+    original_checksum = migration._checksum
+    calls = {"count": 0}
+
+    def fail_first_target_checksum(rows):
+        calls["count"] += 1
+        # The first eight calls build the source report; call nine verifies
+        # the first target table and deliberately simulates a mismatch.
+        if calls["count"] == 9:
+            return "forced-checksum-mismatch"
+        return original_checksum(rows)
+
+    monkeypatch.setattr(migration, "_checksum", fail_first_target_checksum)
+    try:
+        with pytest.raises(RuntimeError, match="verification failed"):
+            migrate_sqlite_to_postgres(source_path, dsn, dry_run=False)
+    finally:
+        source.close()
+
+    target = PostgresDatabase(dsn)
+    with target.connection() as connection:
+        for table in migration._TABLES:
+            count = connection.execute(
+                f"SELECT COUNT(*) AS n FROM {table}"
+            ).fetchone()["n"]
+            assert count == 0, f"{table} retained rows after migration rollback"

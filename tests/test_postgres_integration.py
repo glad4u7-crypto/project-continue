@@ -133,3 +133,17 @@ def test_postgres_access_control_sessions_membership_and_immutable_audit(postgre
                 "UPDATE pc_audit_events SET outcome = 'tampered' WHERE id = %s",
                 (events[0]["id"],),
             )
+
+
+def test_postgres_transaction_rolls_back_all_writes_on_exception(postgres_env):
+    database, repo, project_id, _other_project_id, suffix, _psycopg = postgres_env
+    transient_id = f"pgtest-rollback-{suffix}"
+    with pytest.raises(RuntimeError, match="force rollback"):
+        with database.transaction() as connection:
+            connection.execute(
+                "INSERT INTO projects(id,name,description,created_at,updated_at) "
+                "VALUES (%s,%s,%s,%s,%s)",
+                (transient_id, f"Rollback {suffix}", "", "test", "test"),
+            )
+            raise RuntimeError("force rollback")
+    assert repo.get_project(transient_id) is None

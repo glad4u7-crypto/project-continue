@@ -104,3 +104,36 @@ def test_session_signing_key_is_never_exposed_in_settings_repr():
     })
     assert configured.session_signing_key_configured is True
     assert "sensitive-signing-key-value" not in repr(configured)
+
+
+def test_postgresql_backend_requires_dsn():
+    with pytest.raises(ConfigurationError, match="POSTGRES_DSN"):
+        Settings.from_env({"PROJECT_CONTINUE_DB_BACKEND": "postgresql"})
+
+
+def test_postgresql_backend_accepts_explicit_dsn_without_exposing_it():
+    dsn = "postgresql://user:secret@localhost/project_continue"
+    configured = Settings.from_env({
+        "APP_ENV": "test",
+        "PROJECT_CONTINUE_DB_BACKEND": "postgresql",
+        "PROJECT_CONTINUE_POSTGRES_DSN": dsn,
+    })
+    assert configured.database_backend == "postgresql"
+    assert configured.postgres_dsn == dsn
+    assert "secret" not in repr(configured)
+
+
+def test_unknown_database_backend_is_rejected():
+    with pytest.raises(ConfigurationError, match="sqlite or postgresql"):
+        Settings.from_env({"PROJECT_CONTINUE_DB_BACKEND": "mysql"})
+
+
+def test_postgresql_backend_is_blocked_in_production_until_full_acceptance():
+    with pytest.raises(ConfigurationError, match="full application acceptance"):
+        Settings.from_env({
+            "APP_ENV": "production",
+            "PROJECT_CONTINUE_DB_BACKEND": "postgresql",
+            "PROJECT_CONTINUE_POSTGRES_DSN": "postgresql://user:pass@localhost/db",
+            "LOG_LEVEL": "INFO",
+            "SESSION_SIGNING_KEY": "s" * 48,
+        })

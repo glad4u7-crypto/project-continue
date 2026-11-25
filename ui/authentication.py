@@ -16,8 +16,13 @@ from services.authorization_context import AuthorizationContext
 @st.cache_resource(show_spinner=False)
 def _access_control():
     key = os.environ.get("SESSION_SIGNING_KEY", "")
-    db = get_project_repository(settings.database_path).database
-    access = AccessControl(db, key)
+    repository = get_project_repository(settings.database_path)
+    db = repository.database
+    if settings.database_backend == "postgresql":
+        from services.postgres_access_control import PostgresAccessControl
+        access = PostgresAccessControl(db, key)
+    else:
+        access = AccessControl(db, key)
     with db.connection() as connection:
         count = connection.execute("SELECT COUNT(*) AS n FROM pc_users").fetchone()["n"]
     if count == 0:
