@@ -198,16 +198,16 @@ Phase 10 did not establish public multi-user production certification. Phase 14 
 This section supersedes older Phase 14/16 statements above where they say project membership authorization is not yet wired. The older Colab/runtime instructions are historical acceptance records, not the next task for this repository-only continuation.
 
 - Canonical repository: `glad4u7-crypto/project-continue`.
-- Current `main` baseline: `20bc8759bbf22effb02a56abfd10c9fdcb3d52d9`.
+- Current `main` baseline after PR #45 and PR #44: `510d90d8f7981f18d0957cf646db62f117f84ed0`.
 - Authorization service/UI wiring is present on `main` from `18d5b4320163cd17bbb01f9b610887ed4d3d9fdc`.
-- Current follow-up branch: `fix/phase16-auth-checkpoint-docs`.
+- Follow-up branches `fix/phase16-auth-checkpoint-docs` and `feature/postgresql-database-adapter` have been merged; no active follow-up branch is required.
 - PR #45 — selected-project checkpoint isolation and release-documentation reconciliation: MERGED as `ed702bea6ef782cd4b20ff7d6c8047f1545c6d1d`.
 - Candidate branch is based directly on current `main` with no divergence; the pull request page records the latest head SHA and commit count.
 - PR #45 adds selected-project scoping to checkpoint lookup, recovery preview/apply and resume; clears memory/checkpoint UI state when project or signed-in principal changes; adds a cross-project checkpoint regression test; and refreshes stale Phase 14/16 security documentation.
 - PR #45 exact head `d97527853a2e75d35996e6dec3ace201231bab91` passed Project Continue CI (run #548), Phase 13 (run #91), Phase 14 (run #87; Python 3.11 and 3.13), and Cloud Acceptance Lab (run #99; Python 3.11 and 3.13), then merged as `ed702bea6ef782cd4b20ff7d6c8047f1545c6d1d`.
-- PR #41 is based on a pre-authorization branch and must not be merged wholesale. Its checkpoint-scoping intent is being implemented on top of current main in PR #45.
+- PR #41 was closed as superseded after the equivalent checkpoint-scope fix landed through PR #45.
 - PR #44 PostgreSQL adapter/migration tooling passed PostgreSQL integration #35, Project Continue CI #542, Phase 13 #85, Phase 14 #81 and Cloud Acceptance Lab #93 on candidate `a4d03397e25d161bf21e4820f7e88d668b0a8bec`; merged as `510d90d8f7981f18d0957cf646db62f117f84ed0`. It adds optional adapter capability only. The application remains on SQLite; no live database was migrated.
-- No open repository issues were found at the time of this update.
+- Final repository check after merges found no open pull requests and no open issues.
 
 ### Remaining repository / release work
 
