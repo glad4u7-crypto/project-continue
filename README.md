@@ -58,6 +58,10 @@ The dashboard supports project registration, search, lifecycle management, task 
 
 The GitHub panel is read-only. Public repositories can be inspected without a token; private repositories require a fine-grained token with read-only Contents and Metadata permissions. Configure `GITHUB_REPOSITORY` and optional `GITHUB_TOKEN` in an untracked `.env` file.
 
+## Database adapters
+
+SQLite remains the default application database. An optional PostgreSQL adapter, explicit migration tooling, verified PostgreSQL backup/restore helpers, and PostgreSQL 16 integration workflow are now included. This does not switch the running application to PostgreSQL or migrate existing data; production backend selection requires separate compatibility and operator acceptance.
+
 ## Security and project membership
 
 Production defaults to an administrator-only sign-in gate. To enable the signed-in Owner/Editor/Viewer membership workflow, explicitly set `AUTHORIZATION_ENFORCED=true` and configure a high-entropy `SESSION_SIGNING_KEY` (at least 32 bytes) through the host secret manager. Provision the initial administrator on a fresh database, then bootstrap ownership and grant memberships for existing projects. Do not expose the application publicly until exact-release CI, browser authorization checks, and host controls have been accepted. See `docs/security/PROJECT-MEMBERSHIP-AUTHORIZATION.md` and `docs/SECURITY-AUTHORIZATION-WIRING-AUDIT.md`.
