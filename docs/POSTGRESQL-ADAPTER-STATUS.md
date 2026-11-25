@@ -1,73 +1,36 @@
 # PostgreSQL adapter — implementation status
 
 Branch: `feature/postgresql-database-adapter`
+Latest verified commit before this status update: `3ce427eef53630e65eb9eeb5c0570cdb36c4ee3b`
 
 ## Implemented foundation
 
-- Added `database/postgres_connection.py` with psycopg 3 connection creation,
-  dictionary rows, bounded connection timeout, short-lived connection context,
-  explicit transaction context, and a read-only `SELECT 1` health check.
-- Added `psycopg[binary]>=3.2,<4` to runtime dependencies.
-- Added `database/postgres_schema.py` with a separate idempotent schema for
-  projects, tasks, dependencies, activity, users, memberships, audit events,
-  and login attempts.
-- PostgreSQL schema version is now explicitly aligned with SQLite
-  `SCHEMA_VERSION = 2`; a regression test checks this parity.
-- PostgreSQL trigger guards enforce same-project dependencies/activity,
-  dependency-cycle prevention, and immutable audit events.
-- Added `database/postgres_repository.py` for the project/task repository
-  surface, including PostgreSQL placeholders, transactions, recursive
-  dependency checks, and `RETURNING id`.
-- Added `services/postgres_access_control.py` for password hashing,
-  login throttling, signed sessions, project membership checks, and audit
-  writes using PostgreSQL SQL.
-- Updated the authorization policy/context to accept the PostgreSQL adapter
-  without changing the runtime database selection.
-- Added static contract tests and opt-in live tests in
-  `tests/test_postgres_integration.py`. Live tests require
-  `TEST_POSTGRES_DSN` and use a dedicated disposable PostgreSQL database.
-- Added `database/postgres_migration.py`: the default is a read-only SQLite
-  integrity/FK/schema audit with per-table SHA-256 checksums. An explicit
-  `dry_run=False` migrates only into an empty PostgreSQL target, in one
-  transaction, and verifies row counts and checksums before commit.
-- Added migration dry-run tests and a live migration acceptance test using a
-  second, isolated PostgreSQL test database provisioned by CI.
-- Added `database/postgres_backup.py` for custom-format `pg_dump` backups,
-  `pg_restore --list` archive validation, sidecar metadata, SHA-256 checksums,
-  and restore into an empty target only (no destructive clean/drop flags).
-- Added backup tamper-detection and non-empty-target safety tests, plus an
-  opt-in live backup/restore round-trip test using two dedicated CI databases.
-- Extended PostgreSQL 16 GitHub Actions to provision isolated backup/restore
-  databases and install PostgreSQL client tools before running pytest.
-- Added `.github/workflows/postgres-integration.yml`, which provisions
-  PostgreSQL 16 and runs the complete pytest suite on pushes to main/this
-  feature branch and pull requests targeting main.
+- PostgreSQL connection and transaction primitives using psycopg 3.
+- Separate PostgreSQL schema, schema version parity (version 2), repository, and PostgreSQL access-control implementation.
+- PostgreSQL trigger guards for same-project dependencies/activity, dependency-cycle prevention, and immutable audit events.
+- Explicit SQLite-to-PostgreSQL migration utility. Its default is read-only; real migration requires `dry_run=False`, an empty dedicated PostgreSQL target, and performs transactional row-count and SHA-256 verification for all configured tables.
+- Custom-format PostgreSQL backup with sidecar metadata, byte-count and SHA-256 validation, archive-list validation, and restore refusal for a non-empty target.
+- Dedicated PostgreSQL 16 GitHub Actions workflow with separate integration, migration, backup, and restore test databases.
 
-## Verification status
+## Verified CI evidence (2026-11-25)
 
-The code and test workflow have been committed to this feature branch.
-The live integration tests have **not** been reported as passing until the
-GitHub Actions run completes successfully. When run without
-`TEST_POSTGRES_DSN`, live database tests skip explicitly; they never fall
-back to the application's SQLite database.
+- PostgreSQL integration workflow run #33, commit `3ce427eef53630e65eb9eeb5c0570cdb36c4ee3b`: **252 passed**. The job provisioned PostgreSQL 16 and configured separate DSNs for general integration, migration, backup, and restore tests. The full regression and PostgreSQL integration suite completed successfully.
+- Project Continue CI run #540 on the same commit: **248 passed, 4 skipped**. The four skips are expected in this general workflow because it does not configure the dedicated PostgreSQL test DSNs; the PostgreSQL-specific workflow above does.
+- Cloud Acceptance Lab #92: successful on the same commit, Python 3.11 and 3.13.
+- Phase 13 run #84 and Phase 14 run #80: successful on the same commit.
+- The previous PostgreSQL restore failure caused by client/server major-version mismatch was addressed by pinning the backup helper to PostgreSQL 16 client binaries through `PG_CLIENT_MAJOR=16`.
 
-## Deliberate safety boundary
+## Remaining acceptance boundaries
 
-This is **not yet a drop-in replacement** for the current SQLite
-`Database`. The running application still initializes
-`database/runtime.py` with the SQLite `Database` and
-`ProjectRepository`. Do not select `PostgresDatabase` in runtime, point
-production traffic at it, or migrate user data until compatibility, migration,
-backup/restore, and full acceptance gates are implemented and verified.
+- The CI migration test uses a generated disposable SQLite fixture and a dedicated disposable PostgreSQL target. It does not migrate the user's live Drive database.
+- The CI backup/restore round-trip uses dedicated disposable PostgreSQL databases. It does not validate a production backup or restore.
+- PostgreSQL access-control coverage in the general suite is not equivalent to a full live security acceptance across real application users and roles.
+- The running application still initializes `database/runtime.py` with the SQLite `Database` and `ProjectRepository`. The PostgreSQL adapter is not yet a drop-in runtime replacement.
+- Dashboard acceptance against the currently running Streamlit instance and production readiness have not been completed.
+- PR #44 remains Draft and unmerged; no production database switch has been performed.
 
-No production database, Streamlit configuration, Colab runtime, Drive
-database, existing dashboard, or backup directory is changed by this branch.
+## Safety boundary
 
-## Remaining implementation gates
+Do not select PostgreSQL in production runtime, migrate user data, or deploy this adapter until runtime compatibility, secrets/configuration, full security acceptance, dashboard acceptance, production backup/restore policy, and final approval are complete.
 
-1. Run the PostgreSQL service-backed GitHub Actions workflow and fix any
-   failures; verify the full existing regression suite as well as live tests.
-2. Verify the GitHub Actions backup/restore round-trip and full test results.
-3. Add connection-secret configuration with explicit opt-in selection,
-   without inferring a provider from unrelated secret names.
-4. Run full acceptance before any production switch.
+No production database, Streamlit configuration, Colab runtime, Drive database, existing dashboard, or existing backup directory is changed by the feature branch CI.
