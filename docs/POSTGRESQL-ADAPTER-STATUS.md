@@ -32,6 +32,13 @@ Branch: `feature/postgresql-database-adapter`
   transaction, and verifies row counts and checksums before commit.
 - Added migration dry-run tests and a live migration acceptance test using a
   second, isolated PostgreSQL test database provisioned by CI.
+- Added `database/postgres_backup.py` for custom-format `pg_dump` backups,
+  `pg_restore --list` archive validation, sidecar metadata, SHA-256 checksums,
+  and restore into an empty target only (no destructive clean/drop flags).
+- Added backup tamper-detection and non-empty-target safety tests, plus an
+  opt-in live backup/restore round-trip test using two dedicated CI databases.
+- Extended PostgreSQL 16 GitHub Actions to provision isolated backup/restore
+  databases and install PostgreSQL client tools before running pytest.
 - Added `.github/workflows/postgres-integration.yml`, which provisions
   PostgreSQL 16 and runs the complete pytest suite on pushes to main/this
   feature branch and pull requests targeting main.
@@ -60,7 +67,7 @@ database, existing dashboard, or backup directory is changed by this branch.
 
 1. Run the PostgreSQL service-backed GitHub Actions workflow and fix any
    failures; verify the full existing regression suite as well as live tests.
-2. Add and rehearse PostgreSQL backup/restore, and document the restore path.
+2. Verify the GitHub Actions backup/restore round-trip and full test results.
 3. Add connection-secret configuration with explicit opt-in selection,
    without inferring a provider from unrelated secret names.
 4. Run full acceptance before any production switch.
