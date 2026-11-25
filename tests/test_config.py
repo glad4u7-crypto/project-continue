@@ -126,3 +126,14 @@ def test_postgresql_backend_accepts_explicit_dsn_without_exposing_it():
 def test_unknown_database_backend_is_rejected():
     with pytest.raises(ConfigurationError, match="sqlite or postgresql"):
         Settings.from_env({"PROJECT_CONTINUE_DB_BACKEND": "mysql"})
+
+
+def test_postgresql_backend_is_blocked_in_production_until_full_acceptance():
+    with pytest.raises(ConfigurationError, match="full application acceptance"):
+        Settings.from_env({
+            "APP_ENV": "production",
+            "PROJECT_CONTINUE_DB_BACKEND": "postgresql",
+            "PROJECT_CONTINUE_POSTGRES_DSN": "postgresql://user:pass@localhost/db",
+            "LOG_LEVEL": "INFO",
+            "SESSION_SIGNING_KEY": "s" * 48,
+        })
