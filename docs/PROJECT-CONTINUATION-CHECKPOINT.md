@@ -225,12 +225,15 @@ This section supersedes older Phase 14/16 statements above where they say projec
 This section supersedes the earlier repository-only checkpoint above.
 
 - Canonical repository: `glad4u7-crypto/project-continue`.
-- Current `main` release commit: `1f7c9795e31c3689b9012ad896608b5fd8cfa823`.
+- Phase 16 container/code release merge: `e3242780daf0c1f83b70deab139052d1adbb2dee`.
+- Phase 16 final release-record merge: `1f7c9795e31c3689b9012ad896608b5fd8cfa823`.
+- Durable checkpoint SHA-sync commit: `973ec135dacb66fa03dd5c60b64805f0edcad8b4`.
 - PR #45 merged checkpoint selected-project isolation and stale UI-state clearing as `ed702bea6ef782cd4b20ff7d6c8047f1545c6d1d`.
 - PR #44 merged optional PostgreSQL adapter, migration, backup and restore tooling as `510d90d8f7981f18d0957cf646db62f117f84ed0`; runtime remains SQLite and no user database was migrated.
 - PR #46 merged repository README and handoff reconciliation as `cb7447d3b83ec2ce79d41b1b0511ab129c7cf34c`.
 - PR #47 merged Phase 16 container deployment, operator access-provisioning CLI, docs and CI container smoke test as `e3242780daf0c1f83b70deab139052d1adbb2dee`.
-- PR #48 merged the final Phase 16 release record and this durable checkpoint refresh as `1f7c9795e31c3689b9012ad896608b5fd8cfa823`.
+- PR #48 merged the final Phase 16 release record and checkpoint refresh as `1f7c9795e31c3689b9012ad896608b5fd8cfa823`.
+- PR #49 merged the final checkpoint SHA-history sync as `973ec135dacb66fa03dd5c60b64805f0edcad8b4`.
 - PR #41 was closed as superseded. Repository search after PR #47 merge returned zero open PRs and zero open issues.
 
 ### Exact PR #47 validation
