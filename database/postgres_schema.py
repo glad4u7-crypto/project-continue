@@ -124,6 +124,11 @@ POSTGRES_SCHEMA_STATEMENTS = (
          RETURN NEW;
        END
        $$""",
+    """DROP TRIGGER IF EXISTS trg_pc_dependency_guard ON task_dependencies""",
+    """CREATE TRIGGER trg_pc_dependency_guard
+       BEFORE INSERT OR UPDATE OF task_id, depends_on_task_id
+       ON task_dependencies FOR EACH ROW
+       EXECUTE FUNCTION pc_guard_task_dependency()""",
     """CREATE OR REPLACE FUNCTION pc_guard_activity_project() RETURNS trigger
        LANGUAGE plpgsql AS $$
        DECLARE task_project TEXT;
