@@ -26,6 +26,12 @@ Branch: `feature/postgresql-database-adapter`
 - Added static contract tests and opt-in live tests in
   `tests/test_postgres_integration.py`. Live tests require
   `TEST_POSTGRES_DSN` and use a dedicated disposable PostgreSQL database.
+- Added `database/postgres_migration.py`: the default is a read-only SQLite
+  integrity/FK/schema audit with per-table SHA-256 checksums. An explicit
+  `dry_run=False` migrates only into an empty PostgreSQL target, in one
+  transaction, and verifies row counts and checksums before commit.
+- Added migration dry-run tests and a live migration acceptance test using a
+  second, isolated PostgreSQL test database provisioned by CI.
 - Added `.github/workflows/postgres-integration.yml`, which provisions
   PostgreSQL 16 and runs the complete pytest suite on pushes to main/this
   feature branch and pull requests targeting main.
@@ -52,12 +58,9 @@ database, existing dashboard, or backup directory is changed by this branch.
 
 ## Remaining implementation gates
 
-1. Complete and test the PostgreSQL migration path for all SQLite tables and
-   current schema versions, including row counts, foreign-key checks,
-   checksums, and rollback/restore rehearsal.
-2. Run the new PostgreSQL service-backed GitHub Actions workflow and fix any
+1. Run the PostgreSQL service-backed GitHub Actions workflow and fix any
    failures; verify the full existing regression suite as well as live tests.
-3. Add operational backup/restore and connection-secret configuration with
-   explicit opt-in selection, without inferring a database provider from
-   unrelated secret names.
+2. Add and rehearse PostgreSQL backup/restore, and document the restore path.
+3. Add connection-secret configuration with explicit opt-in selection,
+   without inferring a provider from unrelated secret names.
 4. Run full acceptance before any production switch.
