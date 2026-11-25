@@ -1,67 +1,68 @@
-# Streamlit UI — Manual End-to-End Acceptance
+# Project Continue — Real-Use Dashboard Acceptance
 
-**Purpose:** verify the real Streamlit dashboard in the intended Google Colab/browser environment. Automated AppTest startup coverage does not replace this manual audit.
+**Purpose:** verify the deployed Streamlit dashboard through its real browser UI. Repository unit/integration tests and Streamlit AppTest startup checks do not replace this acceptance.
 
-## Checkpoint register
+**Safety boundary:** use the already-running dashboard. Do not reboot its runtime, stop/restart its process, change its database path, or run destructive maintenance. Do not use Colab as part of this acceptance. Use a clearly named temporary acceptance project and tasks; do not modify existing user projects or tasks.
 
-| Checkpoint | Manual workflow | Required evidence |
+## Before starting
+
+Record:
+- Dashboard URL and environment name (do not paste passwords, cookies, signing keys or tokens).
+- Exact deployed Git SHA, if the operator can see it.
+- Date/time and browser/device.
+- Whether the dashboard is production-authenticated or development/test mode.
+
+If the deployed SHA is not known, record **unknown**; do not infer it from the GitHub default branch.
+
+## Real browser workflows
+
+Use a unique project name such as `ACCEPTANCE-YYYYMMDD-HHMM`. Use synthetic task content only.
+
+| ID | Browser action | Expected observable result |
 |---|---|---|
-| PC-UI-001 | Start and stop Streamlit app | App URL opens; dashboard renders; process stops cleanly |
-| PC-UI-002 | Project create, search, edit, archive and restore | Each action visible after rerun; filters and empty state behave |
-| PC-UI-003 | Task create, edit, status, priority and assignment | Values persist and are shown correctly |
-| PC-UI-004 | Dependency add/remove and blocked completion | Cycle/cross-project errors are safe; dependent task cannot complete early |
-| PC-UI-005 | GitHub integration panel | Configured repository connection check succeeds or safe actionable error appears |
-| PC-UI-006 | Restart persistence | Project/task data remains after stopping and restarting Streamlit |
-| PC-UI-007 | Backup and restore | Backup verifies; restored database has expected records and integrity |
-| PC-UI-008 | Error, empty and loading states | Empty registry, invalid input, API failure and loading feedback render safely |
+| LIVE-001 | Open the existing dashboard URL | Dashboard renders; no uncaught error or blank page |
+| LIVE-002 | Sign in with an authorized test/operator account; sign out and sign in again | Correct authenticated state; unauthorized login is rejected safely |
+| LIVE-003 | Register a uniquely named acceptance project; search for it; open details; edit its description | Project appears in registry/search and edited value remains visible after rerun |
+| LIVE-004 | Create two synthetic tasks; set assignee, due date and priority; edit status and title | Updated values and project progress are visible |
+| LIVE-005 | Add a dependency from task B to task A; attempt to complete B first | B remains incomplete and a clear blocked explanation appears |
+| LIVE-006 | Complete A, then B; remove dependency if desired | Both completion actions succeed in order; progress updates |
+| LIVE-007 | Save a harmless project-memory note; create a checkpoint; preview recovery | Memory and checkpoint appear; preview verifies integrity and does not mutate tasks |
+| LIVE-008 | Refresh the browser tab and reopen the same project | Project, tasks, memory and checkpoint remain visible |
+| LIVE-009 | Exercise empty search and one invalid input; inspect GitHub/AI/automation panels where configured | Safe empty/error feedback; no secrets or stack traces displayed |
+| LIVE-010 | In a separate isolated copy only, run backup verification and restore drill | Backup verifies; restored copy passes SQLite integrity and expected record checks |
 
-## Colab preparation
+## Authorization matrix
 
-Sync to the exact main SHA first. Keep the existing user database safe; use a separate acceptance database for destructive experiments.
+Only perform this with approved synthetic accounts and two test projects. Never change real user memberships as an experiment.
 
-```bash
-cd /content/project-continue
-git fetch origin
-git checkout main
-git pull --ff-only origin main
-git rev-parse HEAD
-python -m pip install -r requirements.txt
-python -m compileall -q .
-python -m pytest -q
-```
+| Identity | Project A | Project B |
+|---|---|---|
+| Admin | Full administrative access | Full administrative access |
+| Owner A | Manage | No access unless separately granted |
+| Editor A | Read/write task and allowed memory operations | No access |
+| Viewer A | Read-only; write actions denied | No access |
+| Non-member | No project data or mutation access | No project data or mutation access |
 
-Set the app database path to a dedicated test file before launching:
-
-```bash
-export APP_ENV=test
-export PROJECT_CONTINUE_DB=/content/project-continue/.data/ui-acceptance.sqlite3
-mkdir -p .data
-streamlit run app.py --server.address 0.0.0.0 --server.port 8501
-```
-
-Open the forwarded Streamlit URL from Colab. Perform the eight workflows above. For persistence, stop Streamlit with Ctrl+C and start it again using the same database path. For backup/restore, use a separate copy and never overwrite the original user database.
+Capture both allowed and denied outcomes. A hidden button alone is not proof: verify the server-side action is denied.
 
 ## Evidence format
 
-For each checkpoint, capture:
-- Checkpoint ID.
-- Exact `git rev-parse HEAD` SHA and Python version.
-- Action performed and visible result.
-- Any error text and whether it was expected/safely handled.
-- PASS or FAIL. Do not mark a checkpoint PASS from source inspection alone.
+For each ID record:
+- ID and exact action performed.
+- Expected result and actual visible result.
+- PASS / FAIL / BLOCKED.
+- Screenshot with secrets and personal data redacted.
+- Exact deployed SHA if known.
+- Error text, if any; redact credentials and session material.
 
-Final sentinel after all eight manual checks:
+Never record passwords, access tokens, cookies, session signing keys, private user data or database contents in screenshots.
 
-```text
-PC-UI-001: PASS
-PC-UI-002: PASS
-PC-UI-003: PASS
-PC-UI-004: PASS
-PC-UI-005: PASS
-PC-UI-006: PASS
-PC-UI-007: PASS
-PC-UI-008: PASS
-STREAMLIT UI END-TO-END ACCEPTANCE: PASS
-```
+## Boundaries and sign-off
 
-Do not print the final sentinel unless all eight checkpoints have actually passed.
+- Browser refresh tests persistence without interrupting the running service.
+- A process/container restart test is a separate maintenance operation. Do not perform it without explicit operator approval and a verified backup.
+- Backup/restore tests must use an isolated copy/volume, never the live user database.
+- HTTPS, firewall, durable-volume, host scheduler, off-site encrypted backup and monitoring checks require access to the selected production host.
+- Do not mark any item PASS from source inspection, CI, or a screenshot of a different environment.
+
+Final acceptance is **PASS** only when all applicable LIVE checks and the authorization matrix have actual evidence. Mark unavailable host-dependent checks **BLOCKED**, not PASS.
