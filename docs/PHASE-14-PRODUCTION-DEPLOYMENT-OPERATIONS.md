@@ -2,7 +2,7 @@
 
 ## Objective
 
-Move Project Continue from development-ready operation toward a safely deployable, observable and recoverable service. Phase 10 established application-level security hygiene, but explicitly did not claim authentication, authorization, multi-tenant isolation, encryption-at-rest, scheduled/off-site backups, or production deployment. Phase 14 addresses these gaps with backward-compatible, evidence-driven work.
+Move Project Continue from development-ready operation toward a safely deployable, observable and recoverable service. Phase 10 established application-level security hygiene, but explicitly did not claim authentication, authorization, multi-tenant isolation, encryption-at-rest, scheduled/off-site backups, or production deployment. Phase 14 addresses these gaps with backward-compatible, evidence-driven work. The authorization service/UI wiring and selected-project checkpoint isolation are now merged on main; host-specific operational controls remain separate.
 
 ## Scope and non-goals
 
@@ -29,7 +29,7 @@ Non-goals:
 |---|---|---|---|
 | PC-P14-S001 | Deployment Architecture & Operational Baseline | Current architecture audit, threat boundaries, deployment decision record, acceptance criteria | PASS — architecture audit recorded; provider-specific decisions remain documented as external deployment prerequisites |
 | PC-P14-S002 | Authentication & Authorization | Explicit identity boundary, role policy, deny-by-default tests | IMPLEMENTED — production admin login gate, signed sessions and login throttling; browser/host acceptance pending |
-| PC-P14-S003 | Project/User Isolation | Cross-user/project access denial tests and migration compatibility | PARTIAL — membership authorization service and tests; existing feature pages are not yet multi-user scoped |
+| PC-P14-S003 | Project/User Isolation | Cross-user/project access denial tests and migration compatibility | IMPLEMENTED IN SOURCE — project/task/AI/automation/memory service boundaries enforce signed principal and membership scope; browser role-matrix acceptance remains pending |
 | PC-P14-S004 | Secrets & Data Protection | Secret-safe configuration, encryption boundary, documented host controls and tests | PARTIAL — production signing-key validation; host encryption/rotation evidence pending |
 | PC-P14-S005 | Automated Backup & Retention | Scheduled backup design, retention policy, integrity verification, isolated tests | IMPLEMENTED — scheduler-callable backup and preview-first retention; external scheduler wiring pending |
 | PC-P14-S006 | Restore Drill & Disaster Recovery | Tested restore procedure, integrity checks, rollback and recovery evidence | IMPLEMENTED — isolated restore drill; provider-hosted drill pending |
@@ -42,7 +42,7 @@ Non-goals:
 - Do not run destructive database migrations on the live user database.
 - Use temporary databases and synthetic identities/data for tests.
 - Any schema change must be additive, migration-tested and backward-compatible.
-- Authentication/authorization must be enforced server-side; hiding UI controls is not access control.
+- Authentication/authorization is enforced server-side; hiding UI controls is not access control. Keep membership mode opt-in until accounts and memberships are provisioned and browser acceptance is complete.
 - Never log credentials, session tokens, personal data or raw authorization headers.
 - Backup retention/deletion must never target the active database or user files without explicit approval.
 - A checkpoint is PASS only after implementation, focused tests, full regression, CI and read-back evidence. Runtime/browser/deployment acceptance are separate gates.
@@ -74,4 +74,4 @@ Non-goals:
 - Phase 14 matrix: Python 3.11 and 3.13 PASS; 32 focused tests and 217 full regression tests PASS.
 - Repository-wide CI, Cloud Acceptance Lab and Phase 13 workflow PASS on the tested feature head.
 - Post-merge main workflows and Colab/browser acceptance remain separate gates.
-- Phase 14 is not yet a live-host production deployment or multi-user production certification.
+- Phase 14 implementation is merged; live-host production deployment and multi-user production certification still require browser role-matrix and host acceptance.
