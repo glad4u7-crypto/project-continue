@@ -72,3 +72,21 @@ Make PostgreSQL a supported, explicitly selected application backend without cha
 ## Safety boundary
 
 This branch is based on the verified `main` commit above. It does not modify `main`, merge PRs #51/#52, access or alter the running dashboard, restart Colab/Streamlit, access Google Drive backups, or migrate any live SQLite/PostgreSQL database. All database integration tests must use disposable fixtures and isolated CI databases.
+
+## Initial call-site audit (2026-11-25)
+
+| Area | Current coupling found | Required Phase 17 action |
+|---|---|---|
+| Runtime | `database/runtime.py` hardcodes SQLite `Database` + `ProjectRepository` | Explicit backend factory and safe cache identity |
+| Project/task repository | Separate `PostgresProjectRepository` exists; SQLite services/UI import SQLite exception types | Complete interface parity and backend-neutral error handling |
+| Authentication | `PostgresAccessControl` exists, but `ui/authentication.py` imports/constructs SQLite `AccessControl` | Runtime-selected access-control adapter and full session/security tests |
+| Authorization context | Contains a PostgreSQL placeholder branch for principal lookup | Verify all policy operations against both adapters |
+| Project/task services | `services/project_management.py`, `services/task_management.py` import `sqlite3` and the concrete SQLite repository | Remove concrete adapter assumptions; preserve duplicate/not-found semantics |
+| Project management UI | `ui/project_management.py` imports `sqlite3` and catches `sqlite3.IntegrityError` | Catch stable service/domain errors rather than driver-specific exceptions |
+| Memory/checkpoints | `services/memory_checkpoint_engine.py` initializes tables through `executescript` and uses SQLite-oriented persistence | Extract schema initialization and port SQL/transaction behavior |
+| Automation | `services/automation_engine.py` uses `executescript`, SQLite placeholders and `sqlite3.IntegrityError` | Port schema, idempotency, retries, and concurrency-safe schedule claims |
+| Operations | SQLite backup operations are wired separately from PostgreSQL backup helpers | Backend-aware, non-destructive backup/restore runbooks and tests |
+
+### Implementation ordering decision
+
+Do not change `database/runtime.py` to select PostgreSQL yet. The runtime switch would route authentication, memory/checkpoint, automation, and UI code into SQLite-specific SQL paths. First introduce a stable service-facing contract and remove the driver-specific assumptions in small, independently tested slices. Only then enable explicit PostgreSQL runtime selection.
