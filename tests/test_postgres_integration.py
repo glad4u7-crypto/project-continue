@@ -52,6 +52,7 @@ def test_postgres_repository_crud_dependencies_and_database_guards(postgres_env)
     repo.create_task(f"pgtest-{suffix}-a", project_id, "Task A")
     repo.create_task(f"pgtest-{suffix}-b", project_id, "Task B")
     repo.create_task(f"pgtest-{suffix}-c", project_id, "Task C")
+    repo.create_task(f"pgtest-{suffix}-d", other_project_id, "Task D")
     repo.add_dependency(f"pgtest-{suffix}-a", f"pgtest-{suffix}-b")
     repo.add_dependency(f"pgtest-{suffix}-b", f"pgtest-{suffix}-c")
     assert repo.list_dependencies(f"pgtest-{suffix}-a") == [f"pgtest-{suffix}-b"]
@@ -73,7 +74,7 @@ def test_postgres_repository_crud_dependencies_and_database_guards(postgres_env)
             connection.execute(
                 "INSERT INTO task_dependencies(task_id, depends_on_task_id, created_at) "
                 "VALUES (%s, %s, %s)",
-                (f"pgtest-{suffix}-a", f"pgtest-{suffix}-c", "test"),
+                (f"pgtest-{suffix}-a", f"pgtest-{suffix}-d", "test"),
             )
 
 
