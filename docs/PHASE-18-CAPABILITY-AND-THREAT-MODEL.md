@@ -8,6 +8,10 @@ Verified in this project session: inspect repository files and pull requests, co
 
 The connector surface available in this session does not provide a supported action to invoke arbitrary Streamlit app methods, read the user's private Streamlit provider logs, or restart/deploy a Community Cloud app. GitHub Actions can make a bounded outbound HTTPS request to the app's public Streamlit health endpoint after the owner configures the repository variable.
 
+### Colab local dashboard bridge
+
+The existing Colab runtime's loopback endpoint is not reachable from GitHub-hosted runners. `scripts/colab_dashboard_status.py` therefore runs inside Colab, checks only `127.0.0.1:8501/_stcore/health`, and posts a minimal commit status against the exact local checkout SHA. It reads a fine-grained token from Colab Secrets; required permission is only **Commit statuses: Read and write** for this repository. No token is placed in source, notebook output, or ChatGPT. This is user-started and runs only while the Colab runtime/process remains active; it is not always-on.
+
 ### Streamlit capability boundary
 
 - Built-in `/_stcore/health`: server-level HTTP health only.
@@ -20,7 +24,8 @@ The connector surface available in this session does not provide a supported act
 | Operation | Classification | Control |
 |---|---|---|
 | Read repository files, PR metadata and CI status | Read-only | Connected GitHub permission |
-| Scheduled GET to `/_stcore/health` | Read-only | HTTPS only, 10-second timeout, no redirects, no response-body logging |
+| Scheduled GET to public `/_stcore/health` | Read-only | HTTPS only, 10-second timeout, no redirects, no response-body logging |
+| Colab loopback GET plus GitHub commit-status POST | Limited metadata write | Loopback-only health request; token stored in Colab Secrets; Commit statuses permission only; exact checkout SHA; no project data |
 | Run in-app self-check | Read-only | Existing administrator access; no data writes |
 | Read application/provider logs | Sensitive read | Not exposed through this workflow; inspect provider UI |
 | Create feature branch/PR commits | Reversible write | Explicit task request; isolated feature branch; reviewable diff |
@@ -41,8 +46,9 @@ The connector surface available in this session does not provide a supported act
 
 ## S003/S004 — Delivered implementation
 
-- `scripts/check_dashboard_health.py`: dependency-free, sanitized Streamlit health probe.
-- `tests/test_dashboard_health_check.py`: unit coverage for HTTPS validation, 200 response, redirect rejection, sanitized errors and unconfigured URL behavior.
+- `scripts/check_dashboard_health.py`: dependency-free, sanitized public Streamlit health probe.
+- `scripts/colab_dashboard_status.py`: Colab-local health check and minimal GitHub commit-status publisher.
+- `tests/test_dashboard_health_check.py` and `tests/test_colab_dashboard_status.py`: unit coverage for URL validation, HTTP responses, redirect rejection, sanitized errors and exact-SHA status publishing.
 - `.github/workflows/dashboard-health.yml`: hourly and manual read-only health workflow.
 - `docs/PHASE-18-OPERATOR-RUNBOOK.md`: configuration and operator instructions.
 
@@ -52,6 +58,6 @@ The connected GitHub integration was used to inspect PR #58 and its branch, then
 
 ## S006 — Acceptance gates and limitations
 
-Automated CI must pass on the exact final PR head SHA. The owner must configure the repository variable `STREAMLIT_APP_URL` to enable live hourly probes; without it the workflow intentionally reports SKIP. A successful probe proves only that the Streamlit server health endpoint returned HTTP 200 at the check time. It does not prove successful login, database durability, feature correctness, or production readiness.
+Automated CI must pass on the exact final PR head SHA. For the existing Colab dashboard, the owner must configure the narrowly scoped token in Colab Secrets and run the reporter; hourly reporting lasts only while the Colab runtime remains active. For a separately hosted public dashboard, the owner may configure repository variable `STREAMLIT_APP_URL` to enable live hourly probes; without it the workflow intentionally reports SKIP. A successful probe proves only that the Streamlit server health endpoint returned HTTP 200 at the check time. It does not prove successful login, database durability, feature correctness, or production readiness.
 
 No production deployment, live database change, backup operation, Colab runtime reboot, dashboard restart, secret change or PR merge is performed by this phase. PR #58 remains subject to review and explicit merge approval.
