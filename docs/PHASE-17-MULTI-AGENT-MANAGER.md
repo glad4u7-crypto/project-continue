@@ -36,4 +36,4 @@ python -m pytest -q
 The focused suite covers U01 registration and validation, U02 role lifecycle, U03 role/capability matching and balancing, U04 delivery/read receipts and cross-project rejection. The verified CI run also passed the full regression, PostgreSQL 16 integration, Docker smoke test, security/dependency checks, and real Streamlit/Chromium browser acceptance. Post-merge main CI and live-host deployment remain separate gates.
 
 ## Current delivery boundary
-Implementation on the feature branch is not a completed release until focused tests and full regression pass, the pull request is reviewed, and the user authorizes merge. Manual browser acceptance is still required before claiming the dashboard workflow has been accepted. No production deployment is included.
+Implementation on the feature branch has passed focused tests, full regression, PostgreSQL integration and automated real-browser acceptance. The pull request still requires review and explicit user authorization before merge. No live Colab update or production deployment is included.
