@@ -33,7 +33,7 @@ python -m pytest -q tests/test_multi_agent_manager.py
 python -m pytest -q
 ```
 
-The focused suite covers U01 registration and validation, U02 role lifecycle, U03 role/capability matching and balancing, U04 delivery/read receipts and cross-project rejection. The verified CI run also passed the full regression, PostgreSQL 16 integration, Docker smoke test, security/dependency checks, and real Streamlit/Chromium browser acceptance. Post-merge main CI and live-host deployment remain separate gates.
+The focused suite covers U01 registration and validation, U02 role lifecycle, U03 role/capability matching and balancing, U04 delivery/read receipts and cross-project rejection. The merged PR #56 CI run passed the full regression, PostgreSQL 16 integration, Docker smoke test, security/dependency checks, and real Streamlit/Chromium browser acceptance. The merge to `main` is complete. Live-host deployment, durable production database storage, and live-host acceptance remain separate gates.
 
 ## Current delivery boundary
-Implementation on the feature branch has passed focused tests, full regression, PostgreSQL integration and automated real-browser acceptance. The pull request still requires review and explicit user authorization before merge. No live Colab update or production deployment is included.
+U01–U04 are merged to `main` through PR #56 (merge commit `d145fd85745002ca800b0e9506a9bff8c6818e4f`). Focused tests, full regression, PostgreSQL integration and automated real-browser acceptance passed in the recorded CI evidence. No live production deployment is included. Production completion still requires a selected host, durable database storage, configured secrets, backup/restore evidence and live-host acceptance. Streamlit Community Cloud local filesystem storage is not guaranteed to persist; do not use its local SQLite file as the authoritative production database.
