@@ -32,10 +32,12 @@ The connected GitHub integration supports repository inspection and permitted Gi
 ## Architecture
 
 1. **GitHub — source of truth for code and review:** feature branches, pull requests, CI, security checks and workflow evidence.
-2. **GitHub Actions — bounded automation:** hourly and manual read-only HTTPS checks against Streamlit's built-in health endpoint, plus repository CI on PR changes. Workflow permissions are `contents: read`.
-3. **Streamlit app — application-level diagnostics:** the existing administrator-triggered self-check verifies database connectivity and, for SQLite, required tables, schema version, integrity and foreign-key consistency. It also reports GitHub configuration and environment readiness. Reports omit paths, records, credentials and raw SQL errors.
-4. **Approval boundary:** all writes, merges, deployments, restarts, migrations, secret changes and backup retention/recovery remain explicit human-approved operations.
-5. **Durable data:** retain the established Google Drive backup strategy; never rely on Community Cloud's local filesystem for authoritative SQLite persistence.
+2. **GitHub Actions — bounded automation:** hourly and manual read-only HTTPS checks against a separately hosted Streamlit health endpoint, plus repository CI on PR changes. Workflow permissions are `contents: read`.
+3. **Colab local dashboard — status bridge:** `scripts/colab_dashboard_status.py` checks `127.0.0.1:8501` inside the existing Colab runtime and publishes a minimal GitHub commit status on the exact checked-out SHA. The token stays in Colab Secrets and requires only Commit statuses read/write.
+
+4. **Streamlit app — application-level diagnostics:** the existing administrator-triggered self-check verifies database connectivity and, for SQLite, required tables, schema version, integrity and foreign-key consistency. It also reports GitHub configuration and environment readiness. Reports omit paths, records, credentials and raw SQL errors.
+5. **Approval boundary:** all writes, merges, deployments, restarts, migrations, secret changes and backup retention/recovery remain explicit human-approved operations.
+6. **Durable data:** retain the established Google Drive backup strategy; never rely on Community Cloud's local filesystem for authoritative SQLite persistence.
 
 ## Delivery checkpoints
 
@@ -56,8 +58,8 @@ The connected GitHub integration supports repository inspection and permitted Gi
 
 ## Current delivery status
 
-Implementation has been added to `feature/phase-18-free-control-plane` and PR #58 remains open as a draft. The branch now contains the HTTPS health probe, unit tests, hourly/manual GitHub Actions workflow, capability/threat-model document and operator runbook.
+Implementation has been added to `feature/phase-18-free-control-plane` and PR #58 remains open as a draft. The branch now contains the public HTTPS health probe, Colab-local status reporter, unit tests, hourly/manual GitHub Actions workflow, capability/threat-model document and operator runbooks.
 
-**Not yet accepted as complete:** exact-final-head GitHub CI evidence has not been retrieved; the owner must set the repository Actions variable `STREAMLIT_APP_URL` before the scheduled live dashboard probe can run. Without that variable, the workflow correctly reports SKIP. A health endpoint PASS proves server reachability only, not login, database durability or feature correctness.
+**Not yet accepted as complete:** exact-final-head GitHub CI evidence and one live Colab reporter test have not yet been retrieved. For the existing Colab dashboard, the owner must add a fine-grained GitHub token with only Commit statuses read/write to Colab Secrets and run the reporter from the active checkout. For a separately hosted public dashboard, `STREAMLIT_APP_URL` enables the scheduled GitHub Actions probe. A health endpoint PASS proves server reachability only, not login, database durability or feature correctness.
 
 No production configuration, secrets, database, backups, Colab runtime or running dashboard have been changed. No deployment, restart or merge has been performed. PR merge remains subject to explicit user approval.
