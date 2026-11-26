@@ -204,7 +204,10 @@ def main() -> int:
                     page.get_by_text(project_name, exact=True).first.wait_for(timeout=15000)
 
                     # Diagnostics remain read-only and are tested after the CRUD flow.
-                    page.get_by_text("Automated self-check", exact=False).first.click()
+                    self_check_expander = page.get_by_test_id("stExpander").filter(
+                        has_text="Automated self-check"
+                    )
+                    self_check_expander.locator("summary").click()
                     page.get_by_role("button", name="Run self-check").click()
                     page.get_by_text("Overall result", exact=False).wait_for(timeout=30000)
                     result_text = page.locator("body").inner_text()
