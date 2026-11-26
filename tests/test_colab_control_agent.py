@@ -46,11 +46,11 @@ def test_issue_queue_reads_beyond_first_100_comments(tmp_path):
     }
 
     def fake_api_request(token, method, url, payload=None):
-        if method == "GET" and "page=1" in url:
+        if method == "GET" and url.endswith("&page=1"):
             return first_page
-        if method == "GET" and "page=2" in url:
+        if method == "GET" and url.endswith("&page=2"):
             return [command]
-        if method == "GET" and "page=3" in url:
+        if method == "GET" and url.endswith("&page=3"):
             return []
         if method == "POST":
             return {"id": 999}
