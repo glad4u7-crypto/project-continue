@@ -22,6 +22,7 @@ Project Continue organizes projects, tasks and dependencies, recommends actionab
 | 14 | Production Deployment & Operations | Authentication, signed sessions, project membership enforcement, verified SQLite backup/restore and health diagnostics merged; real-host acceptance remains separate |
 | 15 | Complete Integration | Merged to main; Colab acceptance: 170 focused test executions and 217 full-suite tests passed; manual browser/host gates pending |
 | 16 | Deployment & Final Delivery | Project-scoped checkpoint isolation merged; provider-neutral Docker/Compose deployment package and CI container smoke test added; live-host, HTTPS, durable-volume and restore evidence remain host-specific |
+| 17 | Multi-Agent Manager | U01–U04 implemented on feature branch; PR #56 CI and acceptance pending |
 
 ## Technology
 
@@ -97,6 +98,7 @@ The Phase 15 Colab acceptance run passed all six focused integration groups (170
 - Phase 16 installation guide: `docs/INSTALLATION-GUIDE.md`
 - Phase 16 backup & recovery guide: `docs/BACKUP-AND-RECOVERY-GUIDE.md`
 - Phase 16 checkpoint instructions: `docs/checkpoints/PC-P16-S001-TO-S008-DEPLOYMENT-FINAL-DELIVERY.md`
+- Phase 17 Multi-Agent Manager: `docs/PHASE-17-MULTI-AGENT-MANAGER.md`
 - Container deployment: `docs/CONTAINER-DEPLOYMENT.md`
 - Operator access provisioning CLI: `scripts/manage_access.py` (see the container deployment guide)
 - Authorization wiring audit / production release gate: `docs/SECURITY-AUTHORIZATION-WIRING-AUDIT.md`
