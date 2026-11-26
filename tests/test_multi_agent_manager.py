@@ -158,3 +158,32 @@ def test_role_selection_and_communication_validation(workspace):
     agent = manager.register_agent(project_id, "Agent")
     with pytest.raises(AgentManagerError):
         manager.set_agent_status(project_id, agent["id"], "deleted")
+
+
+def test_project_membership_permissions_guard_agent_writes(tmp_path):
+    from services.access_control import AccessControl, AccessDenied
+    from services.authorization import ProjectAuthorization
+    from services.authorization_context import AuthorizationContext
+
+    db = Database(tmp_path / "agent-auth.sqlite3")
+    repo = ProjectRepository(db)
+    repo.initialize()
+    project = ProjectManagementService(repo).create_project("Secured agents")
+    access = AccessControl(db, b"s" * 32)
+    access.create_user("owner", "owner@agents.test", "owner-password-123", role="owner")
+    access.create_user("viewer", "viewer@agents.test", "viewer-password-123", role="viewer")
+    owner = access.authenticate("owner@agents.test", "owner-password-123")
+    viewer = access.authenticate("viewer@agents.test", "viewer-password-123")
+    access.bootstrap_project_owner(owner, project["id"])
+    access.grant_project(owner, project["id"], "viewer", role="viewer")
+    policy = ProjectAuthorization(access)
+    owner_manager = MultiAgentManager(repo, authorization_context=AuthorizationContext(policy, owner))
+    viewer_manager = MultiAgentManager(repo, authorization_context=AuthorizationContext(policy, viewer))
+    agent = owner_manager.register_agent(project["id"], "Scoped agent")
+    owner_manager.assign_role(project["id"], agent["id"], "executor")
+    assert viewer_manager.list_agents(project["id"])[0]["id"] == agent["id"]
+    with pytest.raises(AccessDenied):
+        viewer_manager.assign_role(project["id"], agent["id"], "reviewer")
+    with pytest.raises(AccessDenied):
+        viewer_manager.select_agent(project["id"], "executor")
+    db.close()
