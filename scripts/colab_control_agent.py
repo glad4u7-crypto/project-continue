@@ -167,7 +167,7 @@ def read_project_file(relative_path: str) -> tuple[bool, str]:
             os.close(current_fd)
         if root_fd is not None:
             os.close(root_fd)
-    return True, f"File: {relative_path}\\n\\n{content}"
+    return True, f"File: {relative_path}\n\n{content}"
 
 
 def process_comments(token: str, issue_number: int, state: dict) -> int:
