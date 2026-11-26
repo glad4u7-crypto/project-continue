@@ -109,7 +109,7 @@ def run_task(task: str) -> tuple[bool, str]:
 
 
 def read_project_file(relative_path: str) -> tuple[bool, str]:
-    """Read only a small, explicitly allow-listed project text file."""
+    """Read a small allow-listed file without following symlinks."""
     allowed = {
         "README.md",
         "app.py",
@@ -118,17 +118,56 @@ def read_project_file(relative_path: str) -> tuple[bool, str]:
     }
     if relative_path not in allowed:
         return False, "File path is not allow-listed."
-    root = REPO_ROOT.resolve()
-    target = (root / relative_path).resolve()
-    if root not in target.parents or target.is_symlink() or not target.is_file():
-        return False, "File is unavailable or outside the project directory."
+
+    # Walk from an already-open project root using directory file descriptors.
+    # O_NOFOLLOW is applied to every component, closing the resolve()/open()
+    # symlink race and rejecting symlinked parent directories as well.
+    parts = Path(relative_path).parts
+    if not parts or any(part in ("", ".", "..") for part in parts):
+        return False, "File path is not allow-listed."
+    root_fd = file_fd = None
     try:
-        if target.stat().st_size > MAX_READ_BYTES:
+        root_fd = os.open(REPO_ROOT, os.O_RDONLY | os.O_DIRECTORY)
+        current_fd = root_fd
+        for component in parts[:-1]:
+            next_fd = os.open(
+                component,
+                os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW,
+                dir_fd=current_fd,
+            )
+            if current_fd != root_fd:
+                os.close(current_fd)
+            current_fd = next_fd
+        file_fd = os.open(
+            parts[-1], os.O_RDONLY | os.O_NOFOLLOW, dir_fd=current_fd
+        )
+        info = os.fstat(file_fd)
+        if not __import__("stat").S_ISREG(info.st_mode):
+            return False, "File is unavailable or is not a regular file."
+        if info.st_size > MAX_READ_BYTES:
             return False, "File exceeds the 12 KB read limit."
-        content = target.read_text(encoding="utf-8")
-    except (OSError, UnicodeError):
-        return False, "File could not be read as UTF-8 text."
-    return True, f"File: {relative_path}\n\n{content[:MAX_READ_BYTES]}"
+        chunks = []
+        remaining = MAX_READ_BYTES + 1
+        while remaining:
+            chunk = os.read(file_fd, min(4096, remaining))
+            if not chunk:
+                break
+            chunks.append(chunk)
+            remaining -= len(chunk)
+        raw = b"".join(chunks)
+        if len(raw) > MAX_READ_BYTES:
+            return False, "File exceeds the 12 KB read limit."
+        content = raw.decode("utf-8")
+    except (OSError, UnicodeError, ValueError):
+        return False, "File is unavailable, unsafe, or not UTF-8 text."
+    finally:
+        if file_fd is not None:
+            os.close(file_fd)
+        if 'current_fd' in locals() and current_fd != root_fd:
+            os.close(current_fd)
+        if root_fd is not None:
+            os.close(root_fd)
+    return True, f"File: {relative_path}\\n\\n{content}"
 
 
 def process_comments(token: str, issue_number: int, state: dict) -> int:
