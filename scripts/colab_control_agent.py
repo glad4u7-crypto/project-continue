@@ -18,7 +18,7 @@ REPOSITORY = "glad4u7-crypto/project-continue"
 API_ROOT = f"https://api.github.com/repos/{REPOSITORY}"
 AUTHORIZED_LOGIN = "glad4u7-crypto"
 COMMAND_RE = re.compile(r"^/pc-run (phase18-tests|compile|dashboard-health|git-status)$")
-READ_COMMAND_RE = re.compile(r"^/pc-read (README\\.md|app\\.py|scripts/colab_control_agent\\.py|docs/PHASE-18-COLAB-CONTROL-AGENT\\.md)$")
+READ_COMMAND_RE = re.compile(r"^/pc-read (README\.md|app\.py|scripts/colab_control_agent\.py|docs/PHASE-18-COLAB-CONTROL-AGENT\.md)$")
 MAX_READ_BYTES = 12000
 STATE_PATH = Path(os.environ.get("PROJECT_CONTINUE_AGENT_STATE", "/content/.project_continue_agent_state.json"))
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -128,7 +128,7 @@ def read_project_file(relative_path: str) -> tuple[bool, str]:
         content = target.read_text(encoding="utf-8")
     except (OSError, UnicodeError):
         return False, "File could not be read as UTF-8 text."
-    return True, f"File: {relative_path}\\n\\n{content[:MAX_READ_BYTES]}"
+    return True, f"File: {relative_path}\n\n{content[:MAX_READ_BYTES]}"
 
 
 def process_comments(token: str, issue_number: int, state: dict) -> int:
