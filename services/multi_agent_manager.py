@@ -213,7 +213,7 @@ class MultiAgentManager:
     def select_agent(self, project_id: str, role: str, *,
                      required_capabilities: list[str] | tuple[str, ...] = ()) -> dict[str, Any] | None:
         """Choose a matching active agent using least-used, oldest-selected first."""
-        self._authorize(project_id, "read")
+        self._authorize(project_id, "write")
         if role not in self.ROLES:
             raise AgentManagerError("Unsupported agent role")
         required = set(self._capabilities(required_capabilities))
