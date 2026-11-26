@@ -10,6 +10,7 @@ from services.authorization import ProjectAuthorization
 from services.authorization_context import AuthorizationContext
 from services.automation_engine import AutomationEngine
 from services.memory_checkpoint_engine import MemoryCheckpointEngine
+from services.multi_agent_manager import MultiAgentManager
 from services.project_management import ProjectManagementService
 from services.postgres_access_control import PostgresAccessControl
 from services.task_management import TaskManagementService
@@ -116,3 +117,25 @@ def test_authentication_and_authorization_services_run_on_postgres(postgres_work
     viewer_context = AuthorizationContext(ProjectAuthorization(access), viewer)
     with pytest.raises(AccessDenied):
         TaskManagementService(repository, viewer_context).create_task(project_id, "Must be denied")
+
+
+def test_multi_agent_manager_runs_on_postgres(postgres_workspace):
+    _database, repository, project_id, _suffix = postgres_workspace
+    manager = MultiAgentManager(repository)
+    researcher = manager.register_agent(
+        project_id, "Postgres researcher", capabilities=["search", "summarize"]
+    )
+    reviewer = manager.register_agent(project_id, "Postgres reviewer", capabilities=["review"])
+    manager.assign_role(project_id, researcher["id"], "researcher")
+    manager.assign_role(project_id, reviewer["id"], "reviewer")
+    selected = manager.select_agent(
+        project_id, "researcher", required_capabilities=["search"]
+    )
+    assert selected["id"] == researcher["id"]
+    message = manager.send_message(
+        project_id, researcher["id"], reviewer["id"],
+        {"finding": "verified"}, message_type="handoff",
+    )
+    assert manager.list_messages(project_id, reviewer["id"])[0]["id"] == message["id"]
+    assert manager.mark_message_read(project_id, reviewer["id"], message["id"])
+    assert manager.get_message(project_id, message["id"])["status"] == "read"
