@@ -29,3 +29,15 @@ GitHub Actions usage is subject to GitHub's current included-minute and storage 
 Streamlit Community Cloud does not expose a general-purpose project API here for platform process logs, arbitrary restart, or deployment administration. Those operations remain in the provider interface. Do not claim ChatGPT can see private provider logs or restart the hosted app through this health workflow.
 
 All workflow permissions are read-only (`contents: read`). No deployment, restart, database migration, backup deletion/restore, or secret modification is performed.
+
+## Existing Colab dashboard: publish health to GitHub
+
+The current dashboard has historically run on Colab loopback at `127.0.0.1:8501`; GitHub-hosted runners cannot reach that address directly. Use the Colab-side reporter instead of inventing a public URL:
+
+1. Follow `docs/PHASE-18-COLAB-HEALTH-REPORTER.md` to create a fine-grained token with only **Commit statuses: Read and write** for this repository.
+2. Store it in Colab Secrets as `PROJECT_CONTINUE_GITHUB_STATUS_TOKEN`; never paste it into chat or notebook output.
+3. Run `python scripts/colab_dashboard_status.py` from the repository checkout.
+4. For repeat checks while Colab remains active, run `python scripts/colab_dashboard_status.py --interval-seconds 3600` in a separate cell.
+5. The script prints the exact checked commit SHA. ChatGPT can inspect that SHA's combined GitHub status for context `project-continue/colab-dashboard-health`.
+
+The reporter checks local loopback and publishes a minimal status against the exact checked-out commit. It does not restart Streamlit. Colab can disconnect; the reporter is not an always-on service. The public HTTPS Actions workflow remains optional for a separately hosted public dashboard and reports SKIP until `STREAMLIT_APP_URL` is configured.
