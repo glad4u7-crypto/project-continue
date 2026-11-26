@@ -95,3 +95,31 @@ def test_read_project_file_rejects_oversized_files(tmp_path):
     with patch("scripts.colab_control_agent.REPO_ROOT", tmp_path):
         passed, detail = read_project_file("README.md")
     assert not passed and "12 KB" in detail
+
+
+def test_read_project_file_rejects_symlinked_file(tmp_path):
+    outside = tmp_path.parent / "outside-secret.txt"
+    outside.write_text("must not be read", encoding="utf-8")
+    (tmp_path / "README.md").symlink_to(outside)
+    with patch("scripts.colab_control_agent.REPO_ROOT", tmp_path):
+        passed, detail = read_project_file("README.md")
+    assert not passed
+    assert "unavailable" in detail or "unsafe" in detail
+
+
+def test_read_project_file_rejects_symlinked_parent(tmp_path):
+    real_dir = tmp_path / "real"
+    real_dir.mkdir()
+    (real_dir / "colab_control_agent.py").write_text("secret", encoding="utf-8")
+    (tmp_path / "scripts").symlink_to(real_dir, target_is_directory=True)
+    with patch("scripts.colab_control_agent.REPO_ROOT", tmp_path):
+        passed, detail = read_project_file("scripts/colab_control_agent.py")
+    assert not passed
+    assert "unavailable" in detail or "unsafe" in detail
+
+
+def test_read_project_file_rejects_non_regular_file(tmp_path):
+    (tmp_path / "README.md").mkdir()
+    with patch("scripts.colab_control_agent.REPO_ROOT", tmp_path):
+        passed, detail = read_project_file("README.md")
+    assert not passed
