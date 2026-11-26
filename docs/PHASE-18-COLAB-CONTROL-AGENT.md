@@ -22,8 +22,12 @@ Only comments authored by glad4u7-crypto are considered. The entire comment must
 - /pc-run compile — compile-check project Python modules.
 - /pc-run dashboard-health — read the local Streamlit health endpoint.
 - /pc-run git-status — read current checkout status.
+- /pc-read README.md — read an allow-listed project text file.
+- /pc-read app.py — read the Streamlit entry point.
+- /pc-read scripts/colab_control_agent.py — inspect the running bridge source.
+- /pc-read docs/PHASE-18-COLAB-CONTROL-AGENT.md — read bridge documentation.
 
-No shell fragments, command arguments, Python code, arbitrary paths, or free-form payloads are accepted. Commands use fixed argument arrays, shell=False, bounded timeouts and truncated output. Results are posted as issue comments; the last processed comment ID is stored outside the repository.
+No shell fragments, command arguments, Python code, arbitrary paths, or free-form payloads are accepted. File reads are limited to four named UTF-8 project files and 12 KB per file; path traversal and symlink targets are rejected. This is read-only and does not expose `.env`, credentials, runtime files or arbitrary workspace content. Commands use fixed argument arrays, shell=False, bounded timeouts and truncated output. Results are posted as issue comments; the last processed comment ID is stored outside the repository.
 
 ## Source edits and high-impact operations
 
@@ -36,3 +40,8 @@ Delete, arbitrary shell access, database migrations, backup restore/deletion, ru
 The Issues read/write token can read and post comments on this repository issue. It is separate from PROJECT_CONTINUE_GITHUB_STATUS_TOKEN. Never paste either token into chat or source code. Revoke the dedicated token when no longer needed.
 
 This uses free/open-source components; GitHub API rate limits and Colab runtime availability apply. It is not always-on.
+
+
+## File writes and execution
+
+The file-read commands above are read-only. This bridge does not write to the live checkout or execute arbitrary Python. Source changes must be proposed through a reviewed Git branch and pull request, then applied to Colab only through a separately reviewed, explicit synchronization step. Arbitrary runtime file writes and user-supplied code execution remain disabled.

@@ -18,6 +18,8 @@ REPOSITORY = "glad4u7-crypto/project-continue"
 API_ROOT = f"https://api.github.com/repos/{REPOSITORY}"
 AUTHORIZED_LOGIN = "glad4u7-crypto"
 COMMAND_RE = re.compile(r"^/pc-run (phase18-tests|compile|dashboard-health|git-status)$")
+READ_COMMAND_RE = re.compile(r"^/pc-read (README\.md|app\.py|scripts/colab_control_agent\.py|docs/PHASE-18-COLAB-CONTROL-AGENT\.md)$")
+MAX_READ_BYTES = 12000
 STATE_PATH = Path(os.environ.get("PROJECT_CONTINUE_AGENT_STATE", "/content/.project_continue_agent_state.json"))
 REPO_ROOT = Path(__file__).resolve().parents[1]
 TASKS = {
@@ -105,6 +107,69 @@ def run_task(task: str) -> tuple[bool, str]:
     )
 
 
+
+def read_project_file(relative_path: str) -> tuple[bool, str]:
+    """Read a small allow-listed file without following symlinks."""
+    allowed = {
+        "README.md",
+        "app.py",
+        "scripts/colab_control_agent.py",
+        "docs/PHASE-18-COLAB-CONTROL-AGENT.md",
+    }
+    if relative_path not in allowed:
+        return False, "File path is not allow-listed."
+
+    # Walk from an already-open project root using directory file descriptors.
+    # O_NOFOLLOW is applied to every component, closing the resolve()/open()
+    # symlink race and rejecting symlinked parent directories as well.
+    parts = Path(relative_path).parts
+    if not parts or any(part in ("", ".", "..") for part in parts):
+        return False, "File path is not allow-listed."
+    root_fd = file_fd = None
+    try:
+        root_fd = os.open(REPO_ROOT, os.O_RDONLY | os.O_DIRECTORY)
+        current_fd = root_fd
+        for component in parts[:-1]:
+            next_fd = os.open(
+                component,
+                os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW,
+                dir_fd=current_fd,
+            )
+            if current_fd != root_fd:
+                os.close(current_fd)
+            current_fd = next_fd
+        file_fd = os.open(
+            parts[-1], os.O_RDONLY | os.O_NOFOLLOW, dir_fd=current_fd
+        )
+        info = os.fstat(file_fd)
+        if not __import__("stat").S_ISREG(info.st_mode):
+            return False, "File is unavailable or is not a regular file."
+        if info.st_size > MAX_READ_BYTES:
+            return False, "File exceeds the 12 KB read limit."
+        chunks = []
+        remaining = MAX_READ_BYTES + 1
+        while remaining:
+            chunk = os.read(file_fd, min(4096, remaining))
+            if not chunk:
+                break
+            chunks.append(chunk)
+            remaining -= len(chunk)
+        raw = b"".join(chunks)
+        if len(raw) > MAX_READ_BYTES:
+            return False, "File exceeds the 12 KB read limit."
+        content = raw.decode("utf-8")
+    except (OSError, UnicodeError, ValueError):
+        return False, "File is unavailable, unsafe, or not UTF-8 text."
+    finally:
+        if file_fd is not None:
+            os.close(file_fd)
+        if 'current_fd' in locals() and current_fd != root_fd:
+            os.close(current_fd)
+        if root_fd is not None:
+            os.close(root_fd)
+    return True, f"File: {relative_path}\n\n{content}"
+
+
 def process_comments(token: str, issue_number: int, state: dict) -> int:
     """Process all newly-created comments, not just GitHub's first 100."""
     last_id = int(state.get("last_comment_id", 0))
@@ -125,10 +190,16 @@ def process_comments(token: str, issue_number: int, state: dict) -> int:
             if comment_id <= last_id:
                 continue
             author = (comment.get("user") or {}).get("login", "")
-            match = COMMAND_RE.fullmatch(str(comment.get("body") or "").strip())
-            if author == AUTHORIZED_LOGIN and match:
-                task = match.group(1)
-                passed, detail = run_task(task)
+            body = str(comment.get("body") or "").strip()
+            match = COMMAND_RE.fullmatch(body)
+            read_match = READ_COMMAND_RE.fullmatch(body)
+            if author == AUTHORIZED_LOGIN and (match or read_match):
+                if read_match:
+                    task = "read-file"
+                    passed, detail = read_project_file(read_match.group(1))
+                else:
+                    task = match.group(1)
+                    passed, detail = run_task(task)
                 report = (
                     f"Colab Control Agent: {'PASS' if passed else 'FAIL'}\n"
                     f"Request: {comment_id}\n"

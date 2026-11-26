@@ -1,6 +1,8 @@
 from unittest.mock import patch
 
-from scripts.colab_control_agent import COMMAND_RE, process_comments, run_task
+from scripts.colab_control_agent import (
+    COMMAND_RE, READ_COMMAND_RE, process_comments, read_project_file, run_task,
+)
 
 
 def test_parser_accepts_only_fixed_commands():
@@ -68,3 +70,56 @@ def test_issue_queue_reads_beyond_first_100_comments(tmp_path):
     task.assert_called_once_with("git-status")
     assert state["last_comment_id"] == 101
     assert any("page=2" in call.args[2] for call in api.call_args_list)
+
+
+
+def test_read_command_accepts_only_allowlisted_paths():
+    assert READ_COMMAND_RE.fullmatch("/pc-read README.md")
+    assert READ_COMMAND_RE.fullmatch("/pc-read app.py")
+    assert not READ_COMMAND_RE.fullmatch("/pc-read ../../.env")
+    assert not READ_COMMAND_RE.fullmatch("/pc-read secrets.json")
+
+
+def test_read_project_file_is_bounded_and_allowlisted(tmp_path):
+    (tmp_path / "README.md").write_text("safe project text", encoding="utf-8")
+    with patch("scripts.colab_control_agent.REPO_ROOT", tmp_path):
+        assert read_project_file("README.md") == (
+            True, "File: README.md\n\nsafe project text"
+        )
+        passed, detail = read_project_file("../.env")
+        assert not passed and "not allow-listed" in detail
+
+
+def test_read_project_file_rejects_oversized_files(tmp_path):
+    (tmp_path / "README.md").write_text("x" * 12001, encoding="utf-8")
+    with patch("scripts.colab_control_agent.REPO_ROOT", tmp_path):
+        passed, detail = read_project_file("README.md")
+    assert not passed and "12 KB" in detail
+
+
+def test_read_project_file_rejects_symlinked_file(tmp_path):
+    outside = tmp_path.parent / "outside-secret.txt"
+    outside.write_text("must not be read", encoding="utf-8")
+    (tmp_path / "README.md").symlink_to(outside)
+    with patch("scripts.colab_control_agent.REPO_ROOT", tmp_path):
+        passed, detail = read_project_file("README.md")
+    assert not passed
+    assert "unavailable" in detail or "unsafe" in detail
+
+
+def test_read_project_file_rejects_symlinked_parent(tmp_path):
+    real_dir = tmp_path / "real"
+    real_dir.mkdir()
+    (real_dir / "colab_control_agent.py").write_text("secret", encoding="utf-8")
+    (tmp_path / "scripts").symlink_to(real_dir, target_is_directory=True)
+    with patch("scripts.colab_control_agent.REPO_ROOT", tmp_path):
+        passed, detail = read_project_file("scripts/colab_control_agent.py")
+    assert not passed
+    assert "unavailable" in detail or "unsafe" in detail
+
+
+def test_read_project_file_rejects_non_regular_file(tmp_path):
+    (tmp_path / "README.md").mkdir()
+    with patch("scripts.colab_control_agent.REPO_ROOT", tmp_path):
+        passed, detail = read_project_file("README.md")
+    assert not passed
