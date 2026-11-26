@@ -6,6 +6,7 @@ from database.runtime import get_project_repository
 from services.multi_agent_manager import AgentManagerError, MultiAgentManager
 from services.project_management import ProjectManagementService
 from services.authorization_context import AuthorizationContext
+from services.access_control import AccessDenied
 
 
 def render_multi_agent_manager(authorization_context: AuthorizationContext | None = None):
@@ -39,7 +40,7 @@ def render_multi_agent_manager(authorization_context: AuthorizationContext | Non
                 manager.register_agent(project_id, name, description=description, capabilities=caps)
                 st.success("Agent registered.")
                 st.rerun()
-            except (AgentManagerError, KeyError) as exc:
+            except (AgentManagerError, AccessDenied, KeyError) as exc:
                 st.error(str(exc))
         if agents:
             st.dataframe([{"Name": a["name"], "Status": a["status"], "Roles": ", ".join(a["roles"]),
@@ -49,9 +50,12 @@ def render_multi_agent_manager(authorization_context: AuthorizationContext | Non
             chosen = st.selectbox("Agent status control", list(agent_names), key="multi_agent_status_agent")
             status = st.selectbox("Status", ["active", "disabled"], key="multi_agent_status_value")
             if st.button("Update agent status"):
-                manager.set_agent_status(project_id, agent_names[chosen], status)
-                st.success("Agent status updated.")
-                st.rerun()
+                try:
+                    manager.set_agent_status(project_id, agent_names[chosen], status)
+                    st.success("Agent status updated.")
+                    st.rerun()
+                except AccessDenied as exc:
+                    st.error(str(exc))
         else:
             st.info("No agents registered in this project yet.")
 
@@ -67,15 +71,18 @@ def render_multi_agent_manager(authorization_context: AuthorizationContext | Non
                     manager.assign_role(project_id, agent_names[chosen], role)
                     st.success("Role assigned.")
                     st.rerun()
-                except (AgentManagerError, KeyError) as exc:
+                except (AgentManagerError, AccessDenied, KeyError) as exc:
                     st.error(str(exc))
             current = manager.get_agent(project_id, agent_names[chosen]) or {}
             if current.get("roles"):
                 remove = st.selectbox("Assigned role to remove", current["roles"], key="multi_agent_remove_role")
                 if st.button("Remove role"):
-                    manager.remove_role(project_id, agent_names[chosen], remove)
-                    st.success("Role removed.")
-                    st.rerun()
+                    try:
+                        manager.remove_role(project_id, agent_names[chosen], remove)
+                        st.success("Role removed.")
+                        st.rerun()
+                    except AccessDenied as exc:
+                        st.error(str(exc))
             st.caption("Available roles: " + ", ".join(sorted(MultiAgentManager.ROLES)))
 
     with selection:
@@ -91,7 +98,7 @@ def render_multi_agent_manager(authorization_context: AuthorizationContext | Non
                     st.success(f"Selected {chosen['name']} ({chosen['id']}).")
                 else:
                     st.warning("No active agent matches this role and capability set.")
-            except AgentManagerError as exc:
+            except (AgentManagerError, AccessDenied) as exc:
                 st.error(str(exc))
 
     with messages:
@@ -110,7 +117,7 @@ def render_multi_agent_manager(authorization_context: AuthorizationContext | Non
                                          {"text": body}, message_type=message_type)
                     st.success("Message queued.")
                     st.rerun()
-                except AgentManagerError as exc:
+                except (AgentManagerError, AccessDenied) as exc:
                     st.error(str(exc))
             recipient_id = recipient_options[recipient_label]
             inbox = manager.list_messages(project_id, recipient_id, inbox=True, limit=50)
@@ -121,5 +128,8 @@ def render_multi_agent_manager(authorization_context: AuthorizationContext | Non
                 st.write(f"**{item['message_type']}** · {item['created_at']} · {item['status']}")
                 st.write(item["payload"].get("text", item["payload"]))
                 if item["status"] == "queued" and st.button("Mark read", key="agent_message_read_" + item["id"]):
-                    manager.mark_message_read(project_id, recipient_id, item["id"])
-                    st.rerun()
+                    try:
+                        manager.mark_message_read(project_id, recipient_id, item["id"])
+                        st.rerun()
+                    except AccessDenied as exc:
+                        st.error(str(exc))
