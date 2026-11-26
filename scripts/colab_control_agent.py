@@ -18,6 +18,8 @@ REPOSITORY = "glad4u7-crypto/project-continue"
 API_ROOT = f"https://api.github.com/repos/{REPOSITORY}"
 AUTHORIZED_LOGIN = "glad4u7-crypto"
 COMMAND_RE = re.compile(r"^/pc-run (phase18-tests|compile|dashboard-health|git-status)$")
+READ_COMMAND_RE = re.compile(r"^/pc-read (README\\.md|app\\.py|scripts/colab_control_agent\\.py|docs/PHASE-18-COLAB-CONTROL-AGENT\\.md)$")
+MAX_READ_BYTES = 12000
 STATE_PATH = Path(os.environ.get("PROJECT_CONTINUE_AGENT_STATE", "/content/.project_continue_agent_state.json"))
 REPO_ROOT = Path(__file__).resolve().parents[1]
 TASKS = {
@@ -105,6 +107,30 @@ def run_task(task: str) -> tuple[bool, str]:
     )
 
 
+
+def read_project_file(relative_path: str) -> tuple[bool, str]:
+    """Read only a small, explicitly allow-listed project text file."""
+    allowed = {
+        "README.md",
+        "app.py",
+        "scripts/colab_control_agent.py",
+        "docs/PHASE-18-COLAB-CONTROL-AGENT.md",
+    }
+    if relative_path not in allowed:
+        return False, "File path is not allow-listed."
+    root = REPO_ROOT.resolve()
+    target = (root / relative_path).resolve()
+    if root not in target.parents or target.is_symlink() or not target.is_file():
+        return False, "File is unavailable or outside the project directory."
+    try:
+        if target.stat().st_size > MAX_READ_BYTES:
+            return False, "File exceeds the 12 KB read limit."
+        content = target.read_text(encoding="utf-8")
+    except (OSError, UnicodeError):
+        return False, "File could not be read as UTF-8 text."
+    return True, f"File: {relative_path}\\n\\n{content[:MAX_READ_BYTES]}"
+
+
 def process_comments(token: str, issue_number: int, state: dict) -> int:
     """Process all newly-created comments, not just GitHub's first 100."""
     last_id = int(state.get("last_comment_id", 0))
@@ -125,10 +151,16 @@ def process_comments(token: str, issue_number: int, state: dict) -> int:
             if comment_id <= last_id:
                 continue
             author = (comment.get("user") or {}).get("login", "")
-            match = COMMAND_RE.fullmatch(str(comment.get("body") or "").strip())
-            if author == AUTHORIZED_LOGIN and match:
-                task = match.group(1)
-                passed, detail = run_task(task)
+            body = str(comment.get("body") or "").strip()
+            match = COMMAND_RE.fullmatch(body)
+            read_match = READ_COMMAND_RE.fullmatch(body)
+            if author == AUTHORIZED_LOGIN and (match or read_match):
+                if read_match:
+                    task = "read-file"
+                    passed, detail = read_project_file(read_match.group(1))
+                else:
+                    task = match.group(1)
+                    passed, detail = run_task(task)
                 report = (
                     f"Colab Control Agent: {'PASS' if passed else 'FAIL'}\n"
                     f"Request: {comment_id}\n"
