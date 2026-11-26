@@ -9,6 +9,7 @@ from ui.project_management import render_project_management
 from ui.ai_brain import render_ai_brain
 from ui.automation import render_automation
 from ui.memory_checkpoint import render_memory_checkpoint
+from ui.multi_agent_manager import render_multi_agent_manager
 from ui.self_check import render_self_check
 
 st.set_page_config(page_title=settings.app_name, page_icon="🧭", layout="wide")
@@ -35,6 +36,7 @@ if authorization_context is None or authorization_context.principal.get("role") 
 render_ai_brain(authorization_context)
 render_automation(authorization_context)
 render_memory_checkpoint(authorization_context)
+render_multi_agent_manager(authorization_context)
 if authorization_context is None or authorization_context.principal.get("role") == "admin":
     render_github_integration()
 else:
