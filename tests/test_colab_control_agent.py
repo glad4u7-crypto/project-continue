@@ -1,6 +1,8 @@
 from unittest.mock import patch
 
-from scripts.colab_control_agent import (\n    COMMAND_RE, READ_COMMAND_RE, process_comments, read_project_file, run_task,\n)
+from scripts.colab_control_agent import (
+    COMMAND_RE, READ_COMMAND_RE, process_comments, read_project_file, run_task,
+)
 
 
 def test_parser_accepts_only_fixed_commands():
