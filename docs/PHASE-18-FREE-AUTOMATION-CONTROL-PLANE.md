@@ -18,44 +18,46 @@ Provide a safe, auditable path for ChatGPT-assisted observation and approved ope
 
 - Repository: `glad4u7-crypto/project-continue`; canonical branch: `main`.
 - Phase 17 U01–U04 are recorded in README as merged through PR #56; automated CI and Streamlit/Chromium browser acceptance are recorded as passing.
-- The application currently has a read-only GitHub integration panel (`integrations/github_client.py`, `services/github_integration.py`, `ui/github_integration.py`).
-- The app has a read-only self-check panel and a Streamlit health endpoint is used by the container health check.
+- The application has a read-only GitHub integration panel and an administrator-triggered, read-only Automated self-check.
+- Streamlit's built-in `/_stcore/health` endpoint provides server-level HTTP health.
 - Production auth is fail-closed and requires host-managed secrets.
 - SQLite remains the default runtime database. Streamlit Community Cloud local filesystem persistence is not guaranteed; it must not be treated as authoritative durable storage.
-- Existing documentation explicitly distinguishes repository CI from live-host deployment and acceptance.
 
 ## Platform capability boundary
 
-Streamlit Community Cloud does not provide this project with a supported general-purpose API to fetch platform process logs, restart the hosted app, or perform arbitrary deployment administration. The app can expose only application-level, sanitized diagnostics that it deliberately records. Platform logs and deployment controls remain in the provider's own interface unless a supported free integration is separately verified.
+Streamlit Community Cloud does not provide this project with a supported general-purpose API to fetch platform process logs, restart the hosted app, or perform arbitrary deployment administration. The app can expose only application-level, sanitized diagnostics that it deliberately records. Platform logs and deployment controls remain in the provider's own interface.
 
-ChatGPT's existing GitHub connection can support repository-level inspection and permitted GitHub operations. A direct custom ChatGPT-to-Streamlit API action is not assumed: its availability on the user's current ChatGPT plan and connection surface must be verified before designing around it. Do not promise unattended, always-on control.
+The connected GitHub integration supports repository inspection and permitted GitHub operations. A direct custom ChatGPT-to-Streamlit API action is not available through the connector actions verified in this session. Do not promise unattended, always-on control.
 
-## Proposed architecture
+## Architecture
 
 1. **GitHub — source of truth for code and review:** feature branches, pull requests, CI, security checks and workflow evidence.
-2. **GitHub Actions — free-tier bounded automation:** run repository tests, isolated browser acceptance, dependency/security checks and read-only diagnostics on disposable data. Enforce least privilege and workflow concurrency.
-3. **Streamlit app — application-level health only:** expose sanitized status such as app version/commit, environment label, dependency readiness and database connectivity/integrity result without exposing paths, records, secrets or raw logs.
-4. **Approval boundary:** all writes, deployments, restarts, migrations, secret changes and backup retention/recovery remain explicit human-approved operations. Read-only checks may be automated.
+2. **GitHub Actions — bounded automation:** hourly and manual read-only HTTPS checks against Streamlit's built-in health endpoint, plus repository CI on PR changes. Workflow permissions are `contents: read`.
+3. **Streamlit app — application-level diagnostics:** the existing administrator-triggered self-check verifies database connectivity and, for SQLite, required tables, schema version, integrity and foreign-key consistency. It also reports GitHub configuration and environment readiness. Reports omit paths, records, credentials and raw SQL errors.
+4. **Approval boundary:** all writes, merges, deployments, restarts, migrations, secret changes and backup retention/recovery remain explicit human-approved operations.
 5. **Durable data:** retain the established Google Drive backup strategy; never rely on Community Cloud's local filesystem for authoritative SQLite persistence.
 
 ## Delivery checkpoints
 
-- **P18-S001 — Capability and permission audit:** confirm which GitHub operations are available through the linked connection, which Streamlit controls are genuinely exposed, and which operations require a user in the provider UI.
-- **P18-S002 — Threat model and operation matrix:** classify every action as read-only, reversible write, or destructive; define authentication, authorization, audit and approval rules.
-- **P18-S003 — Read-only status contract:** define a minimal sanitized health/status schema and tests; no raw log or personal-data exposure.
-- **P18-S004 — GitHub Actions control workflows:** add least-privilege, manually approved, free-tier workflows for CI/status tasks only; no production secrets or deployment by default.
-- **P18-S005 — ChatGPT workflow verification:** test the actual available GitHub connection actions and determine whether a supported direct API action exists on the user's plan. If not, document a safe manual approval bridge rather than claiming direct control.
-- **P18-S006 — Acceptance and handoff:** run isolated tests, document free-tier limits and provide a single operator runbook. Live-host acceptance remains separate.
+- **P18-S001 — Capability and permission audit:** documented in `docs/PHASE-18-CAPABILITY-AND-THREAT-MODEL.md`.
+- **P18-S002 — Threat model and operation matrix:** documented; read-only, reversible writes and destructive actions are classified with controls.
+- **P18-S003 — Read-only status contract:** implemented in `scripts/check_dashboard_health.py` and covered by `tests/test_dashboard_health_check.py`; no raw log or personal-data exposure.
+- **P18-S004 — GitHub Actions automation:** implemented in `.github/workflows/dashboard-health.yml`; hourly and manual; no deployment permissions or production secrets.
+- **P18-S005 — ChatGPT workflow verification:** GitHub repository actions were exercised on this feature branch. Direct Streamlit platform administration is not exposed; the safe bridge is GitHub Actions health evidence plus operator-only provider controls.
+- **P18-S006 — Acceptance and handoff:** runbook is in `docs/PHASE-18-OPERATOR-RUNBOOK.md`. Exact-head CI and live URL probe remain acceptance gates; see status below.
 
-## Initial acceptance criteria
+## Acceptance criteria
 
 - No paid dependency is introduced.
 - No existing runtime, dashboard, database or backup folder is stopped, restarted, deleted or modified by this phase.
 - Read-only checks reveal no secret, database path, user/project content or raw sensitive log.
-- Every write-capable workflow is disabled by default or requires explicit approval.
-- CI evidence is tied to the exact commit SHA and uses disposable data.
-- The documentation clearly distinguishes GitHub repository access, in-app diagnostics, provider-platform logs, and actual deployment controls.
+- Workflow permissions are least-privilege and CI evidence is tied to the exact commit SHA.
+- The documentation distinguishes GitHub repository access, in-app diagnostics, provider-platform logs, and deployment controls.
 
-## Current status
+## Current delivery status
 
-Phase 18 has been opened on `feature/phase-18-free-control-plane`. This initial document is a design and verification plan only; no application code, production configuration, secrets, database, dashboard or deployment has been changed.
+Implementation has been added to `feature/phase-18-free-control-plane` and PR #58 remains open as a draft. The branch now contains the HTTPS health probe, unit tests, hourly/manual GitHub Actions workflow, capability/threat-model document and operator runbook.
+
+**Not yet accepted as complete:** exact-final-head GitHub CI evidence has not been retrieved; the owner must set the repository Actions variable `STREAMLIT_APP_URL` before the scheduled live dashboard probe can run. Without that variable, the workflow correctly reports SKIP. A health endpoint PASS proves server reachability only, not login, database durability or feature correctness.
+
+No production configuration, secrets, database, backups, Colab runtime or running dashboard have been changed. No deployment, restart or merge has been performed. PR merge remains subject to explicit user approval.
