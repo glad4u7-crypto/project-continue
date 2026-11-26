@@ -1,0 +1,29 @@
+name: Streamlit Dashboard Health
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: streamlit-dashboard-health
+  cancel-in-progress: true
+
+jobs:
+  dashboard-health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Report missing dashboard URL
+        if: vars.STREAMLIT_APP_URL == ''
+        run: echo "SKIP: Configure the HTTPS repository variable STREAMLIT_APP_URL to enable live dashboard checks."
+      - name: Check Streamlit health endpoint
+        if: vars.STREAMLIT_APP_URL != ''
+        env:
+          STREAMLIT_APP_URL: ${{ vars.STREAMLIT_APP_URL }}
+        run: python scripts/check_dashboard_health.py --timeout 10
