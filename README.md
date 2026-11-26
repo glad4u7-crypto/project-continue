@@ -22,7 +22,7 @@ Project Continue organizes projects, tasks and dependencies, recommends actionab
 | 14 | Production Deployment & Operations | Authentication, signed sessions, project membership enforcement, verified SQLite backup/restore and health diagnostics merged; real-host acceptance remains separate |
 | 15 | Complete Integration | Merged to main; Colab acceptance: 170 focused test executions and 217 full-suite tests passed; manual browser/host gates pending |
 | 16 | Deployment & Final Delivery | Project-scoped checkpoint isolation merged; provider-neutral Docker/Compose deployment package and CI container smoke test added; live-host, HTTPS, durable-volume and restore evidence remain host-specific |
-| 17 | Multi-Agent Manager | U01–U04 implemented on feature branch; PR #56 CI and acceptance pending |
+| 17 | Multi-Agent Manager | U01–U04 merged to main in PR #56 (`d145fd85745002ca800b0e9506a9bff8c6818e4f`); automated CI and real Streamlit/Chromium acceptance passed; live-host deployment and persistent-storage acceptance remain pending |
 
 ## Technology
 
@@ -74,6 +74,10 @@ The Memory & Checkpoint Engine adds project-scoped typed memory, SHA-256 verifie
 ## Phase 14 — Production operations
 
 Phase 14 adds a fail-closed admin login gate for production, signed sessions, project membership authorization primitives, safe access audit events, verified SQLite backup orchestration, preview-first retention, isolated restore drills, health diagnostics and an external-host backup runner. It is not yet a multi-user production certification: project-scoped authorization wiring and host-specific HTTPS, persistent storage, secret management, scheduling and restore acceptance must be verified. See `docs/PHASE-14-PRODUCTION-DEPLOYMENT-OPERATIONS.md` and `docs/PHASE-14-OPERATIONS-RUNBOOK.md`.
+
+## Phase 17 — Multi-Agent Manager
+
+U01–U04 (agent registration, role assignment, capability-aware selection with least-used balancing, and project-local agent messaging/read receipts) are merged to `main`. The implementation is a local coordination layer: it does not execute arbitrary tools or call paid/external AI providers. Automated CI and real Streamlit/Chromium browser acceptance passed for the merged change. This is not a live production deployment; durable database storage, host configuration, and live-host acceptance remain separate release gates. See `docs/PHASE-17-MULTI-AGENT-MANAGER.md`.
 
 ## Phase 15 — Complete integration
 
