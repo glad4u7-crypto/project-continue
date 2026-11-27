@@ -9,13 +9,13 @@
 
 | Unit ID | Checkpoint | Status | Evidence / run reference |
 |---|---|---|---|
-| U20-0-01 | বর্তমান main branch, HEAD SHA এবং working baseline পুনরায় পড়া | NOT STARTED | — |
-| U20-0-02 | Phase 19 master index ও Phase 19.5 specification যাচাই | NOT STARTED | — |
-| U20-0-03 | Issue #59-এর সব pending /pc-run অনুরোধ ও প্রতিক্রিয়া মিলিয়ে দেখা | NOT STARTED | — |
-| U20-0-04 | Notebook creation PASS-এর exact evidence, created file ও read-back যাচাই | NOT STARTED | — |
-| U20-0-05 | Duplicate filename / symlink / invalid path protection-এর বাস্তব test evidence সংগ্রহ | NOT STARTED | — |
-| U20-0-06 | Phase 19.5-এর unresolved criteria আলাদা করে BLOCKED তালিকায় রাখা | NOT STARTED | — |
-| U20-0-07 | Phase 19 handoff report তৈরি; কোনো অনিষ্পন্ন কাজকে PASS না বলা | NOT STARTED | — |
+| U20-0-01 | বর্তমান main branch, HEAD SHA এবং working baseline পুনরায় পড়া | BLOCKED | Main HEAD d9165f1; prior 2fb496e is 6 commits behind; local Colab working-tree status unavailable via connector. See 2026-11-27 handoff report. |
+| U20-0-02 | Phase 19 master index ও Phase 19.5 specification যাচাই | PASS | MASTER-PHASE-INDEX.md, docs/PHASE-19/README.md and docs/PHASE-19-5-CONTROLLED-NOTEBOOK-CREATION.md read from main; handoff report. |
+| U20-0-03 | Issue #59-এর সব pending /pc-run অনুরোধ ও প্রতিক্রিয়া মিলিয়ে দেখা | BLOCKED | 65 comments audited; unmatched /pc-run IDs 7211284500, 7216294809, 7216331292; duplicate replies for 7207977245. See handoff report. |
+| U20-0-04 | Notebook creation PASS-এর exact evidence, created file ও read-back যাচাই | BLOCKED | Agent reply 7214096439 reports file, 714 bytes, SHA-256 c405d276... and JSON read-back; actual Drive file/independent read-back not accessible. |
+| U20-0-05 | Duplicate filename / symlink / invalid path protection-এর বাস্তব test evidence সংগ্রহ | BLOCKED | Source tests define duplicate, symlink, traversal and invalid-name cases; no executed pytest output or runtime test artifact found. |
+| U20-0-06 | Phase 19.5-এর unresolved criteria আলাদা করে BLOCKED তালিকায় রাখা | PASS | Unresolved gates explicitly enumerated in 2026-11-27 Phase 19 handoff report. |
+| U20-0-07 | Phase 19 handoff report তৈরি; কোনো অনিষ্পন্ন কাজকে PASS না বলা | PASS | reports/Phase-20/2026-11-27-Phase19-Handoff.md saved on plan branch. |
 
 **20.0 exit gate:** 7 of 7 unit checkpoints must have evidence-backed PASS, or an explicitly approved limitation recorded in the final report. No silent skips.
 
