@@ -9,15 +9,15 @@
 
 | Unit ID | Checkpoint | Status | Evidence / run reference |
 |---|---|---|---|
-| U20-0-01 | বর্তমান main branch, HEAD SHA এবং working baseline পুনরায় পড়া | BLOCKED | Main HEAD d9165f1; prior 2fb496e is 6 commits behind; local Colab working-tree status unavailable via connector. See 2026-11-27 handoff report. |
+| U20-0-01 | বর্তমান main branch, HEAD SHA এবং working baseline পুনরায় পড়া | PASS | Main HEAD `d9165f1aea785f0c75a0b4c55405424532a422a6`; PR #69 base SHA একই; plan branch-এর CI-tested SHA `86152ee74a4e98bd935d72d495a91510d6ec8c05` verified. Colab/local working tree is excluded under the approved Colab-free execution model. |
 | U20-0-02 | Phase 19 master index ও Phase 19.5 specification যাচাই | PASS | MASTER-PHASE-INDEX.md, docs/PHASE-19/README.md and docs/PHASE-19-5-CONTROLLED-NOTEBOOK-CREATION.md read from main; handoff report. |
-| U20-0-03 | Issue #59-এর সব pending /pc-run অনুরোধ ও প্রতিক্রিয়া মিলিয়ে দেখা | BLOCKED | 65 comments audited; unmatched /pc-run IDs 7211284500, 7216294809, 7216331292; duplicate replies for 7207977245. See handoff report. |
-| U20-0-04 | Notebook creation PASS-এর exact evidence, created file ও read-back যাচাই | BLOCKED | Agent reply 7214096439 reports file, 714 bytes, SHA-256 c405d276... and JSON read-back; actual Drive file/independent read-back not accessible. |
-| U20-0-05 | Duplicate filename / symlink / invalid path protection-এর বাস্তব test evidence সংগ্রহ | BLOCKED | Source tests define duplicate, symlink, traversal and invalid-name cases; no executed pytest output or runtime test artifact found. |
+| U20-0-03 | Issue #59-এর সব pending /pc-run অনুরোধ ও প্রতিক্রিয়া মিলিয়ে দেখা | PASS | All 65 comments and 23 `/pc-run` requests reconciled. Three unmatched Colab requests are explicitly retired/superseded by the approved Colab-free decision; duplicate replies for `7207977245` remain documented as a historical idempotency anomaly. No replay/cursor reset. |
+| U20-0-04 | Notebook creation PASS-এর exact evidence, created file ও read-back যাচাই | BLOCKED (APPROVED LIMITATION) | Issue #59 reply `7214096439` reports 714-byte notebook, SHA-256 `c405d27615e7c91f2cb6f921292d29980098a62599922c834c1d9be34128c3fc`, JSON read-back PASS. Independent Drive retrieval is unavailable; user approved proceeding without Colab, so Drive/Colab notebook read-back is excluded from the Phase 20 execution path. Historical claim is not upgraded to independently verified PASS. |
+| U20-0-05 | Duplicate filename / symlink / invalid path protection-এর বাস্তব test evidence সংগ্রহ | PASS | GitHub Actions CI run `46021825415` on exact SHA `86152ee74a4e98bd935d72d495a91510d6ec8c05`: focused categories passed and full `python -m pytest -q` reported `310 passed, 11 skipped`; uploaded `phase-09-test-reports` artifact (242,853 bytes). The full default pytest suite includes `tests/test_colab_notebook_creation.py`; no separate Drive/Colab execution is claimed. |
 | U20-0-06 | Phase 19.5-এর unresolved criteria আলাদা করে BLOCKED তালিকায় রাখা | PASS | Unresolved gates explicitly enumerated in 2026-11-27 Phase 19 handoff report. |
 | U20-0-07 | Phase 19 handoff report তৈরি; কোনো অনিষ্পন্ন কাজকে PASS না বলা | PASS | reports/Phase-20/2026-11-27-Phase19-Handoff.md saved on plan branch. |
 
-**20.0 exit gate:** 7 of 7 unit checkpoints must have evidence-backed PASS, or an explicitly approved limitation recorded in the final report. No silent skips.
+**20.0 exit gate:** COMPLETE WITH APPROVED LIMITATION. Six units are evidence-backed PASS; U20-0-04 remains visibly BLOCKED because the Drive file cannot be independently retrieved. The user explicitly approved the Colab-free execution model, and this limitation is recorded in `reports/Phase-20/2026-11-27-Phase20-0-Colab-Free-Entry-Gate.md`. No silent skip or false PASS.
 
 ## 20.1 — GitHub capability ও permission audit
 
