@@ -19,7 +19,7 @@ from scripts.colab_notebook_creation import create_notebook
 REPOSITORY = "glad4u7-crypto/project-continue"
 API_ROOT = f"https://api.github.com/repos/{REPOSITORY}"
 AUTHORIZED_LOGIN = "glad4u7-crypto"
-COMMAND_RE = re.compile(r"^/pc-run (phase18-tests|compile|dashboard-health|git-status)$")
+COMMAND_RE = re.compile(r"^/pc-run (phase18-tests|phase19-tests|compile|dashboard-health|git-status)$")
 READ_COMMAND_RE = re.compile(r"^/pc-read (README\.md|app\.py|scripts/colab_control_agent\.py|docs/PHASE-18-COLAB-CONTROL-AGENT\.md)$")
 DISCOVERY_COMMAND_RE = re.compile(r"^/pc-discover$")
 CREATE_NOTEBOOK_COMMAND_RE = re.compile(r"^/pc-create-notebook ([A-Za-z0-9][A-Za-z0-9 _-]{0,63})$")
@@ -33,6 +33,12 @@ TASKS = {
         "tests/test_colab_dashboard_status.py",
         "tests/test_colab_control_agent.py",
         "tests/test_colab_notebook_discovery.py",
+    ],
+    "phase19-tests": [
+        sys.executable, "-m", "pytest", "-q",
+        "tests/test_colab_notebook_discovery.py",
+        "tests/test_colab_notebook_creation.py",
+        "tests/test_colab_control_agent.py",
     ],
     "compile": [
         sys.executable, "-m", "compileall", "-q",
