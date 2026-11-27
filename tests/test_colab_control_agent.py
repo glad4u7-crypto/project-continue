@@ -12,6 +12,7 @@ def test_parser_accepts_only_fixed_commands():
     assert not COMMAND_RE.fullmatch("/pc-run pytest; rm -rf /")
     assert not COMMAND_RE.fullmatch("/pc-run python -c 'print(1)'")
     assert not COMMAND_RE.fullmatch("/pc-run compile --unsafe")
+    assert COMMAND_RE.fullmatch("/pc-run phase19-tests")
 
 
 def test_discovery_command_is_exact():
@@ -199,3 +200,29 @@ def test_authorized_issue_command_creates_notebook_and_posts_report(tmp_path):
 
     assert processed == 1
     create.assert_called_once_with("Created By Agent")
+
+
+
+def test_unauthorized_user_cannot_create_notebook(tmp_path):
+    command = {
+        "id": 302,
+        "user": {"login": "untrusted-user"},
+        "body": "/pc-create-notebook Unauthorized",
+    }
+
+    def fake_api_request(token, method, url, payload=None):
+        if method == "GET":
+            return [command] if url.endswith("&page=1") else []
+        if method == "POST":
+            raise AssertionError("Unauthorized command must not post a result")
+        raise AssertionError(f"Unexpected API call: {method} {url}")
+
+    with (
+        patch("scripts.colab_control_agent.STATE_PATH", tmp_path / "state.json"),
+        patch("scripts.colab_control_agent.api_request", side_effect=fake_api_request),
+        patch("scripts.colab_control_agent.create_notebook") as create,
+    ):
+        processed = process_comments("token", 59, {"last_comment_id": 0})
+
+    assert processed == 0
+    create.assert_not_called()
