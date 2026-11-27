@@ -188,6 +188,10 @@ def save() -> Path:
 
     db_records = []
     db_source = env_path("PROJECT_CONTINUE_DB")
+    if db_source is None:
+        configured_default = repo / ".data" / "project_continue.sqlite3"
+        if configured_default.is_file():
+            db_source = configured_default.resolve()
     if db_source:
         db_records.append(make_sqlite_snapshot(db_source, run_dir / "database" / db_source.name))
     else:
@@ -222,6 +226,9 @@ def save() -> Path:
         ("streamlit_log", "PROJECT_CONTINUE_LOG"),
     ):
         source = env_path(variable)
+        if label == "agent_state" and source is None:
+            default_state = Path("/content/.project_continue_agent_state.json")
+            source = default_state if default_state.is_file() else None
         if source and source.is_file():
             target = run_dir / "runtime" / label / source.name
             target.parent.mkdir(parents=True, exist_ok=True)
