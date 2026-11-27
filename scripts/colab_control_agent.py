@@ -19,7 +19,7 @@ REPOSITORY = "glad4u7-crypto/project-continue"
 API_ROOT = f"https://api.github.com/repos/{REPOSITORY}"
 AUTHORIZED_LOGIN = "glad4u7-crypto"
 COMMAND_RE = re.compile(r"^/pc-run (phase18-tests|compile|dashboard-health|git-status)$")
-READ_COMMAND_RE = re.compile(r"^/pc-read (README\\.md|app\\.py|scripts/colab_control_agent\\.py|docs/PHASE-18-COLAB-CONTROL-AGENT\\.md)$")
+READ_COMMAND_RE = re.compile(r"^/pc-read (README\.md|app\.py|scripts/colab_control_agent\.py|docs/PHASE-18-COLAB-CONTROL-AGENT\.md)$")
 DISCOVERY_COMMAND_RE = re.compile(r"^/pc-discover$")
 MAX_READ_BYTES = 12000
 STATE_PATH = Path(os.environ.get("PROJECT_CONTINUE_AGENT_STATE", "/content/.project_continue_agent_state.json"))
@@ -104,9 +104,9 @@ def run_task(task: str) -> tuple[bool, str]:
         )
     except subprocess.TimeoutExpired:
         return False, "Task timed out; no retry was started."
-    output = (result.stdout + "\\n" + result.stderr).strip()
+    output = (result.stdout + "\n" + result.stderr).strip()
     return result.returncode == 0, (
-        f"Exit code: {result.returncode}\\n{output[-3500:] or '(no output)'}"
+        f"Exit code: {result.returncode}\n{output[-3500:] or '(no output)'}"
     )
 
 
@@ -164,7 +164,7 @@ def read_project_file(relative_path: str) -> tuple[bool, str]:
             os.close(current_fd)
         if root_fd is not None:
             os.close(root_fd)
-    return True, f"File: {relative_path}\\n\\n{content}"
+    return True, f"File: {relative_path}\n\n{content}"
 
 
 def process_comments(token: str, issue_number: int, state: dict) -> int:
@@ -202,10 +202,10 @@ def process_comments(token: str, issue_number: int, state: dict) -> int:
                     task = match.group(1)
                     passed, detail = run_task(task)
                 report = (
-                    f"Colab Control Agent: {'PASS' if passed else 'FAIL'}\\n"
-                    f"Request: {comment_id}\\n"
-                    f"Task: {task}\\n\\n"
-                    f"{detail[:3500]}\\n\\n"
+                    f"Colab Control Agent: {'PASS' if passed else 'FAIL'}\n"
+                    f"Request: {comment_id}\n"
+                    f"Task: {task}\n\n"
+                    f"{detail[:3500]}\n\n"
                     "Arbitrary shell, source edits, restart, deployment and deletion "
                     "are unsupported."
                 )
