@@ -13,12 +13,14 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from scripts.colab_dashboard_status import check_local_streamlit
+from scripts.colab_notebook_discovery import discover_project_files
 
 REPOSITORY = "glad4u7-crypto/project-continue"
 API_ROOT = f"https://api.github.com/repos/{REPOSITORY}"
 AUTHORIZED_LOGIN = "glad4u7-crypto"
 COMMAND_RE = re.compile(r"^/pc-run (phase18-tests|compile|dashboard-health|git-status)$")
 READ_COMMAND_RE = re.compile(r"^/pc-read (README\.md|app\.py|scripts/colab_control_agent\.py|docs/PHASE-18-COLAB-CONTROL-AGENT\.md)$")
+DISCOVERY_COMMAND_RE = re.compile(r"^/pc-discover$")
 MAX_READ_BYTES = 12000
 STATE_PATH = Path(os.environ.get("PROJECT_CONTINUE_AGENT_STATE", "/content/.project_continue_agent_state.json"))
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -28,6 +30,7 @@ TASKS = {
         "tests/test_dashboard_health_check.py",
         "tests/test_colab_dashboard_status.py",
         "tests/test_colab_control_agent.py",
+        "tests/test_colab_notebook_discovery.py",
     ],
     "compile": [
         sys.executable, "-m", "compileall", "-q",
@@ -107,7 +110,6 @@ def run_task(task: str) -> tuple[bool, str]:
     )
 
 
-
 def read_project_file(relative_path: str) -> tuple[bool, str]:
     """Read a small allow-listed file without following symlinks."""
     allowed = {
@@ -119,9 +121,6 @@ def read_project_file(relative_path: str) -> tuple[bool, str]:
     if relative_path not in allowed:
         return False, "File path is not allow-listed."
 
-    # Walk from an already-open project root using directory file descriptors.
-    # O_NOFOLLOW is applied to every component, closing the resolve()/open()
-    # symlink race and rejecting symlinked parent directories as well.
     parts = Path(relative_path).parts
     if not parts or any(part in ("", ".", "..") for part in parts):
         return False, "File path is not allow-listed."
@@ -138,9 +137,7 @@ def read_project_file(relative_path: str) -> tuple[bool, str]:
             if current_fd != root_fd:
                 os.close(current_fd)
             current_fd = next_fd
-        file_fd = os.open(
-            parts[-1], os.O_RDONLY | os.O_NOFOLLOW, dir_fd=current_fd
-        )
+        file_fd = os.open(parts[-1], os.O_RDONLY | os.O_NOFOLLOW, dir_fd=current_fd)
         info = os.fstat(file_fd)
         if not __import__("stat").S_ISREG(info.st_mode):
             return False, "File is unavailable or is not a regular file."
@@ -193,10 +190,14 @@ def process_comments(token: str, issue_number: int, state: dict) -> int:
             body = str(comment.get("body") or "").strip()
             match = COMMAND_RE.fullmatch(body)
             read_match = READ_COMMAND_RE.fullmatch(body)
-            if author == AUTHORIZED_LOGIN and (match or read_match):
+            discovery_match = DISCOVERY_COMMAND_RE.fullmatch(body)
+            if author == AUTHORIZED_LOGIN and (match or read_match or discovery_match):
                 if read_match:
                     task = "read-file"
                     passed, detail = read_project_file(read_match.group(1))
+                elif discovery_match:
+                    task = "notebook-discovery"
+                    passed, detail = discover_project_files(repo_root=REPO_ROOT)
                 else:
                     task = match.group(1)
                     passed, detail = run_task(task)
@@ -215,7 +216,6 @@ def process_comments(token: str, issue_number: int, state: dict) -> int:
                     {"body": report},
                 )
                 processed += 1
-            # Persist every seen comment so ignored comments are not rescanned.
             last_id = comment_id
             state["last_comment_id"] = last_id
             save_state(state)
