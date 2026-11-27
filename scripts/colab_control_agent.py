@@ -6,6 +6,7 @@ import json
 import os
 import re
 import subprocess
+import stat
 import sys
 import time
 from pathlib import Path
@@ -18,6 +19,9 @@ REPOSITORY = "glad4u7-crypto/project-continue"
 API_ROOT = f"https://api.github.com/repos/{REPOSITORY}"
 AUTHORIZED_LOGIN = "glad4u7-crypto"
 COMMAND_RE = re.compile(r"^/pc-run (phase18-tests|compile|dashboard-health|git-status)$")
+READ_COMMAND_RE = re.compile(r"^/pc-read (README\\.md|app\\.py|scripts/colab_control_agent\\.py|docs/PHASE-18-COLAB-CONTROL-AGENT\\.md)$")
+READ_ALLOWLIST = frozenset({"README.md", "app.py", "scripts/colab_control_agent.py", "docs/PHASE-18-COLAB-CONTROL-AGENT.md"})
+MAX_READ_BYTES = 12 * 1024
 STATE_PATH = Path(os.environ.get("PROJECT_CONTINUE_AGENT_STATE", "/content/.project_continue_agent_state.json"))
 REPO_ROOT = Path(__file__).resolve().parents[1]
 TASKS = {
@@ -105,6 +109,64 @@ def run_task(task: str) -> tuple[bool, str]:
     )
 
 
+
+def read_project_file(relative_path: str) -> tuple[bool, str]:
+    """Read one small allow-listed project file without following symlinks."""
+    if relative_path not in READ_ALLOWLIST:
+        return False, "File is not allow-listed."
+    parts = relative_path.split("/")
+    directory_fd = None
+    file_fd = None
+    try:
+        directory_fd = os.open(
+            str(REPO_ROOT),
+            os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0),
+        )
+        for component in parts[:-1]:
+            next_fd = os.open(
+                component,
+                os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0),
+                dir_fd=directory_fd,
+            )
+            os.close(directory_fd)
+            directory_fd = next_fd
+        file_fd = os.open(
+            parts[-1], os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0), dir_fd=directory_fd
+        )
+        metadata = os.fstat(file_fd)
+        if not stat.S_ISREG(metadata.st_mode):
+            return False, "Requested path is not a regular file."
+        if metadata.st_size > MAX_READ_BYTES:
+            return False, f"File exceeds the {MAX_READ_BYTES}-byte read limit."
+        content = os.read(file_fd, MAX_READ_BYTES + 1)
+        if len(content) > MAX_READ_BYTES:
+            return False, f"File exceeds the {MAX_READ_BYTES}-byte read limit."
+        return True, content.decode("utf-8")
+    except (OSError, UnicodeError) as exc:
+        return False, f"File read failed ({type(exc).__name__})."
+    finally:
+        if file_fd is not None:
+            os.close(file_fd)
+        if directory_fd is not None:
+            os.close(directory_fd)
+
+
+def _read_report(comment_id: int, relative_path: str) -> str:
+    passed, result = read_project_file(relative_path)
+    if not passed:
+        return (
+            f"Colab Read Bridge: FAIL\\nRequest: {comment_id}\\n"
+            f"File: {relative_path}\\n\\n{result}"
+        )
+    fence = "```"
+    while fence in result:
+        fence += "`"
+    return (
+        f"Colab Read Bridge: PASS\\nRequest: {comment_id}\\n"
+        f"File: {relative_path}\\nBytes: {len(result.encode('utf-8'))}\\n\\n"
+        f"{fence}text\\n{result}\\n{fence}"
+    )
+
 def process_comments(token: str, issue_number: int, state: dict) -> int:
     """Process all newly-created comments, not just GitHub's first 100."""
     last_id = int(state.get("last_comment_id", 0))
@@ -125,15 +187,26 @@ def process_comments(token: str, issue_number: int, state: dict) -> int:
             if comment_id <= last_id:
                 continue
             author = (comment.get("user") or {}).get("login", "")
-            match = COMMAND_RE.fullmatch(str(comment.get("body") or "").strip())
-            if author == AUTHORIZED_LOGIN and match:
+            body = str(comment.get("body") or "").strip()
+            match = COMMAND_RE.fullmatch(body)
+            read_match = READ_COMMAND_RE.fullmatch(body)
+            if author == AUTHORIZED_LOGIN and read_match:
+                report = _read_report(comment_id, read_match.group(1))
+                api_request(
+                    token,
+                    "POST",
+                    f"{API_ROOT}/issues/{issue_number}/comments",
+                    {"body": report},
+                )
+                processed += 1
+            elif author == AUTHORIZED_LOGIN and match:
                 task = match.group(1)
                 passed, detail = run_task(task)
                 report = (
-                    f"Colab Control Agent: {'PASS' if passed else 'FAIL'}\n"
-                    f"Request: {comment_id}\n"
-                    f"Task: {task}\n\n"
-                    f"{detail[:3500]}\n\n"
+                    f"Colab Control Agent: {'PASS' if passed else 'FAIL'}\\n"
+                    f"Request: {comment_id}\\n"
+                    f"Task: {task}\\n\\n"
+                    f"{detail[:3500]}\\n\\n"
                     "Arbitrary shell, source edits, restart, deployment and deletion "
                     "are unsupported."
                 )
