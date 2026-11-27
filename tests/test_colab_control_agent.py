@@ -1,6 +1,8 @@
 from unittest.mock import patch
 
-from scripts.colab_control_agent import COMMAND_RE, process_comments, run_task
+from scripts.colab_control_agent import (
+    COMMAND_RE, READ_COMMAND_RE, process_comments, read_project_file, run_task,
+)
 
 
 def test_parser_accepts_only_fixed_commands():
@@ -9,6 +11,30 @@ def test_parser_accepts_only_fixed_commands():
     assert not COMMAND_RE.fullmatch("/pc-run pytest; rm -rf /")
     assert not COMMAND_RE.fullmatch("/pc-run python -c 'print(1)'")
     assert not COMMAND_RE.fullmatch("/pc-run compile --unsafe")
+
+
+def test_read_parser_accepts_only_allowlisted_paths():
+    for path in ("README.md", "app.py", "scripts/colab_control_agent.py",
+                 "docs/PHASE-18-COLAB-CONTROL-AGENT.md"):
+        assert READ_COMMAND_RE.fullmatch("/pc-read " + path)
+    assert not READ_COMMAND_RE.fullmatch("/pc-read ../../etc/passwd")
+    assert not READ_COMMAND_RE.fullmatch("/pc-read README.md; /pc-run compile")
+
+
+def test_read_project_file_reads_allowlisted_file(tmp_path):
+    (tmp_path / "README.md").write_text("Project Continue\\n", encoding="utf-8")
+    with patch("scripts.colab_control_agent.REPO_ROOT", tmp_path):
+        assert read_project_file("README.md") == (True, "Project Continue\\n")
+        assert not read_project_file("../README.md")[0]
+
+
+def test_read_project_file_rejects_symlink(tmp_path):
+    outside = tmp_path / "outside.txt"
+    outside.write_text("secret", encoding="utf-8")
+    (tmp_path / "README.md").symlink_to(outside)
+    with patch("scripts.colab_control_agent.REPO_ROOT", tmp_path):
+        passed, message = read_project_file("README.md")
+    assert not passed and "failed" in message
 
 
 def test_unknown_task_is_rejected():
