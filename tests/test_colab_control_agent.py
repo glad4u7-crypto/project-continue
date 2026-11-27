@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
 from scripts.colab_control_agent import (
-    COMMAND_RE, READ_COMMAND_RE, process_comments, read_project_file, run_task,
+    COMMAND_RE, DISCOVERY_COMMAND_RE, READ_COMMAND_RE, process_comments, read_project_file, run_task,
 )
 
 
@@ -11,6 +11,12 @@ def test_parser_accepts_only_fixed_commands():
     assert not COMMAND_RE.fullmatch("/pc-run pytest; rm -rf /")
     assert not COMMAND_RE.fullmatch("/pc-run python -c 'print(1)'")
     assert not COMMAND_RE.fullmatch("/pc-run compile --unsafe")
+
+
+def test_discovery_command_is_exact():
+    assert DISCOVERY_COMMAND_RE.fullmatch("/pc-discover")
+    assert not DISCOVERY_COMMAND_RE.fullmatch("/pc-discover /content")
+    assert not DISCOVERY_COMMAND_RE.fullmatch("/pc-discover; rm -rf /")
 
 
 def test_unknown_task_is_rejected():
@@ -123,3 +129,34 @@ def test_read_project_file_rejects_non_regular_file(tmp_path):
     with patch("scripts.colab_control_agent.REPO_ROOT", tmp_path):
         passed, detail = read_project_file("README.md")
     assert not passed
+
+
+
+def test_discovery_command_returns_only_aggregate_report(tmp_path):
+    command = {
+        "id": 201,
+        "user": {"login": "glad4u7-crypto"},
+        "body": "/pc-discover",
+    }
+
+    def fake_api_request(token, method, url, payload=None):
+        if method == "GET":
+            return [command] if url.endswith("&page=1") else []
+        if method == "POST":
+            assert "notebook-discovery" in payload["body"]
+            assert "private-name.ipynb" not in payload["body"]
+            return {"id": 999}
+        raise AssertionError(f"Unexpected API call: {method} {url}")
+
+    with (
+        patch("scripts.colab_control_agent.STATE_PATH", tmp_path / "state.json"),
+        patch("scripts.colab_control_agent.api_request", side_effect=fake_api_request),
+        patch(
+            "scripts.colab_control_agent.discover_project_files",
+            return_value=(True, "Metadata-only discovery completed. notebooks=2"),
+        ) as discover,
+    ):
+        processed = process_comments("token", 59, {"last_comment_id": 0})
+
+    assert processed == 1
+    discover.assert_called_once()
