@@ -8,7 +8,7 @@
 
 | Phase | Status | Passed units | Total units | Latest evidence | Next action |
 |---|---|---:|---:|---|---|
-| 20.0 Phase 19 handoff ও entry gate | IN PROGRESS | 0 | 7 | Initial planning baseline only | Complete in order; see unit register |
+| 20.0 Phase 19 handoff ও entry gate | BLOCKED | 3 | 7 | 2026-11-27 Phase 19 handoff report; 4 units blocked | Resolve U20-0-01, U20-0-03, U20-0-04, U20-0-05; do not advance past the first incomplete unit |
 | 20.1 GitHub capability ও permission audit | IN PROGRESS | 0 | 12 | Initial planning baseline only | Complete in order; see unit register |
 | 20.2 Authentication ও least-privilege security | NOT STARTED | 0 | 9 | Initial planning baseline only | Complete in order; see unit register |
 | 20.3 Secure dispatcher ও command protocol | NOT STARTED | 0 | 9 | Initial planning baseline only | Complete in order; see unit register |
@@ -26,10 +26,10 @@
 ## Global counters
 
 - Total atomic checkpoints: 142
-- PASS: 0
+- PASS: 3
 - FAIL: 0
-- BLOCKED: 0
-- NOT STARTED: 142
+- BLOCKED: 4
+- NOT STARTED: 135
 
 ## Update rules
 
