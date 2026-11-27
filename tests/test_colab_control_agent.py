@@ -1,7 +1,8 @@
 from unittest.mock import patch
 
 from scripts.colab_control_agent import (
-    COMMAND_RE, DISCOVERY_COMMAND_RE, READ_COMMAND_RE, process_comments, read_project_file, run_task,
+    COMMAND_RE, CREATE_NOTEBOOK_COMMAND_RE, DISCOVERY_COMMAND_RE, READ_COMMAND_RE,
+    process_comments, read_project_file, run_task,
 )
 
 
@@ -11,6 +12,7 @@ def test_parser_accepts_only_fixed_commands():
     assert not COMMAND_RE.fullmatch("/pc-run pytest; rm -rf /")
     assert not COMMAND_RE.fullmatch("/pc-run python -c 'print(1)'")
     assert not COMMAND_RE.fullmatch("/pc-run compile --unsafe")
+    assert COMMAND_RE.fullmatch("/pc-run phase19-tests")
 
 
 def test_discovery_command_is_exact():
@@ -160,3 +162,67 @@ def test_discovery_command_returns_only_aggregate_report(tmp_path):
 
     assert processed == 1
     discover.assert_called_once()
+
+
+
+def test_create_notebook_command_is_strict():
+    assert CREATE_NOTEBOOK_COMMAND_RE.fullmatch("/pc-create-notebook Analysis 01")
+    assert not CREATE_NOTEBOOK_COMMAND_RE.fullmatch("/pc-create-notebook ../escape")
+    assert not CREATE_NOTEBOOK_COMMAND_RE.fullmatch("/pc-create-notebook folder/name")
+    assert not CREATE_NOTEBOOK_COMMAND_RE.fullmatch("/pc-create-notebook Analysis; rm -rf /")
+
+
+def test_authorized_issue_command_creates_notebook_and_posts_report(tmp_path):
+    command = {
+        "id": 301,
+        "user": {"login": "glad4u7-crypto"},
+        "body": "/pc-create-notebook Created By Agent",
+    }
+
+    def fake_api_request(token, method, url, payload=None):
+        if method == "GET":
+            return [command] if url.endswith("&page=1") else []
+        if method == "POST":
+            assert "notebook-create" in payload["body"]
+            assert "Created By Agent.ipynb" in payload["body"]
+            return {"id": 1001}
+        raise AssertionError(f"Unexpected API call: {method} {url}")
+
+    with (
+        patch("scripts.colab_control_agent.STATE_PATH", tmp_path / "state.json"),
+        patch("scripts.colab_control_agent.api_request", side_effect=fake_api_request),
+        patch(
+            "scripts.colab_control_agent.create_notebook",
+            return_value=(True, "Notebook created. File: Created By Agent.ipynb"),
+        ) as create,
+    ):
+        processed = process_comments("token", 59, {"last_comment_id": 0})
+
+    assert processed == 1
+    create.assert_called_once_with("Created By Agent")
+
+
+
+def test_unauthorized_user_cannot_create_notebook(tmp_path):
+    command = {
+        "id": 302,
+        "user": {"login": "untrusted-user"},
+        "body": "/pc-create-notebook Unauthorized",
+    }
+
+    def fake_api_request(token, method, url, payload=None):
+        if method == "GET":
+            return [command] if url.endswith("&page=1") else []
+        if method == "POST":
+            raise AssertionError("Unauthorized command must not post a result")
+        raise AssertionError(f"Unexpected API call: {method} {url}")
+
+    with (
+        patch("scripts.colab_control_agent.STATE_PATH", tmp_path / "state.json"),
+        patch("scripts.colab_control_agent.api_request", side_effect=fake_api_request),
+        patch("scripts.colab_control_agent.create_notebook") as create,
+    ):
+        processed = process_comments("token", 59, {"last_comment_id": 0})
+
+    assert processed == 0
+    create.assert_not_called()
