@@ -49,6 +49,19 @@ def env_path(name: str, default: Path | None = None) -> Path | None:
     return Path(value).expanduser().resolve() if value else (default.resolve() if default else None)
 
 
+def safe_tar_filter(info: tarfile.TarInfo) -> tarfile.TarInfo | None:
+    parts = Path(info.name).parts
+    excluded_dirs = {".git", ".venv", "venv", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache"}
+    if any(part in excluded_dirs for part in parts):
+        return None
+    name = Path(info.name).name
+    if name == ".env" or name.endswith((".pem", ".key")):
+        return None
+    if name.lower() in {"credentials.json", "service-account.json"}:
+        return None
+    return info
+
+
 def run_git(repo: Path, *args: str) -> str | None:
     result = subprocess.run(
         ["git", "-C", str(repo), *args],
@@ -162,7 +175,7 @@ def save() -> Path:
         for item in sorted(repo.iterdir()):
             if item.name in excluded or item.name == ".env":
                 continue
-            archive.add(item, arcname=item.name, recursive=True)
+            archive.add(item, arcname=item.name, recursive=True, filter=safe_tar_filter)
 
     # Preserve Git history/refs separately. The bundle is a portable Git recovery artifact.
     bundle = run_dir / "repository.git.bundle"
@@ -321,6 +334,8 @@ def restore_latest() -> Path:
             target = (repo_target / member.name).resolve()
             if root not in target.parents and target != root:
                 raise RuntimeError("Unsafe archive path rejected.")
+            if member.issym() or member.islnk() or not (member.isfile() or member.isdir()):
+                raise RuntimeError("Links and special archive entries are rejected.")
         tar.extractall(repo_target)
 
     bundle_info = repo_record["git_bundle"]
