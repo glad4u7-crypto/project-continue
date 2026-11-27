@@ -191,11 +191,30 @@ def save() -> Path:
     if db_source:
         db_records.append(make_sqlite_snapshot(db_source, run_dir / "database" / db_source.name))
     else:
-        # The previously verified database backups remain preserved; don't guess which DB is live.
-        db_records.append({
-            "status": "not-copied",
-            "reason": "PROJECT_CONTINUE_DB is not configured; existing verified database backup retained.",
-        })
+        # Carry forward the previously verified baseline DB copies into each versioned snapshot.
+        legacy_db = LEGACY_BACKUP / "database"
+        if legacy_db.is_dir():
+            for source in sorted(legacy_db.glob("*.sqlite3")):
+                target = run_dir / "database" / source.name
+                target.parent.mkdir(parents=True, exist_ok=True)
+                if not target.exists():
+                    shutil.copy2(source, target)
+                integrity = sqlite_check(target)
+                if integrity != "ok":
+                    raise RuntimeError(f"Legacy SQLite backup failed integrity check: {source.name}")
+                db_records.append({
+                    "source_path": str(source),
+                    "backup_path": str(target),
+                    "size": target.stat().st_size,
+                    "sha256": sha256(target),
+                    "integrity_check": integrity,
+                    "source_type": "previously-verified-baseline-copy",
+                })
+        if not db_records:
+            db_records.append({
+                "status": "not-copied",
+                "reason": "PROJECT_CONTINUE_DB is not configured and no baseline SQLite copies were found.",
+            })
 
     optional_files = {}
     for label, variable in (
@@ -327,6 +346,16 @@ def restore_latest() -> Path:
             shutil.copy2(source, target)
             restored_dbs.append(str(target))
 
+    restored_runtime = {}
+    for label, item in manifest.get("runtime_files", {}).items():
+        if item.get("path"):
+            source = Path(item["path"])
+            if source.is_file() and sha256(source) == item["sha256"]:
+                target = restore_root / "runtime" / label / source.name
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source, target)
+                restored_runtime[label] = str(target)
+
     (restore_root / "RESTORE_REPORT.json").write_text(json.dumps({
         "status": "isolated_restore_copy_created",
         "source_manifest": str(manifest_path),
@@ -334,6 +363,7 @@ def restore_latest() -> Path:
         "git_bundle_copy": str(bundle_target),
         "notebooks_copy": str(notebooks_target),
         "database_copies": restored_dbs,
+        "runtime_file_copies": restored_runtime,
         "live_repository_or_database_modified": False,
         "note": "This is an isolated recovery copy; operator validation and any cutover are separate.",
     }, indent=2), encoding="utf-8")
