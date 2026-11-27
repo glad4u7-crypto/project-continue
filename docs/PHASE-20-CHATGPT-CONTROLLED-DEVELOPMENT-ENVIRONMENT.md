@@ -240,3 +240,16 @@ Never store tokens, cookies, private user data, database contents or unredacted 
 ## 8. Change log
 
 - 2026-11-27: Initial Phase 20 master checklist and evidence-based baseline created on planning branch. No application code, live database, Streamlit process, Colab runtime, notebook or secret was modified.
+
+
+## 9. Complete atomic unit checklist and persistent progress
+
+The phase-level table above is only the summary. The complete execution order is defined in the separate **142-item atomic unit register**:
+
+- [A-to-Z Unit Checkpoint Register](PHASE-20-UNIT-CHECKPOINT-REGISTER.md)
+- [Persistent Progress Tracker](../reports/Phase-20/PROGRESS-TRACKER.md)
+- [Initial Baseline Report](../reports/Phase-20/2026-11-27-Phase20-Baseline.md)
+
+Every atomic unit has a unique ID, a status field, and an evidence/run-reference field. The register starts with 142 NOT STARTED units and zero PASS. A unit can move to PASS only after its test/output/report is saved. Update the progress tracker after each verified unit. Do not skip, silently defer, or infer completion from a merge or a related test.
+
+**Execution order:** P20.0 → P20.1 → … → P20.13, and within each phase follow the unit IDs top to bottom. When a unit is BLOCKED by a missing connector capability, record the exact missing operation and proceed only with independent safe work; do not claim the blocked capability works.
