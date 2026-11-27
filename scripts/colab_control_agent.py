@@ -14,6 +14,7 @@ from urllib.request import Request, urlopen
 
 from scripts.colab_dashboard_status import check_local_streamlit
 from scripts.colab_notebook_discovery import discover_project_files
+from scripts.colab_notebook_creation import create_notebook
 
 REPOSITORY = "glad4u7-crypto/project-continue"
 API_ROOT = f"https://api.github.com/repos/{REPOSITORY}"
@@ -21,6 +22,7 @@ AUTHORIZED_LOGIN = "glad4u7-crypto"
 COMMAND_RE = re.compile(r"^/pc-run (phase18-tests|compile|dashboard-health|git-status)$")
 READ_COMMAND_RE = re.compile(r"^/pc-read (README\.md|app\.py|scripts/colab_control_agent\.py|docs/PHASE-18-COLAB-CONTROL-AGENT\.md)$")
 DISCOVERY_COMMAND_RE = re.compile(r"^/pc-discover$")
+CREATE_NOTEBOOK_COMMAND_RE = re.compile(r"^/pc-create-notebook ([A-Za-z0-9][A-Za-z0-9 _-]{0,63})$")
 MAX_READ_BYTES = 12000
 STATE_PATH = Path(os.environ.get("PROJECT_CONTINUE_AGENT_STATE", "/content/.project_continue_agent_state.json"))
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -191,13 +193,17 @@ def process_comments(token: str, issue_number: int, state: dict) -> int:
             match = COMMAND_RE.fullmatch(body)
             read_match = READ_COMMAND_RE.fullmatch(body)
             discovery_match = DISCOVERY_COMMAND_RE.fullmatch(body)
-            if author == AUTHORIZED_LOGIN and (match or read_match or discovery_match):
+            create_match = CREATE_NOTEBOOK_COMMAND_RE.fullmatch(body)
+            if author == AUTHORIZED_LOGIN and (match or read_match or discovery_match or create_match):
                 if read_match:
                     task = "read-file"
                     passed, detail = read_project_file(read_match.group(1))
                 elif discovery_match:
                     task = "notebook-discovery"
                     passed, detail = discover_project_files(repo_root=REPO_ROOT)
+                elif create_match:
+                    task = "notebook-create"
+                    passed, detail = create_notebook(create_match.group(1))
                 else:
                     task = match.group(1)
                     passed, detail = run_task(task)
