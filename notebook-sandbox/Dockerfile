@@ -16,6 +16,7 @@ COPY scripts/notebook_container_runner.py /opt/notebook-runtime/scripts/notebook
 
 RUN touch /opt/notebook-runtime/core/__init__.py /opt/notebook-runtime/scripts/__init__.py \
     && python -m pip install --no-cache-dir -r /opt/notebook-sandbox/requirements.txt \
+    && python -m ipykernel install --prefix=/usr/local --name python3 --display-name "Python 3" \
     && groupadd --system --gid 10001 notebookrunner \
     && useradd --system --uid 10001 --gid 10001 --home-dir /tmp --shell /usr/sbin/nologin notebookrunner \
     && mkdir -p /workspace/output \
