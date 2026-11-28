@@ -177,10 +177,16 @@ def run_sandbox(
                 summary = json.loads(stdout)
             except (json.JSONDecodeError, TypeError):
                 summary = {}
-            execution_status = summary.get("status") if isinstance(summary, dict) else None
             sanitized = json.dumps(artifact_doc, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
             if len(sanitized) > MAX_NOTEBOOK_BYTES:
                 return SandboxResult(3, timed_out, stdout, "redacted notebook artifact exceeds 64 KiB", stdout_truncated, stderr_truncated)
+            execution_status = summary.get("status") if isinstance(summary, dict) else None
+            if (
+                execution_status not in {"completed", "cell_error"}
+                or summary.get("artifact_bytes") != len(sanitized)
+                or summary.get("artifact_sha256") != hashlib.sha256(sanitized).hexdigest()
+            ):
+                return SandboxResult(3, timed_out, stdout, "notebook artifact summary does not match persisted bytes", stdout_truncated, stderr_truncated)
             final_path = destination / f"executed-{uuid.uuid4().hex}.ipynb"
             try:
                 _write_exclusive(final_path, sanitized)
