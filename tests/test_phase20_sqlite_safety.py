@@ -8,6 +8,9 @@ import pytest
 def test_pytest_runner_blocks_non_temporary_sqlite_database(tmp_path):
     with pytest.raises(RuntimeError, match="temporary SQLite"):
         sqlite3.connect(Path.home() / "project-continue-live.sqlite3")
+    configured_live = Path(__file__).resolve().parents[1] / ".data" / "project_continue.sqlite3"
+    with pytest.raises(RuntimeError, match="temporary SQLite"):
+        sqlite3.connect(configured_live)
 
 
 def test_pytest_runner_allows_pytest_tmp_path_temporary_directory_and_memory(tmp_path):
