@@ -66,3 +66,15 @@ def test_non_object_request_fails_closed():
     passed, errors = _authorize(["not-a-request"])
     assert not passed
     assert errors
+
+def test_only_pinned_harmless_e2e_fixture_is_additionally_allowlisted():
+    path = "tests/fixtures/notebooks/harmless_execution.ipynb"
+    blob = "b62de83fd65d7faa0713ce52b8c87b4741ed9832"
+    passed, errors = authorize_notebook_execution(
+        {"notebook_path": path, "commit_sha": COMMIT, "blob_sha": blob},
+        checked_out_commit_sha=COMMIT,
+        resolved_notebook_path=path,
+        resolved_blob_sha=blob,
+    )
+    assert passed
+    assert errors == ()
