@@ -190,3 +190,108 @@ def validate_patch(
         if _validate_sha(expected_blob_sha, "expected_blob_sha") != previous:
             raise RepositoryAccessRejected("stale or missing blob SHA; re-read before overwrite")
     return ValidatedPatch(path, content, len(raw), _blob_sha(raw), previous)
+
+
+@dataclass(frozen=True)
+class DiffSummary:
+    """Reviewable patch metadata; never includes file contents or secrets."""
+    path: str
+    additions: int
+    deletions: int
+    old_blob_sha: str | None
+    new_blob_sha: str
+
+
+def prepare_patch(
+    *, target_branch: str, base_branch: str, observed_base_sha: str,
+    expected_base_sha: str, path: str, new_content: str,
+    current_content: str | None, expected_blob_sha: str | None,
+) -> ValidatedPatch:
+    """Fail closed on main-branch writes and stale base/blob SHA before producing a patch."""
+    validate_target_branch(
+        target_branch=target_branch, base_branch=base_branch,
+        observed_base_sha=observed_base_sha, expected_base_sha=expected_base_sha,
+    )
+    return validate_patch(
+        path=path, content=new_content, current_content=current_content,
+        expected_blob_sha=expected_blob_sha,
+    )
+
+
+def summarize_diff(
+    *, path: str, old_content: str | None, new_content: str,
+    old_blob_sha: str | None = None,
+) -> DiffSummary:
+    """Return bounded line-level change counts and the exact new Git blob SHA."""
+    import difflib
+
+    _safe_path(path)
+    if not isinstance(new_content, str) or len(new_content.encode("utf-8")) > _MAX_FILE_BYTES:
+        raise RepositoryAccessRejected("new diff content must be bounded UTF-8 text")
+    old_lines = (old_content or "").splitlines()
+    new_lines = new_content.splitlines()
+    matcher = difflib.SequenceMatcher(a=old_lines, b=new_lines, autojunk=False)
+    additions = deletions = 0
+    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+        if tag in {"replace", "delete"}:
+            deletions += i2 - i1
+        if tag in {"replace", "insert"}:
+            additions += j2 - j1
+    if old_content is not None:
+        actual_old_sha = _blob_sha(old_content.encode("utf-8"))
+        if old_blob_sha is not None and _validate_sha(old_blob_sha, "old_blob_sha") != actual_old_sha:
+            raise RepositoryAccessRejected("diff review supplied a stale old blob SHA")
+        old_blob_sha = actual_old_sha
+    elif old_blob_sha is not None:
+        raise RepositoryAccessRejected("new file diff cannot claim an old blob SHA")
+    new_blob_sha = _blob_sha(new_content.encode("utf-8"))
+    return DiffSummary(path, additions, deletions, old_blob_sha, new_blob_sha)
+
+
+def build_pull_request_body(
+    *, summary: str, risk: str, rollback: str, test_results: str,
+    changed_files: tuple[DiffSummary, ...], base_sha: str, head_sha: str,
+) -> str:
+    """Create a PR body only when evidence fields and immutable refs are present."""
+    _validate_sha(base_sha, "base_sha")
+    _validate_sha(head_sha, "head_sha")
+    fields = {"summary": summary, "risk": risk, "rollback": rollback, "test_results": test_results}
+    if any(not isinstance(value, str) or not value.strip() for value in fields.values()):
+        raise RepositoryAccessRejected("PR body requires summary, risk, rollback and test evidence")
+    if not changed_files:
+        raise RepositoryAccessRejected("PR must identify at least one reviewed changed file")
+    lines = [
+        "## Summary", summary.strip(), "",
+        "## Reviewed changes",
+        "| File | Additions | Deletions | New blob SHA |",
+        "|---|---:|---:|---|",
+    ]
+    lines.extend(
+        f"| {item.path} | {item.additions} | {item.deletions} | {item.new_blob_sha} |"
+        for item in changed_files
+    )
+    lines.extend([
+        "", "## Test evidence", test_results.strip(),
+        "", "## Risk assessment", risk.strip(),
+        "", "## Rollback", rollback.strip(),
+        "", f"Base SHA: {base_sha}", f"Head SHA: {head_sha}",
+        "", "Do not merge until an authorized human reviews this PR and required checks pass.",
+    ])
+    return "\\n".join(lines)
+
+
+def assert_pull_request_ready(
+    *, target_branch: str, base_branch: str, base_sha: str, head_sha: str,
+    diff: tuple[DiffSummary, ...], compile_passed: bool,
+    focused_tests_passed: bool, full_tests_passed: bool,
+) -> None:
+    """Gate PR creation on branch separation, fresh refs, reviewed diff and green tests."""
+    validate_target_branch(
+        target_branch=target_branch, base_branch=base_branch,
+        observed_base_sha=base_sha, expected_base_sha=base_sha,
+    )
+    _validate_sha(head_sha, "head_sha")
+    if not diff:
+        raise RepositoryAccessRejected("PR creation requires a non-empty reviewed diff")
+    if not all((compile_passed, focused_tests_passed, full_tests_passed)):
+        raise RepositoryAccessRejected("PR creation blocked until compile and all tests pass")
