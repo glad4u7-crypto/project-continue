@@ -91,3 +91,28 @@ def validate_and_claim(
 
     if not claim_pair(request_id, nonce, expires):
         raise RequestRejected("request_id/nonce: duplicate or replay detected")
+
+class RequestGuard:
+    """Reusable fail-closed validation boundary backed by a replay store.
+
+    Construct this once with an initialized durable store. The dispatcher must
+    call validate() before resolving or invoking any task handler.
+    """
+
+    def __init__(self, replay_store: Any, *, max_ttl_seconds: int = 300) -> None:
+        claim_pair = getattr(replay_store, "claim_pair", None)
+        if not callable(claim_pair):
+            raise TypeError("replay_store must provide callable claim_pair")
+        if type(max_ttl_seconds) is not int or max_ttl_seconds < 1:
+            raise ValueError("max_ttl_seconds must be a positive integer")
+        self._claim_pair = claim_pair
+        self._max_ttl_seconds = max_ttl_seconds
+
+    def validate(self, envelope: Mapping[str, Any], *, now: datetime) -> None:
+        """Reject malformed, expired, duplicate or replayed requests."""
+        validate_and_claim(
+            envelope,
+            now=now,
+            claim_pair=self._claim_pair,
+            max_ttl_seconds=self._max_ttl_seconds,
+        )
