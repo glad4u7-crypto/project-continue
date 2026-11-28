@@ -93,6 +93,14 @@ def stop_app(process: subprocess.Popen) -> None:
         process.wait(timeout=5)
 
 
+def ensure_expander_open(page, label: str, *, last: bool = False) -> None:
+    locator = page.locator("summary").filter(has_text=label)
+    locator = locator.last if last else locator.first
+    is_open = locator.evaluate("(element) => Boolean(element.closest('details')?.open)")
+    if not is_open:
+        locator.click()
+
+
 def browser_round_trip(base_url: str, *, expect_existing: bool, screenshot_path: Path) -> None:
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True)
@@ -113,19 +121,19 @@ def browser_round_trip(base_url: str, *, expect_existing: bool, screenshot_path:
                 page.screenshot(path=str(screenshot_path), full_page=True)
                 return
 
-            page.locator("summary").filter(has_text="Register a project").click()
+            ensure_expander_open(page, "Register a project")
             page.get_by_label("Project name").fill("Browser acceptance project")
             page.get_by_label("Description").fill("Created by isolated Chromium acceptance")
             page.get_by_role("button", name="Create project").click()
             page.get_by_text("Browser acceptance project", exact=True).wait_for(timeout=15000)
 
             page.get_by_role("button", name="Open details").click()
-            page.locator("summary").filter(has_text="Edit project details").click()
+            ensure_expander_open(page, "Edit project details")
             page.get_by_role("textbox", name="Name", exact=True).fill("Browser acceptance project updated")
             page.get_by_label("Description").last.fill("Updated by Chromium browser acceptance")
             page.get_by_role("button", name="Save changes").click()
             page.get_by_text("Browser acceptance project updated", exact=True).first.wait_for(timeout=15000)
-            page.locator("summary").filter(has_text="Create task").first.click()
+            ensure_expander_open(page, "Create task")
             page.get_by_label("Task title").fill("Browser acceptance task")
             page.get_by_label("Description").last.fill("Persist across app restart")
             page.get_by_role("button", name="Create task").click(force=True)
@@ -133,7 +141,7 @@ def browser_round_trip(base_url: str, *, expect_existing: bool, screenshot_path:
                 page.get_by_text("Browser acceptance task", exact=True).wait_for(timeout=15000)
             except PlaywrightTimeoutError as exc:
                 raise AssertionError("First task create did not persist; browser body: " + page.locator("body").inner_text()[-4000:]) from exc
-            page.locator("summary").filter(has_text="Edit task").first.click()
+            ensure_expander_open(page, "Edit task")
             page.get_by_role("textbox", name="Title", exact=True).fill("Browser acceptance task updated")
             page.get_by_role("button", name="Save task changes").click(force=True)
             page.get_by_text("Browser acceptance task updated", exact=True).first.wait_for(timeout=15000)
@@ -147,7 +155,7 @@ def browser_round_trip(base_url: str, *, expect_existing: bool, screenshot_path:
             except PlaywrightTimeoutError as exc:
                 raise AssertionError("Dependent task create did not persist; browser body: " + page.locator("body").inner_text()[-5000:]) from exc
 
-            page.locator("summary").filter(has_text="Dependencies").last.click()
+            ensure_expander_open(page, "Dependencies", last=True)
             page.get_by_role("combobox", name="This task depends on").click()
             page.get_by_text("Browser acceptance task updated", exact=True).last.click()
             page.get_by_role("button", name="Add dependency").click(force=True)
