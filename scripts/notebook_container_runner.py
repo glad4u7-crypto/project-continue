@@ -84,7 +84,9 @@ def main(argv: list[str] | None = None) -> int:
     except Exception as exc:
         frames = traceback.extract_tb(exc.__traceback__)[-5:]
         trace = ";".join(f"{Path(frame.filename).name}:{frame.lineno}:{frame.name}" for frame in frames)
-        print(f"NOTEBOOK_RUNNER_ERROR={type(exc).__name__};TRACE={trace}", file=sys.stderr)
+        attribute = getattr(exc, "name", None) if isinstance(exc, AttributeError) else None
+        target_type = type(getattr(exc, "obj", None)).__name__ if isinstance(exc, AttributeError) else None
+        print(f"NOTEBOOK_RUNNER_ERROR={type(exc).__name__};ATTRIBUTE={attribute};TARGET_TYPE={target_type};TRACE={trace}", file=sys.stderr)
         return 2
     print(json.dumps(summary, sort_keys=True))
     return 0
