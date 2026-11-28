@@ -258,7 +258,8 @@ def main() -> int:
             "commit": os.environ.get("GITHUB_SHA", "local-unpinned"),
             "captured_at": datetime.now(timezone.utc).isoformat(),
             "browser": "Chromium",
-            "health_http_200": True,\n            "startup_import_dependency_error_capture": True,
+            "health_http_200": True,
+            "startup_import_dependency_error_capture": True,
             "project_create_read_update": True,
             "task_create_update_complete": True,
             "task_dependency_service_tests": True,
@@ -272,7 +273,8 @@ def main() -> int:
             json.dumps(evidence, sort_keys=True, indent=2) + "\\n", encoding="utf-8"
         )
         print("PHASE20_STREAMLIT_BROWSER_ACCEPTANCE=PASS")
-        print("health_endpoint=HTTP_200")\n        print("startup_import_dependency_error_capture=PASS")
+        print("health_endpoint=HTTP_200")
+        print("startup_import_dependency_error_capture=PASS")
         print("browser=Chromium")
         print("project_create_read_update=PASS")
         print("task_create_update_complete=PASS")
