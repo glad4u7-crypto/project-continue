@@ -50,3 +50,11 @@
 - Preferred runner: existing GitHub Actions standard GitHub-hosted runners for this public repository.
 - Evidence: workflow run URLs and artifact IDs are recorded in `reports/Phase-20/2026-11-27-Phase20-0-Colab-Free-Entry-Gate.md`.
 - Cost guard: no larger runners, no paid hosting/APIs/automation, keep artifacts short-lived and compact, and stop if a quota/billing gate is encountered. Account-level payment/budget settings are not readable through the current connector.
+
+## Four unavailable capability resolution attempt (2026-11-28)
+
+- Rechecked all available connector actions and Issue #59. No workflow-dispatch, Codespaces lifecycle, Secrets/Variables write, or direct Colab execution action is exposed.
+- No unsafe request was posted to Issue #59: the legacy agent can default a missing cursor to 0 and replay historical commands; prior state-file absence was reported.
+- Existing Phase 20 decision already excludes Colab and Codespaces and prefers GitHub-hosted Actions runners. PR-triggered Actions CI is a tested substitute for suitable tasks, not proof of workflow_dispatch.
+- Detailed evidence and safe alternatives: `reports/Phase-20/2026-11-28-Phase20-1-Four-Unavailable-Capabilities-Resolution-Attempt.md`.
+- Counts unchanged: PASS 15; UNAVAILABLE 4; NOT STARTED 123. The four capability units are not marked PASS.
