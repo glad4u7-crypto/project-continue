@@ -77,6 +77,21 @@ class Phase20RunnerTests(unittest.TestCase):
         )
         setrlimit.assert_any_call(resource.RLIMIT_CORE, (0, 0))
 
+    @patch("scripts.phase20_runner.build_command")
+    def test_real_child_stdout_and_stderr_are_captured_separately(self, build):
+        import sys
+        from scripts.phase20_runner import _run_once
+        build.return_value = (
+            sys.executable, "-c",
+            "import sys; print('stdout-sentinel'); print('stderr-sentinel', file=sys.stderr)",
+        )
+        result = _run_once("compile")
+        self.assertEqual(result["classification"], "success")
+        self.assertIn("stdout-sentinel", result["stdout"])
+        self.assertNotIn("stderr-sentinel", result["stdout"])
+        self.assertIn("stderr-sentinel", result["stderr"])
+        self.assertNotIn("stdout-sentinel", result["stderr"])
+
     def test_output_parser_extracts_pytest_counts(self):
         output = "================ 12 passed, 2 skipped in 3.21s ================\n"
         self.assertEqual(parse_test_counts(output), {"passed": 12, "skipped": 2})
