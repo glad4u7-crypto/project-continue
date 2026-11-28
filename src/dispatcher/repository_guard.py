@@ -66,7 +66,7 @@ def _safe_path(value: str, *, allow_root: bool = False, allow_directory: bool = 
 
 
 def _blob_sha(content: bytes) -> str:
-    header = f"blob {len(content)}\\0".encode("ascii")
+    header = b"blob " + str(len(content)).encode("ascii") + bytes([0])
     return hashlib.sha1(header + content).hexdigest()
 
 
@@ -170,7 +170,7 @@ def validate_patch(
         raw = content.encode("utf-8", errors="strict")
     except UnicodeEncodeError as exc:
         raise RepositoryAccessRejected("patch content must be valid UTF-8") from exc
-    if not raw or len(raw) > _MAX_FILE_BYTES or b"\\x00" in raw:
+    if not raw or len(raw) > _MAX_FILE_BYTES or bytes([0]) in raw:
         raise RepositoryAccessRejected("patch is empty, contains NUL or exceeds 256 KiB")
     if re.search(rb"-----BEGIN [A-Z ]*PRIVATE KEY-----|(?:gh[pousr]_|github_pat_)[A-Za-z0-9_]{20,}", raw, re.I):
         raise RepositoryAccessRejected("credential-like content is forbidden")
