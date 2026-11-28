@@ -241,16 +241,15 @@ def read_notebook(root: str | Path, name: str) -> dict[str, Any]:
         else:
             cell["source"] = _redact(source)
         for output in cell.get("outputs", []):
-            for key in ("text",):
-                if isinstance(output.get(key), list):
-                    output[key] = [_redact(part) for part in output[key]]
-                elif isinstance(output.get(key), str):
-                    output[key] = _redact(output[key])
-            for payload in output.get("data", {}).values():
+            if isinstance(output.get("text"), list):
+                output["text"] = [_redact(part) for part in output["text"]]
+            elif isinstance(output.get("text"), str):
+                output["text"] = _redact(output["text"])
+            for mime, payload in output.get("data", {}).items():
                 if isinstance(payload, list) and all(isinstance(x, str) for x in payload):
-                    output["data"][key] = [_redact(x) for x in payload]
+                    output["data"][mime] = [_redact(x) for x in payload]
                 elif isinstance(payload, str):
-                    output["data"][key] = _redact(payload)
+                    output["data"][mime] = _redact(payload)
     return {"notebook": safe_document, "summary": summary,
             "sha256": hashlib.sha256(raw).hexdigest()}
 
