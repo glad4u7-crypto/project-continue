@@ -16,7 +16,7 @@
 | 20.5 Repository read/write ও patch workflow | COMPLETE | 11 | 11 | `reports/Phase-20/2026-11-28-Phase20-5-Repository-Read-Write-Guard.md`; dedicated run `46111096475` and main CI `46111096455` SUCCESS on code SHA `cf6e342`; PR #71 DRAFT, not merged; 385 passed, 11 skipped, 52 subtests; 79% coverage | All U20-5-01..11 PASS; host adapter remains an integration boundary; PostgreSQL tests skipped without DSNs |
 | 20.6 Python compile, unit test ও debugging | COMPLETE | 11 | 11 | `reports/Phase-20/2026-11-28-Phase20-6-Python-Compile-Test-Debugging.md`; exact code SHA `2ff748243837ab3f99898c173779d3f8cdb868ec`; runner `46122965873`, main CI `46122965859`, PostgreSQL `46122965932` all SUCCESS | All U20-6-01..11 PASS; U20-6-05 explicitly not applicable (no configured lint/type-check tool); next parent phase 20.7 notebook inventory/create/read/execute |
 | 20.7 Notebook inventory, create, read ও execute | COMPLETE | 12 | 12 | U20-7-01..12 PASS. U20-7-10 harmless notebook E2E `46129247588` SUCCESS; U20-7-11 malicious/unauthorized rejection `46129560191` SUCCESS; U20-7-12 final failure-mode acceptance `46129902281` SUCCESS on exact SHA `7ca5b0dfd1498160fa677e70be727aa674463d3b` (24 tests; duplicate write and malformed JSON rejected; real kernel crash exit 2/no artifact; real five-second timeout exit 124/no artifact; harmless 2-cell E2E and artifact upload PASS; network denial and dependency audit PASS). Reports U20-7-06..12 saved | Next: inspect Phase 20.8 in master checklist |
-| 20.8 SQLite, backup ও recovery safety | NOT STARTED | 0 | 10 | Initial planning baseline only | Complete in order; see unit register |
+| 20.8 SQLite, backup ও recovery safety | IN PROGRESS | 1 | 10 | U20-8-01 PASS: pytest-wide temporary SQLite isolation guard; exact-SHA CI 46130732459 SUCCESS on b00d705981d0a2ff1446917a6552bb031d08fb07 (431 passed, 11 PostgreSQL DSN-gated skips, 52 subtests). Report 2026-11-28-U20-8-01-Temporary-SQLite-Test-Isolation.md | Next: U20-8-02 live database path শনাক্ত করে test runner-এ block |
 | 20.9 Streamlit ও browser acceptance | NOT STARTED | 0 | 11 | Initial planning baseline only | Complete in order; see unit register |
 | 20.10 Recovery, idempotency ও resumability | NOT STARTED | 0 | 10 | Initial planning baseline only | Complete in order; see unit register |
 | 20.11 ChatGPT end-to-end orchestration | NOT STARTED | 0 | 10 | Initial planning baseline only | Complete in order; see unit register |
@@ -26,11 +26,11 @@
 ## Global counters
 
 - Total atomic checkpoints: 142
-- PASS: 75 (20.0: 7; 20.1: 8; 20.2: 7; 20.3: 9; 20.4: 10; 20.5: 11; 20.6: 11; 20.7: 12)
+- PASS: 76 (20.0: 7; 20.1: 8; 20.2: 7; 20.3: 9; 20.4: 10; 20.5: 11; 20.6: 11; 20.7: 12; 20.8: 1)
 - FAIL: 0
 - BLOCKED: 0
 - UNAVAILABLE: 6 (20.1: 4; 20.2: 2)
-- NOT STARTED: 61
+- NOT STARTED: 60
 - Phase 20.0 exit gate: COMPLETE
 - Phase 20.1 capability audit: COMPLETE WITH 4 UNAVAILABLE LIMITATIONS; all 12 units have explicit evidence-backed dispositions.
 - Phase 20.2 progress: 7/9 PASS; U20-2-06 and U20-2-08 remain UNAVAILABLE with reasons in the review/follow-up reports. User explicitly approved proceeding with these limitations on 2026-11-28; this is an accepted-limitation disposition, not a full PASS.
@@ -39,6 +39,8 @@
 - Phase 20.5 progress: 11/11 PASS. Main CI `46111096455` and dedicated runner `46111096475` passed on code SHA `cf6e342badd589f572ae05afecb64af2253ba58e`; 385 passed, 11 PostgreSQL skips, 52 subtests; coverage 79%. Artifact `15249911064`. Draft PR #71 opened; no merge or main-branch mutation.
 - Phase 20.6 progress: COMPLETE, 11/11 PASS. Exact code SHA `2ff748243837ab3f99898c173779d3f8cdb868ec`; dedicated runner `46122965873`, main CI `46122965859`, PostgreSQL integration `46122965932`, Dashboard Browser `46122965838`, Phase 14 `46122965892`, Cloud Acceptance `46122965866`, Phase 13 `46122965856` all SUCCESS. Runner: 12 safety tests passed/5 subtests; compile PASS; dispatcher 69 passed/47 subtests; full suite 391 passed, 11 skipped, 52 subtests. PostgreSQL-enabled suite: 402 passed, 52 subtests. U20-6-05 passed applicability assessment (no configured lint/type-check tool; none claimed); U20-6-06..11 structured output, failure classification, synthetic intentional-failure detection, feature-branch patch, exact-SHA retest and one-retry policy verified. Report: `2026-11-28-Phase20-6-Python-Compile-Test-Debugging.md`. Next: Phase 20.7.
 - Phase 20.7 progress: 12/12 PASS — COMPLETE. U20-7-01..05 cover read-only inventory, notebook validation/create/read and secret redaction. U20-7-06 pins the execution allow-list to exact Git blobs and trusted commits; U20-7-07 provides the non-root isolated Docker kernel; U20-7-08 enforces network denial, timeout and cleanup; U20-7-09 captures execution counts/tracebacks and persists only validated, redacted, SHA-256-checked artifacts through bounded stdout and a 1 MiB tmpfs. U20-7-10 executes the harmless allow-listed fixture end-to-end; U20-7-11 rejects malicious/unallow-listed notebooks before Docker launch; U20-7-12 verifies duplicate-write/malformed-JSON rejection, real kernel crash fail-closed behavior and real wall-clock timeout cleanup. Final exact-SHA acceptance 46129902281 SUCCESS on 7ca5b0dfd1498160fa677e70be727aa674463d3b: 24 tests; Docker image/non-root kernel, network denial, dependency audit, harmless 2-cell E2E and artifact upload PASS; kernel crash exit 2/no artifact; timeout exit 124/no artifact. Reports U20-7-06..12 saved. The real ProjectContinue-Recovery notebook was not executed; no Colab/Drive or production data was accessed.
+
+- Phase 20.8 progress: 1/10 PASS. U20-8-01 adds a pytest-wide autouse guard so file-backed SQLite databases must be under pytest tmp_path, OS temporary directory or temporary session root; :memory: is allowed; repository .data and production /var/lib paths are rejected before open. Runtime DB caches are cleared per test and session temp root is removed at session end. Exact-SHA full CI 46130732459 SUCCESS on b00d705981d0a2ff1446917a6552bb031d08fb07 (431 passed, 11 PostgreSQL DSN-gated skips, 52 subtests; compile, audit, container build, Compose, smoke and focused categories PASS). Report: 2026-11-28-U20-8-01-Temporary-SQLite-Test-Isolation.md. Next U20-8-02 live database path detection/blocking.
 
 ## Update rules
 
