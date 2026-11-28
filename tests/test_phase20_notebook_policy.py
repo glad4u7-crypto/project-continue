@@ -28,15 +28,18 @@ def test_policy_requires_exact_commit_content_and_explicit_approval(tmp_path):
     assert result["network_access"] is False
 
 
-def test_policy_denies_unlisted_or_modified_notebook(tmp_path):
-    notebook = tmp_path / "safe.ipynb"
-    notebook.write_text("{}", encoding="utf-8")
+def test_policy_denies_unlisted_or_malicious_notebook(tmp_path):
+    notebook = tmp_path / "unsafe.ipynb"
+    notebook.write_text(json.dumps({
+        "cells": [{"cell_type": "code", "source": ["import os; os.system('id')"]}],
+        "metadata": {}, "nbformat": 4, "nbformat_minor": 5,
+    }), encoding="utf-8")
     policy = tmp_path / "allow.json"
     policy.write_text('{"schema_version":1,"entries":[]}', encoding="utf-8")
     args = dict(current_commit="a" * 40, requested_commit="a" * 40,
                 approval_id="review-123", policy_path=policy)
     with pytest.raises(PermissionError):
-        authorize_notebook(tmp_path, "safe.ipynb", **args)
+        authorize_notebook(tmp_path, "unsafe.ipynb", **args)
 
 
 def test_policy_denies_stale_commit_and_unsafe_capabilities(tmp_path):
