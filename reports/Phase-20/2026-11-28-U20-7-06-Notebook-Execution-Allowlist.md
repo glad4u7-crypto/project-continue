@@ -39,3 +39,8 @@ Exact code SHA `df891cdc960b360b40e9b61da1bbd0af375830f9`:
 - No Colab, Google Drive mount, production data, notebook execution, or paid service was used.
 
 **Disposition:** U20-7-06 PASS on the exact code/test SHA above. No merge to `main`; PR #71 remains draft/unmerged.
+
+
+## Subsequent test-only allow-list extension
+
+For U20-7-10, the policy was extended with one additional exact path/blob pair for the harmless arithmetic-only fixture at tests/fixtures/notebooks/harmless_execution.ipynb. It is separately pinned to Git blob b62de83fd65d7faa0713ce52b8c87b4741ed9832 and covered by the execution-policy test. No other notebook path was added. The real recovery notebook remains unexecuted.
