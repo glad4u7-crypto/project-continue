@@ -174,6 +174,13 @@ def test_backup_verification_rejects_symlink_alias(tmp_path):
     db.close()
 
 
+def test_backup_root_nested_under_live_directory_is_rejected(tmp_path):
+    db = Database(tmp_path / "live" / "project.sqlite3")
+    with pytest.raises(ValueError, match="separate from the live database directory"):
+        BackupOperations(db, tmp_path / "live" / "backups")
+    db.close()
+
+
 def test_backup_root_symlink_is_rejected(tmp_path):
     db, repo, ops = prepared(tmp_path)
     actual = tmp_path / "actual-backups"
