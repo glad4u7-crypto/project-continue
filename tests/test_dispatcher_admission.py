@@ -68,8 +68,11 @@ class AdmissionControllerTests(unittest.TestCase):
             self.controller.admit(f"r{i}", f"actor{i}", now=self.now + timedelta(seconds=i))
             self.controller.release(f"r{i}")
         self.controller.admit("r2", "actor2", now=self.now + timedelta(seconds=2))
+        self.controller.release("r2")
         self.controller.admit("r3", "actor3", now=self.now + timedelta(seconds=3))
+        self.controller.release("r3")
         self.controller.admit("r4", "actor4", now=self.now + timedelta(seconds=4))
+        self.controller.release("r4)
         with self.assertRaisesRegex(AdmissionRejected, "global request rate"):
             self.controller.admit("r5", "actor5", now=self.now + timedelta(seconds=5))
 
