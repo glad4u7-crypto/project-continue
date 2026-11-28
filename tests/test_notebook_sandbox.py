@@ -42,7 +42,7 @@ def test_sandbox_uses_nonroot_readonly_and_bounded_container(tmp_path):
     assert "--rm" in command
     assert "--network=none" in command
     assert "--stop-timeout=5" in command
-    assert ("--user", f"{SANDBOX_UID}:{SANDBOX_UID}") == command[6:8]
+    assert ("--user", f"{SANDBOX_UID}:{SANDBOX_UID}") == command[7:9]
     assert "--read-only" in command
     assert "--cap-drop=ALL" in command
     assert "--security-opt=no-new-privileges" in command
