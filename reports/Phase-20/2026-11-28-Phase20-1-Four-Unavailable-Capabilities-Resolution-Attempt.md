@@ -70,6 +70,23 @@ Safe resolution needed:
 - Either a supported ChatGPT-accessible Colab execution connector, or a reviewed free-tier execution architecture that does not require the user to manually run Colab cells.
 - Before reusing Issue #59, fix and test first-run cursor initialization, durable atomic state, process locking, duplicate request handling, and replay prevention. Then verify a live runtime and complete a harmless end-to-end request/result round trip.
 
+
+## Existing Phase 20 architecture decision and practical substitutes
+
+The existing persistent progress tracker already records a Colab-free Phase 20 execution decision dated 2026-11-27:
+- Colab is excluded from the Phase 20 execution path.
+- Codespaces is excluded.
+- Existing GitHub Actions standard GitHub-hosted runners are the preferred runner.
+- No paid hosting/APIs/automation; respect free-tier quota and stop safely on quota/billing gates.
+
+Therefore the four exact connector capabilities remain UNAVAILABLE, but the project can avoid depending on three of them and can use an already-proven event trigger instead:
+- Workflow dispatch: use an approved pull_request-triggered workflow (and/or another reviewed GitHub event) where the task fits. PR #70 automatically triggered run 46093587157, which completed with 321 passing tests. This proves the PR event path, not workflow_dispatch.
+- Codespaces: do not use Codespaces in Phase 20; use the existing GitHub-hosted Actions runner path.
+- Secrets/Variables write: design tasks around short-lived GitHub Actions GITHUB_TOKEN with minimal workflow permissions and the existing GitHub connector; avoid storing a long-lived PAT when not needed. This avoids the need to write a repository secret for those tasks but does not prove secret-write capability.
+- Colab: do not rely on Colab for Phase 20 execution. Move required fixed tasks into isolated, allow-listed GitHub Actions jobs; keep the legacy Issue #59 bridge dormant unless its state/replay safety is fixed and a live runtime is explicitly verified.
+
+These are architectural substitutions, not PASS evidence for U20-1-08 through U20-1-11. The master checklist's UNAVAILABLE dispositions must remain until exact capabilities are tested or the user formally approves changing the acceptance criteria.
+
 ## Summary
 
 | Unit | Capability | Current disposition | What is missing |
