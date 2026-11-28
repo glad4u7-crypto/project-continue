@@ -23,18 +23,18 @@
 
 | Unit ID | Checkpoint | Status | Evidence / run reference |
 |---|---|---|---|
-| U20-1-01 | বর্তমান GitHub connector-এর উপলভ্য action inventory সংরক্ষণ | NOT STARTED | — |
-| U20-1-02 | Repository metadata/read permission বাস্তবে পরীক্ষা | NOT STARTED | — |
-| U20-1-03 | Branch create এবং branch read-back পরীক্ষা | NOT STARTED | — |
-| U20-1-04 | Feature branch-এ disposable file create/read-back পরীক্ষা | NOT STARTED | — |
-| U20-1-05 | Issue comment create/read-back round trip পরীক্ষা | NOT STARTED | — |
-| U20-1-06 | Pull request create/update/read capability আলাদা করে যাচাই | NOT STARTED | — |
-| U20-1-07 | Workflow run, job, log, artifact read capability যাচাই | NOT STARTED | — |
-| U20-1-08 | Workflow dispatch capability আছে কি না live proof দিয়ে নির্ধারণ | NOT STARTED | — |
-| U20-1-09 | Codespaces create/start/stop/delete capability আলাদা করে যাচাই | NOT STARTED | — |
-| U20-1-10 | Repository Secrets/Variables write capability আছে কি না যাচাই; secret value কখনো পড়ার চেষ্টা নয় | NOT STARTED | — |
-| U20-1-11 | Colab runtime বা notebook execution bridge আছে কি না যাচাই | NOT STARTED | — |
-| U20-1-12 | প্রতিটি capability PASS / FAIL / UNAVAILABLE এবং প্রমাণসহ matrix-এ লেখা | NOT STARTED | — |
+| U20-1-01 | বর্তমান GitHub connector-এর উপলভ্য action inventory সংরক্ষণ | PASS | `reports/Phase-20/2026-11-28-Phase20-1-GitHub-Capability-Audit.md` — in-session action inventory সংরক্ষিত। |
+| U20-1-02 | Repository metadata/read permission বাস্তবে পরীক্ষা | PASS | `get_repo`, authenticated login, collaborator permission=admin, README read-back; audit report। |
+| U20-1-03 | Branch create এবং branch read-back পরীক্ষা | PASS | `audit/phase20-1-capability-20261128` create/read-back; base SHA `d9165f1aea785f0c75a0b4c55405424532a422a6`; audit report। |
+| U20-1-04 | Feature branch-এ disposable file create/read-back পরীক্ষা | PASS | `docs/audits/phase20-1-connector-probe-20261128.md`; blob SHA `b8b2b9b725b6e83fc80985acb7d3d05f83878c90`; commit `f6362e75842c24337499bbc2e769c4dd2341f690`; audit report। |
+| U20-1-05 | Issue comment create/read-back round trip পরীক্ষা | PASS | Issue #59 comment `7231731907` create/read/update/read-back; harmless non-command marker; audit report। |
+| U20-1-06 | Pull request create/update/read capability আলাদা করে যাচাই | PASS | Draft PR #70 create/update/read-back; পরে unmerged অবস্থায় closed; audit report। |
+| U20-1-07 | Workflow run, job, log, artifact read capability যাচাই | PASS | Run `46093287827`, jobs `140818901418`/`140818901649`, logs 35,314 chars; artifact `15207999445` downloaded/read; PR test run `46093587157`, job `140819820015`, `321 passed in 14.56s`; audit report। |
+| U20-1-08 | Workflow dispatch capability আছে কি না live proof দিয়ে নির্ধারণ | UNAVAILABLE | Current connector inventory-তে workflow-dispatch action নেই; run/job read এবং rerun dispatch নয়। Audit report। |
+| U20-1-09 | Codespaces create/start/stop/delete capability আলাদা করে যাচাই | UNAVAILABLE | Current connector inventory-তে Codespaces lifecycle action নেই। Audit report। |
+| U20-1-10 | Repository Secrets/Variables write capability আছে কি না যাচাই; secret value কখনো পড়ার চেষ্টা নয় | UNAVAILABLE | Current connector inventory-তে Secrets/Variables write action নেই; generic fetch GET-only এবং sensitive Secrets API excluded। কোনো secret value পড়া হয়নি। Audit report। |
+| U20-1-11 | Colab runtime বা notebook execution bridge আছে কি না যাচাই | UNAVAILABLE | Direct Colab runtime/notebook execution action নেই; comment posting execution proof নয়। কোনো execution command পাঠানো হয়নি। Audit report। |
+| U20-1-12 | প্রতিটি capability PASS / FAIL / UNAVAILABLE এবং প্রমাণসহ matrix-এ লেখা | PASS | ১২টি capability-র পূর্ণ disposition matrix এবং evidence: `reports/Phase-20/2026-11-28-Phase20-1-GitHub-Capability-Audit.md`। |
 
 **20.1 exit gate:** 12 of 12 unit checkpoints must have evidence-backed PASS, or an explicitly approved limitation recorded in the final report. No silent skips.
 
