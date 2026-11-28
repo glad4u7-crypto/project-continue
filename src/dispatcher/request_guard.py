@@ -75,7 +75,7 @@ def validate_and_claim(
     task = envelope["task"]
     if not isinstance(task, Mapping) or set(task) != {"task_id", "arguments"}:
         raise RequestRejected("task: malformed")
-    if task["task_id"] not in {"repo.read_file", "repo.list_tree", "tests.run_pytest"}:
+    if not isinstance(task["task_id"], str) or task["task_id"] not in {"repo.read_file", "repo.list_tree", "tests.run_pytest"}:
         raise RequestRejected("task.task_id: not allow-listed")
     if not isinstance(task["arguments"], Mapping):
         raise RequestRejected("task.arguments: object required")
