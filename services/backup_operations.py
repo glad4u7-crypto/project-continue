@@ -167,6 +167,53 @@ class BackupOperations:
         })
         return approval
 
+    def _restore_approval_digest(self, source: Path, target: Path) -> str:
+        payload = {
+            "action": "restore", "source": source.name,
+            "source_sha256": sha256_file(source), "target": str(target.resolve()),
+        }
+        return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
+
+    def issue_restore_approval(
+        self, backup_path: str | Path, destination: str | Path, *,
+        approved_by: str, confirmation: str,
+    ) -> DestructiveApproval:
+        """Issue a one-use approval for one verified backup -> new destination restore."""
+        preview = self.preview_restore(backup_path, destination)
+        if not isinstance(approved_by, str) or not approved_by.strip():
+            raise PermissionError("A named approver is required")
+        source = (self.root / preview["source_name"]).resolve(strict=True)
+        target = Path(destination).expanduser().resolve()
+        required = f"APPROVE RESTORE {target.name} FROM {source.name}"
+        if confirmation != required:
+            raise PermissionError("Exact source-and-target restore confirmation is required")
+        digest = self._restore_approval_digest(source, target)
+        token = secrets.token_urlsafe(32)
+        issued = self.clock().astimezone(timezone.utc).isoformat()
+        approval = DestructiveApproval(token, "restore", str(target), digest, approved_by.strip(), issued)
+        self._issued_approvals[token] = (approval.action, approval.target, approval.preview_sha256)
+        self._approval_audit.append({
+            "event": "approval_issued", "action": "restore", "target": target.name,
+            "source": source.name, "approved_by": approval.approved_by, "issued_at": issued,
+        })
+        return approval
+
+    def _consume_approval(self, approval: DestructiveApproval | None, *, action: str, target: Path, digest: str) -> None:
+        if not isinstance(approval, DestructiveApproval):
+            raise PermissionError(f"An explicit one-time {action} approval is required")
+        scope = (action, str(target.resolve()), digest)
+        if (approval.token in self._consumed_approvals
+                or self._issued_approvals.get(approval.token) != scope
+                or approval.action != action or approval.target != str(target.resolve())
+                or approval.preview_sha256 != digest):
+            raise PermissionError("Approval is invalid, mismatched, or already consumed")
+        self._consumed_approvals.add(approval.token)
+        self._approval_audit.append({
+            "event": "approval_consumed", "action": action, "target": target.name,
+            "approved_by": approval.approved_by,
+            "consumed_at": self.clock().astimezone(timezone.utc).isoformat(),
+        })
+
     def apply_retention(
         self, preview: dict, *, approvals: dict[str, DestructiveApproval] | None = None, confirm=False,
     ) -> list[str]:
@@ -209,7 +256,10 @@ class BackupOperations:
             deleted.append(str(path.resolve()))
         return deleted
 
-    def restore_drill(self, backup_path: str | Path, destination: str | Path) -> Path:
+    def restore_drill(
+        self, backup_path: str | Path, destination: str | Path, *,
+        approval: DestructiveApproval | None = None,
+    ) -> Path:
         raw_source = Path(backup_path).expanduser()
         if raw_source.is_symlink():
             raise ValueError("Restore source must not be a symbolic link")
@@ -226,6 +276,10 @@ class BackupOperations:
             raise ValueError("Restore destination must differ from backup source")
         if not Database.verify_backup(source):
             raise sqlite3.DatabaseError("Restore source failed integrity verification")
+        self._consume_approval(
+            approval, action="restore", target=target,
+            digest=self._restore_approval_digest(source, target),
+        )
         missing_parent_dirs = []
         parent = target.parent
         while not parent.exists():
@@ -253,7 +307,10 @@ class BackupOperations:
         finally:
             destination_db.close()
 
-    def restore_drill_idempotent(self, backup_path: str | Path, destination: str | Path) -> Path:
+    def restore_drill_idempotent(
+        self, backup_path: str | Path, destination: str | Path, *,
+        approval: DestructiveApproval | None = None,
+    ) -> Path:
         """Restore once; an identical existing destination is an idempotent no-op."""
         raw_source = Path(backup_path).expanduser()
         raw_target = Path(destination).expanduser()
@@ -276,4 +333,4 @@ class BackupOperations:
                 raise FileExistsError("Restore destination contains different data; no overwrite performed")
             return target
 
-        return self.restore_drill(source, target)
+        return self.restore_drill(source, target, approval=approval)

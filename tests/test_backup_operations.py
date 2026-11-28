@@ -1,10 +1,18 @@
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 import sqlite3
 import os
 import pytest
 
 from database import Database, ProjectRepository, sha256_file
 from services.backup_operations import BackupOperations
+
+
+def _restore_approval(ops, backup, destination):
+    return ops.issue_restore_approval(
+        backup, destination, approved_by="test-operator",
+        confirmation=f"APPROVE RESTORE {Path(destination).name} FROM {Path(backup).name}",
+    )
 
 
 def test_backup_integrity_restore_drill_and_no_overwrite(tmp_path):
@@ -16,7 +24,8 @@ def test_backup_integrity_restore_drill_and_no_overwrite(tmp_path):
     ops = BackupOperations(db, tmp_path / "backups")
     backup = ops.create_backup()
     assert Database.verify_backup(backup)
-    restored = ops.restore_drill(backup, tmp_path / "restore" / "copy.sqlite3")
+    destination = tmp_path / "restore" / "copy.sqlite3"
+    restored = ops.restore_drill(backup, destination, approval=_restore_approval(ops, backup, destination))
     restored_db = Database(restored)
     assert ProjectRepository(restored_db).get_project("p1")["name"] == "Project one"
     with pytest.raises(FileExistsError):
@@ -180,7 +189,7 @@ def test_interrupted_restore_removes_partial_file_and_new_parent_directories(tmp
 
     monkeypatch.setattr(sqlite3, "connect", interrupt_copy)
     with pytest.raises(RuntimeError, match="injected interruption"):
-        ops.restore_drill(backup, destination)
+        ops.restore_drill(backup, destination, approval=_restore_approval(ops, backup, destination))
 
     assert backup.exists()
     assert Database.verify_backup(backup) is True
@@ -212,7 +221,7 @@ def test_restore_verification_failure_rolls_back_restored_file(tmp_path, monkeyp
 
     monkeypatch.setattr(Database, "verify_backup", staticmethod(fail_after_copy))
     with pytest.raises(sqlite3.DatabaseError, match="Restored database failed integrity"):
-        ops.restore_drill(backup, destination)
+        ops.restore_drill(backup, destination, approval=_restore_approval(ops, backup, destination))
 
     assert verification_calls == 2
     assert backup.exists()
@@ -234,7 +243,7 @@ def test_idempotent_restore_replay_returns_identical_copy_without_duplicate_rows
     backup = ops.create_backup()
     destination = tmp_path / "idempotent" / "nested" / "restored.sqlite3"
 
-    first = ops.restore_drill_idempotent(backup, destination)
+    first = ops.restore_drill_idempotent(backup, destination, approval=_restore_approval(ops, backup, destination))
     first_digest = sha256_file(first)
     second = ops.restore_drill_idempotent(backup, destination)
 
@@ -285,6 +294,29 @@ def test_idempotent_restore_still_rejects_live_database_target(tmp_path):
     assert Database.verify_backup(backup) is True
     live_db.close()
 
+
+
+def test_restore_requires_exact_one_time_source_and_destination_approval(tmp_path):
+    db = Database(tmp_path / "live.sqlite3")
+    ProjectRepository(db).initialize()
+    ops = BackupOperations(db, tmp_path / "backups")
+    backup = ops.create_backup()
+    destination = tmp_path / "restore" / "copy.sqlite3"
+    with pytest.raises(PermissionError, match="explicit one-time restore approval"):
+        ops.restore_drill(backup, destination)
+    assert not destination.exists()
+    with pytest.raises(PermissionError, match="Exact source-and-target"):
+        ops.issue_restore_approval(
+            backup, destination, approved_by="operator", confirmation="APPROVE RESTORE",
+        )
+    approval = _restore_approval(ops, backup, destination)
+    restored = ops.restore_drill(backup, destination, approval=approval)
+    assert Database.verify_backup(restored)
+    other = tmp_path / "restore" / "other.sqlite3"
+    with pytest.raises(PermissionError, match="already consumed"):
+        ops.restore_drill(backup, other, approval=approval)
+    assert not other.exists()
+    db.close()
 
 
 def test_delete_approval_is_target_specific_and_requires_exact_phrase(tmp_path):
