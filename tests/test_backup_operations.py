@@ -39,7 +39,7 @@ def test_retention_is_preview_first_and_namespace_limited(tmp_path):
     with pytest.raises(PermissionError):
         ops.apply_retention(preview)
     assert backup.exists()
-    assert ops.apply_retention(preview, confirm=True) == [str(backup)]
+    assert ops.apply_retention(preview, confirm=True, approval_id="test-retention-approval") == [str(backup)]
     assert not backup.exists()
     db.close()
 
@@ -54,6 +54,9 @@ def test_backup_root_cannot_be_live_database_directory(tmp_path):
 def test_retention_rejects_untrusted_paths(tmp_path):
     db = Database(tmp_path / "live.sqlite3")
     ops = BackupOperations(db, tmp_path / "backups")
-    with pytest.raises(ValueError, match="namespace"):
-        ops.apply_retention({"candidates": [str(tmp_path / "important.txt")]}, confirm=True)
+    preview = ops.preview_retention()
+    preview["candidates"] = [{"name": "important.txt", "sha256": "0" * 64,
+                              "size_bytes": 1, "mtime_ns": 1}]
+    with pytest.raises(ValueError, match="unknown, stale or modified"):
+        ops.apply_retention(preview, confirm=True, approval_id="test-invalid-preview")
     db.close()
