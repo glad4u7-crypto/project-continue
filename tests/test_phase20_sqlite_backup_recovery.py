@@ -162,6 +162,29 @@ def test_restore_rejects_symlink_destination_and_symlink_backup_root(tmp_path):
     db.close()
 
 
+def test_backup_verification_rejects_symlink_alias(tmp_path):
+    db, repo, ops = prepared(tmp_path)
+    backup = ops.create_backup()
+    alias = tmp_path / "backups" / "project-continue-alias.sqlite3"
+    alias.symlink_to(backup)
+    with pytest.raises(ValueError, match="symbolic links"):
+        ops.verify_backup(alias)
+    with pytest.raises(ValueError, match="symbolic link"):
+        Database.verify_backup(alias)
+    db.close()
+
+
+def test_backup_root_symlink_is_rejected(tmp_path):
+    db, repo, ops = prepared(tmp_path)
+    actual = tmp_path / "actual-backups"
+    actual.mkdir()
+    alias = tmp_path / "backup-alias"
+    alias.symlink_to(actual, target_is_directory=True)
+    with pytest.raises(ValueError, match="symbolic links"):
+        BackupOperations(db, alias)
+    db.close()
+
+
 def test_schema_version_mismatch_is_rejected(tmp_path):
     db, repo, ops = prepared(tmp_path)
     bad = tmp_path / "backups" / "project-continue-bad.sqlite3"
