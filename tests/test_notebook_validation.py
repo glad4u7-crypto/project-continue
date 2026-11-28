@@ -128,7 +128,7 @@ def test_untrusted_unhashable_schema_values_fail_closed():
 
 
 def test_invalid_unicode_in_source_is_rejected_without_exception():
-    payload = b'{"nbformat":4,"nbformat_minor":5,"metadata":{},"cells":[{"cell_type":"raw","id":"raw-01","metadata":{},"source":"\\\\ud800"}]}'
+    payload = b'{"nbformat":4,"nbformat_minor":5,"metadata":{},"cells":[{"cell_type":"raw","id":"raw-01","metadata":{},"source":"\\ud800"}]}'
     passed, errors = validate_notebook_payload(payload)
     assert not passed
     assert errors
