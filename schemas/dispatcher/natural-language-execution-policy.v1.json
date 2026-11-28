@@ -1,0 +1,68 @@
+{
+  "policy_version": "1.0",
+  "purpose": "Prevent natural-language input from becoming executable shell, Python, SQL, or other arbitrary commands.",
+  "default_decision": "reject",
+  "rules": [
+    {
+      "id": "NL-01",
+      "decision": "deny",
+      "rule": "Natural-language text is never passed to a shell, Python interpreter, SQL engine, eval/exec, subprocess, workflow command, or notebook cell."
+    },
+    {
+      "id": "NL-02",
+      "decision": "allow_only_after_validation",
+      "rule": "An intent resolver may propose only an exact task_id present in task-registry.v1.json; the proposal is not authorization."
+    },
+    {
+      "id": "NL-03",
+      "decision": "deny",
+      "rule": "Unknown, ambiguous, unsupported, or multi-intent requests are rejected or returned for clarification; no best-effort command construction."
+    },
+    {
+      "id": "NL-04",
+      "decision": "allow_only_after_validation",
+      "rule": "Arguments must be structured values validated against the exact selected registry arguments_schema with additionalProperties=false."
+    },
+    {
+      "id": "NL-05",
+      "decision": "deny",
+      "rule": "Caller-supplied command strings, shell fragments, Python source, SQL, executable URLs, interpreter flags, and arbitrary workflow names are not accepted as task arguments."
+    },
+    {
+      "id": "NL-06",
+      "decision": "require",
+      "rule": "Before handler lookup, validate authenticated actor, exact allow-listed repository, immutable commit SHA, envelope schema, expiry, and authorization policy."
+    },
+    {
+      "id": "NL-07",
+      "decision": "deny",
+      "rule": "No dynamic import, eval, exec, shell=True, command concatenation, or direct execution of user text in any handler."
+    },
+    {
+      "id": "NL-08",
+      "decision": "require",
+      "rule": "Only fixed, reviewed handler_ref values in the versioned task registry may be resolved; no user-controlled handler names."
+    },
+    {
+      "id": "NL-09",
+      "decision": "require",
+      "rule": "Destructive, external-side-effect, deployment, merge, credential, and live-data operations require a separate explicit approval gate and are not implied by natural-language intent."
+    },
+    {
+      "id": "NL-10",
+      "decision": "deny",
+      "rule": "If policy, registry, schema, identity, or repository verification is unavailable or fails, fail closed without executing a task."
+    }
+  ],
+  "execution_boundary": {
+    "accepted_input": "Untrusted natural-language text, used only to derive a candidate intent.",
+    "permitted_output": "A candidate fixed task_id plus JSON arguments; candidate must pass registry and authorization validation.",
+    "prohibited_output": "Shell/Python/SQL source, executable command strings, dynamic handler references, arbitrary workflow dispatch.",
+    "current_registry": [
+      "repo.read_file",
+      "repo.list_tree",
+      "tests.run_pytest"
+    ],
+    "runtime_status": "Policy contract only; runtime enforcement and CI execution are not yet implemented or claimed."
+  }
+}
