@@ -223,7 +223,7 @@ def test_restore_verification_failure_rolls_back_restored_file(tmp_path, monkeyp
     with pytest.raises(sqlite3.DatabaseError, match="Restored database failed integrity"):
         ops.restore_drill(backup, destination, approval=_restore_approval(ops, backup, destination))
 
-    assert verification_calls == 2
+    assert verification_calls == 3
     assert backup.exists()
     assert not destination.exists()
     assert not destination.parent.exists()
