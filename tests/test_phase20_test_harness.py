@@ -26,6 +26,7 @@ class TestHarnessTests(unittest.TestCase):
         self.assertEqual(classify(1, "", "ModuleNotFoundError")[0], "dependency")
         self.assertEqual(classify(1, "", "Permission denied")[0], "permission")
         self.assertEqual(classify(1, "", "503 Service Unavailable")[0], "infrastructure")
+        self.assertEqual(classify(1, "", "unknown runner setup failure")[0], "environment")
         self.assertEqual(classify(124, "", "", timed_out=True), ("timeout", True))
 
     def test_pytest_counts_are_reported(self):
