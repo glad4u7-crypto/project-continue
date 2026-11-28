@@ -132,3 +132,54 @@ def test_invalid_unicode_in_source_is_rejected_without_exception():
     passed, errors = validate_notebook_payload(payload)
     assert not passed
     assert errors
+
+
+
+def test_recovery_notebook_copy_contract_preserves_source_backup():
+    import ast
+
+    notebook_path = (
+        Path(__file__).resolve().parents[1]
+        / "notebooks"
+        / "ProjectContinue-Recovery.ipynb"
+    )
+    notebook = json.loads(notebook_path.read_text(encoding="utf-8"))
+    code_cells = [
+        "".join(cell.get("source", []))
+        for cell in notebook["cells"]
+        if cell["cell_type"] == "code"
+    ]
+    all_code = "\\n".join(code_cells)
+
+    # The notebook may mount Drive normally, but must not force-remount it.
+    assert "drive.mount('/content/drive')" in all_code
+    assert "force_remount" not in all_code
+    assert "drive.flush_and_unmount" not in all_code
+
+    # Recovery copies the source tree to a distinct, timestamped destination.
+    assert "BACKUP_ROOT = DRIVE_ROOT / 'Project-Continue-Backups'" in all_code
+    assert "RESTORE_ROOT = DRIVE_ROOT / 'Project-Continue-Recovery-Restores'" in all_code
+    assert "if RESTORE_DEST.exists():" in all_code
+    assert "raise FileExistsError" in all_code
+    assert "shutil.copytree(BACKUP_SOURCE, RESTORE_DEST, symlinks=False)" in all_code
+    assert "BACKUP_SOURCE.exists()" in all_code
+    assert "source_rel - restored_rel" in all_code
+
+    # Fail closed if a future notebook edit adds a source-destructive call.
+    forbidden_calls = {
+        "unlink", "rmdir", "rmtree", "remove", "move", "rename", "replace",
+    }
+    for source in code_cells:
+        tree = ast.parse(source)
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            function = node.func
+            called_name = (
+                function.attr if isinstance(function, ast.Attribute)
+                else function.id if isinstance(function, ast.Name)
+                else ""
+            )
+            assert called_name not in forbidden_calls, (
+                f"Recovery notebook contains source-destructive call: {called_name}"
+            )
