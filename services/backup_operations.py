@@ -26,9 +26,10 @@ class BackupOperations:
     def __init__(self, database: Database, backup_root: str | Path, *, clock=None):
         self.database = database
         candidate = Path(backup_root).expanduser()
-        if candidate.is_symlink():
-            raise ValueError("Backup directory must not be a symbolic link")
-        self.root = candidate.resolve()
+        absolute_candidate = Path(os.path.abspath(candidate))
+        if any(part.is_symlink() for part in (absolute_candidate, *absolute_candidate.parents)):
+            raise ValueError("Backup directory path must not contain symbolic links")
+        self.root = absolute_candidate.resolve()
         self.clock = clock or (lambda: datetime.now(timezone.utc))
         source = Path(database.path).expanduser().resolve()
         if database.path != ":memory:" and self.root == source.parent:
@@ -176,9 +177,10 @@ class BackupOperations:
         backup = self._managed_backup(backup_path)
         verified = self.verify_backup(backup)
         raw_target = Path(destination).expanduser()
-        if raw_target.is_symlink():
-            raise ValueError("Restore destination must not be a symbolic link")
-        target = raw_target.resolve()
+        absolute_target = Path(os.path.abspath(raw_target))
+        if any(part.is_symlink() for part in (absolute_target, *absolute_target.parents)):
+            raise ValueError("Restore destination path must not contain symbolic links")
+        target = absolute_target.resolve()
         live = Path(self.database.path).expanduser().resolve()
         if self.database.path != ":memory:" and target == live:
             raise ValueError("Restore drill cannot overwrite the live database")
