@@ -3,36 +3,33 @@
 - Repository: `glad4u7-crypto/project-continue`
 - Branch: `phase20/secure-dispatcher-u20-3-01`
 - Date: 2026-11-28 (Asia/Kolkata)
-- Disposition: IMPLEMENTED — VERIFICATION PENDING; NOT PASS
+- Disposition: IMPLEMENTED — CI VERIFICATION RUNNING; NOT PASS YET
 
-## Changes committed
+## Implemented
 
-- `src/dispatcher/request_guard.py`: strict envelope shape, UUID request ID and nonce, actor/repository/commit/task shape checks, timezone-aware timestamp parsing, expiry and maximum-TTL checks, and fail-closed duplicate/replay claims.
-- `tests/test_dispatcher_request_guard.py`: 9 deterministic unittest cases covering valid request, malformed fields/timestamp, expiry, excessive TTL, duplicate request ID, replayed nonce, malformed identity/repository/commit/task, and replay-store failure.
-- GitHub commit for implementation: `9d2675251d9b2b873c0ff3b9f4f5970e30f90644`
-- GitHub commit for tests: `ebb99d6c13969be2aa063eba74d734da3d500ee9`
-- Both files were fetched back from the target branch and their expected content was confirmed.
+- `src/dispatcher/request_guard.py`: strict envelope shape, UUID request ID and nonce, actor/repository/commit/task shape checks, timezone-aware timestamp parsing, future/expired/invalid lifetime and maximum-TTL checks. Duplicate/replay rejection now requires one atomic paired claim operation.
+- `src/dispatcher/replay_store.py`: durable SQLite replay store using the repository's existing `Database` transaction manager. It creates a namespaced primary-key table, expires stale rows, and atomically claims request ID + nonce. If either value collides, a deliberate rollback prevents partial consumption. Storage errors propagate (fail closed).
+- `tests/test_dispatcher_request_guard.py`: 11 deterministic unittest cases cover valid and malformed requests, timestamp and TTL rules, duplicate/replay rejection, fail-closed store errors, durable duplicate detection, rollback of partial claims, and expiry cleanup.
+- `.github/workflows/ci.yml`: added `phase20/**` to the push-trigger branch filter so this implementation branch receives the repository's actual CI suite.
 
-## Security properties
+## Storage and deployment constraints
 
-- Unknown/missing envelope fields are rejected.
-- Timestamps must be timezone-aware; expired, future-issued, non-positive-lifetime, and over-maximum-TTL requests are rejected.
-- Request IDs and nonces must be UUIDs.
-- Actor, repository, commit SHA, and task fields receive strict shape/allow-list checks.
-- Duplicate request IDs and replayed nonces are rejected through an injected `claim_once` callback.
-- Replay-store exceptions propagate; there is no permissive fallback.
-- Replay claims must be backed by durable shared storage and atomic insert-if-absent. An in-memory set is explicitly insufficient.
+- SQLite is already a supported application backend. The replay store must use the same durable database file as the dispatcher and that file must be on persistent storage shared by every worker that can receive the same requests.
+- Do not use SQLite `:memory:`, ephemeral runner storage, or separate per-worker database files for production replay protection.
+- The current implementation is a storage adapter and validation boundary; the repository does not yet contain a dispatcher handler lookup/runtime entrypoint that wires it together with U20-3-05 authentication and commit verification. Runtime enforcement is not claimed.
 
-## Verification gaps — do not mark PASS
+## CI evidence
 
-- The GitHub connector can commit and read files but cannot run this repository's Python test suite in the current session.
-- The durable atomic replay-store adapter is not implemented.
-- Dispatcher runtime wiring and authenticated actor/repository/commit authorization integration are not implemented.
-- Therefore the 9 tests are authored but NOT EXECUTED, and this unit is NOT PASS. Runtime replay protection is NOT claimed.
+- CI workflow run: https://github.com/glad4u7-crypto/project-continue/actions/runs/46098486057
+- Trigger commit: `55390631e49837764ee1f76e01a819d4e856d2db`
+- At report update time, the GitHub Actions job had started and dependency installation was still in progress. No test result is claimed yet.
+- Earlier implementation and test commits were read back from the target branch. Final read-back of all updated files and completed CI status is still required before PASS.
 
-## Next actions
+## Remaining acceptance gates
 
-1. Run `python -m unittest tests.test_dispatcher_request_guard` (or the repository's configured test command) in CI and fix any import/style/integration failures.
-2. Implement a durable shared atomic replay store with TTL cleanup and concurrency tests.
-3. Wire request validation before handler lookup and combine it with U20-3-05 authenticated identity/repository/commit checks.
-4. Re-run tests and read back the CI evidence before changing this unit to PASS.
+1. CI must complete successfully, including compile, focused test categories, complete pytest suite, container build and smoke test.
+2. If CI fails, inspect the failing job logs, fix the cause, and rerun CI.
+3. Add the runtime entrypoint integration with authenticated actor/repository/commit authorization before claiming end-to-end enforcement.
+4. Read back the final implementation, tests, workflow and report from the branch and record their SHAs.
+
+No merge to main and no live service/data modification.
