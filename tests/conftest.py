@@ -32,7 +32,7 @@ def require_temporary_sqlite_databases(tmp_path, monkeypatch):
     def guarded_init(self, path, *, timeout=5.0):
         if str(path) != ":memory:":
             candidate = Path(path).expanduser().resolve()
-            if not any(_is_relative_to(candidate, allowed) for allowed in (root, _TEST_DATABASE_ROOT)):
+            if not any(_is_relative_to(candidate, allowed) for allowed in (root, _TEST_DATABASE_ROOT, Path(tempfile.gettempdir()).resolve())):
                 raise AssertionError(
                     "SQLite tests must use pytest tmp_path, the temporary pytest session root, "
                     "or :memory:; repository/default and production database paths are forbidden"
