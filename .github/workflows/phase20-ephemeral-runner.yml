@@ -24,7 +24,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: phase20-ephemeral-${{ github.event.pull_request.head.sha || github.sha }}
+  group: phase20-ephemeral-${{ github.event_name }}-${{ github.event.pull_request.head.sha || github.sha }}
   cancel-in-progress: true
 
 jobs:
