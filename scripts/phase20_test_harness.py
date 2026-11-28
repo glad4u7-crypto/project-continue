@@ -17,9 +17,9 @@ ROOT = Path(__file__).resolve().parents[1]
 TIMEOUT_SECONDS = 600
 MAX_STREAM_BYTES = 32 * 1024
 MAX_RETRIES = 1
-SUMMARY = re.compile(r"(?P<passed>\\d+) passed|(?P<failed>\\d+) failed|(?P<skipped>\\d+) skipped|(?P<errors>\\d+) errors")
+SUMMARY = re.compile(r"(?P<passed>\d+) passed|(?P<failed>\d+) failed|(?P<skipped>\d+) skipped|(?P<errors>\d+) errors")
 SECRET_PATTERNS = (
-    re.compile(r"(?i)(token|password|secret|api[_-]?key)(\\s*[=:]\\s*)[^\\s,;]+"),
+    re.compile(r"(?i)(token|password|secret|api[_-]?key)(\s*[=:]\s*)[^\s,;]+"),
     re.compile(r"gh[pousr]_[A-Za-z0-9_]{20,}"),
 )
 
@@ -50,7 +50,7 @@ def _bounded(data: str) -> str:
     encoded = data.encode("utf-8", errors="replace")
     if len(encoded) <= MAX_STREAM_BYTES:
         return _redact(data)
-    return _redact(encoded[:MAX_STREAM_BYTES].decode("utf-8", errors="replace")) + "\\n[output truncated]"
+    return _redact(encoded[:MAX_STREAM_BYTES].decode("utf-8", errors="replace")) + "\n[output truncated]"
 
 
 def build_command(task: str) -> tuple[str, ...] | None:
@@ -74,7 +74,7 @@ def build_command(task: str) -> tuple[str, ...] | None:
 def classify(exit_code: int, stdout: str, stderr: str, timed_out: bool = False) -> tuple[str, bool]:
     if timed_out:
         return "timeout", True
-    combined = (stdout + "\\n" + stderr).lower()
+    combined = (stdout + "\n" + stderr).lower()
     if exit_code == 0:
         return "none", False
     if any(s in combined for s in ("temporary failure in name resolution", "connection reset", "service unavailable", "502 bad gateway", "503 service unavailable")):
@@ -91,7 +91,7 @@ def classify(exit_code: int, stdout: str, stderr: str, timed_out: bool = False) 
 
 
 def _counts(stdout: str, stderr: str) -> tuple[int, int, int, int]:
-    text = stdout + "\\n" + stderr
+    text = stdout + "\n" + stderr
     totals = {"passed": 0, "failed": 0, "skipped": 0, "errors": 0}
     for line in text.splitlines():
         if " passed" in line or " failed" in line or " skipped" in line or " errors" in line:
@@ -130,7 +130,7 @@ def run_task(task: str, retries: int = 0) -> TaskResult:
         except subprocess.TimeoutExpired as exc:
             stdout = exc.stdout.decode("utf-8", "replace") if isinstance(exc.stdout, bytes) else (exc.stdout or "")
             stderr = exc.stderr.decode("utf-8", "replace") if isinstance(exc.stderr, bytes) else (exc.stderr or "")
-            stderr += "\\nTask exceeded the fixed 600-second timeout."
+            stderr += "\nTask exceeded the fixed 600-second timeout."
             code, timed_out = 124, True
         failure_class, retryable = classify(code, stdout, stderr, timed_out)
         if not retryable or attempts > retries:
