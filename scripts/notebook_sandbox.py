@@ -29,7 +29,7 @@ class SandboxResult:
 
 def _mount_path(path: Path) -> str:
     value = str(path)
-    if any(character in value for character in (",", "\\n", "\\r")):
+    if any(character in value for character in (",", "\n", "\r")):
         raise ValueError("sandbox mount path contains unsupported characters")
     return value
 
