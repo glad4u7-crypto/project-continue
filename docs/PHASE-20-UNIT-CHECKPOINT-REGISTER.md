@@ -113,15 +113,15 @@
 | U20-6-02 | Compile-only task handler তৈরি | PASS | Fixed `compile` task in `scripts/phase20_runner.py`; safety tests and dedicated Actions run `46111096475` SUCCESS on code SHA `cf6e342badd589f572ae05afecb64af2253ba58e`; report `reports/Phase-20/2026-11-28-U20-6-02-04-Fixed-Test-Handlers.md` |
 | U20-6-03 | Focused pytest task handler তৈরি | PASS | Fixed `dispatcher-tests` task and immutable test-file allow-list; dedicated Actions run `46111096475` SUCCESS on code SHA `cf6e342badd589f572ae05afecb64af2253ba58e`; report `reports/Phase-20/2026-11-28-U20-6-02-04-Fixed-Test-Handlers.md` |
 | U20-6-04 | Full pytest suite task handler তৈরি | PASS | Fixed `full-tests` task; dedicated Actions run `46111096475` SUCCESS on code SHA `cf6e342badd589f572ae05afecb64af2253ba58e`; report `reports/Phase-20/2026-11-28-U20-6-02-04-Fixed-Test-Handlers.md` |
-| U20-6-05 | Lint/type-check task handler প্রযোজ্য হলে যুক্ত করা | NOT STARTED | — |
-| U20-6-06 | stdout/stderr/exit code/duration/test count সংগ্রহ | NOT STARTED | — |
-| U20-6-07 | Failure classification: code/environment/dependency/permission/timeout/infrastructure | NOT STARTED | — |
-| U20-6-08 | একটি intentional failing fixture দিয়ে FAIL detection পরীক্ষা | NOT STARTED | — |
-| U20-6-09 | ChatGPT-প্রস্তুত patch feature branch-এ commit করা | NOT STARTED | — |
-| U20-6-10 | নতুন exact SHA-তে focused ও regression retest | NOT STARTED | — |
-| U20-6-11 | সীমিত retry; repeated failure হলে BLOCKED ও human decision | NOT STARTED | — |
+| U20-6-05 | Lint/type-check task handler প্রযোজ্য হলে যুক্ত করা | PASS (NOT APPLICABLE) | Repository configuration inspected: no Ruff/Flake8/mypy/pyright/tox/pre-commit or equivalent configured lint/type-check tool/handler; no dependency added. Existing compile, pytest and pip-audit checks retained. Not a claim that lint/type-check was run. |
+| U20-6-06 | stdout/stderr/exit code/duration/test count সংগ্রহ | PASS | Separate stdout/stderr files, 64 KiB per-stream cap, byte totals/truncation, exit code, duration, timeout and pytest counts; real child stream-separation test. Run `46122965873` emitted ATTEMPT/RESULT JSON. |
+| U20-6-07 | Failure classification: code/environment/dependency/permission/timeout/infrastructure | PASS | `classify_failure` and unit coverage in `tests/test_phase20_runner.py`; exact-SHA runner run `46122965873` SUCCESS. |
+| U20-6-08 | একটি intentional failing fixture দিয়ে FAIL detection পরীক্ষা | PASS | Synthetic intentional pytest failure transcript with failing node and AssertionError classified as `code`; included in runner safety suite. No permanently failing test added to normal collection. |
+| U20-6-09 | ChatGPT-প্রস্তুত patch feature branch-এ commit করা | PASS | Runner/parser/tests/workflow fixes committed on `phase20/secure-dispatcher-u20-3-01`; code SHA `2ff748243837ab3f99898c173779d3f8cdb868ec`; main untouched. |
+| U20-6-10 | নতুন exact SHA-তে focused ও regression retest | PASS | Dedicated runner `46122965873`, main CI `46122965859`, PostgreSQL integration `46122965932`, dashboard `46122965838`, Phase 14 `46122965892`, Cloud Acceptance `46122965866`, Phase 13 `46122965856` all SUCCESS on exact code SHA. |
+| U20-6-11 | সীমিত retry; repeated failure হলে BLOCKED ও human decision | PASS | One-retry ceiling; only infrastructure classification retries; tests prove infrastructure retry once and code failure no retry; CI uses `--retry-transient`. |
 
-**20.6 exit gate:** 11 of 11 unit checkpoints must have evidence-backed PASS, or an explicitly approved limitation recorded in the final report. No silent skips.
+**20.6 exit gate:** COMPLETE — 11/11 evidence-backed PASS, with U20-6-05 explicitly assessed as not applicable. Full evidence: `reports/Phase-20/2026-11-28-Phase20-6-Python-Compile-Test-Debugging.md`.
 
 ## 20.7 — Notebook inventory, create, read ও execute
 
