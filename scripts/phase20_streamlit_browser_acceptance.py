@@ -50,7 +50,7 @@ def start_app(database_path: Path, log_path: Path, port: int, *, production: boo
     env = os.environ.copy()
     for key in (
         "GITHUB_TOKEN", "GITHUB_APP_PRIVATE_KEY", "SESSION_SIGNING_KEY",
-        "INITIAL_ADMIN_PASSWORD", "PROJECT_CONTINUE_POSTGRES_DSN",
+        "INITIAL_ADMIN_PASSWORD", "INITIAL_ADMIN_EMAIL", "PROJECT_CONTINUE_POSTGRES_DSN",
     ):
         env.pop(key, None)
     env.update({
@@ -61,6 +61,12 @@ def start_app(database_path: Path, log_path: Path, port: int, *, production: boo
         "AUTHORIZATION_ENFORCED": "false",
         "STREAMLIT_BROWSER_GATHER_USAGE_STATS": "false",
     })
+    if production:
+        env.update({
+            "SESSION_SIGNING_KEY": "phase20-browser-acceptance-signing-key-123456",
+            "INITIAL_ADMIN_EMAIL": "browser-admin@example.invalid",
+            "INITIAL_ADMIN_PASSWORD": "Browser-Test-Only-Password-123!",
+        })
     log = log_path.open("a", encoding="utf-8")
     process = subprocess.Popen(
         [
