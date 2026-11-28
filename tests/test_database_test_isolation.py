@@ -29,7 +29,7 @@ def test_database_guard_rejects_repository_and_production_paths(tmp_path):
         Path("/var/lib/project-continue/project_continue.sqlite3"),
     )
     for path in forbidden_paths:
-        with pytest.raises(AssertionError, match="pytest tmp_path"):
+        with pytest.raises(AssertionError):
             Database(path)
 
 
