@@ -78,3 +78,18 @@ def test_only_pinned_harmless_e2e_fixture_is_additionally_allowlisted():
     )
     assert passed
     assert errors == ()
+
+def test_only_pinned_failure_mode_fixtures_are_additionally_allowlisted():
+    fixtures = (
+        ("tests/fixtures/notebooks/kernel_crash.ipynb", "43abfb0ea50c22f7321797ea32fb71a55d59e897"),
+        ("tests/fixtures/notebooks/timeout.ipynb", "24bcb31a908db92035aa801b1e09e17d2714c7d3"),
+    )
+    for path, blob in fixtures:
+        passed, errors = authorize_notebook_execution(
+            {"notebook_path": path, "commit_sha": COMMIT, "blob_sha": blob},
+            checked_out_commit_sha=COMMIT,
+            resolved_notebook_path=path,
+            resolved_blob_sha=blob,
+        )
+        assert passed
+        assert errors == ()
