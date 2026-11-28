@@ -46,7 +46,7 @@ def _validate_sha(value: str, field: str) -> str:
     return value
 
 
-def _safe_path(value: str, *, allow_root: bool = False) -> PurePosixPath:
+def _safe_path(value: str, *, allow_root: bool = False, allow_directory: bool = False) -> PurePosixPath:
     if allow_root and value == "":
         return PurePosixPath(".")
     if not isinstance(value, str) or not value or len(value) > 240:
@@ -61,7 +61,7 @@ def _safe_path(value: str, *, allow_root: bool = False) -> PurePosixPath:
         raise RepositoryAccessRejected("absolute paths are forbidden")
     if path.name.lower() in _DENIED_NAMES or path.suffix.lower() in _DENIED_SUFFIXES:
         raise RepositoryAccessRejected("sensitive file path is forbidden")
-    if path.suffix.lower() not in _ALLOWED_SUFFIXES:
+    if path.suffix.lower() not in _ALLOWED_SUFFIXES and not (allow_directory and not path.suffix):
         raise RepositoryAccessRejected("file extension is not allow-listed")
     return path
 
@@ -121,7 +121,7 @@ class RepositorySnapshot:
     def list_tree(self, *, expected_commit_sha: str, path: str = "") -> tuple[str, ...]:
         self._check_commit(expected_commit_sha)
         if path:
-            relative = _safe_path(path)
+            relative = _safe_path(path, allow_directory=True)
             base = self._resolve(relative)
             if not base.is_dir():
                 raise RepositoryAccessRejected("tree path is not a directory")
@@ -149,8 +149,9 @@ def validate_target_branch(
     *, target_branch: str, base_branch: str, observed_base_sha: str, expected_base_sha: str
 ) -> None:
     """Require a separate feature branch based on the exact reviewed base SHA."""
-    if not isinstance(target_branch, str) or not _BRANCH.fullmatch(target_branch):
-        raise RepositoryAccessRejected("target branch name is invalid")
+    if (not isinstance(target_branch, str) or not _BRANCH.fullmatch(target_branch)
+            or not isinstance(base_branch, str) or not _BRANCH.fullmatch(base_branch)):
+        raise RepositoryAccessRejected("target or base branch name is invalid")
     if target_branch in {"main", "master"} or not target_branch.startswith(("phase20/", "feature/")):
         raise RepositoryAccessRejected("writes require a dedicated phase20/ or feature/ branch")
     if target_branch == base_branch:
