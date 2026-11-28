@@ -134,7 +134,11 @@ def browser_login_round_trip(base_url: str) -> None:
             response = page.goto(base_url, wait_until="domcontentloaded", timeout=30000)
             if response is None or response.status != 200:
                 raise AssertionError("Production login page did not return HTTP 200")
-            page.get_by_text("Project Continue — Sign in", exact=True).wait_for(timeout=20000)
+            try:
+                page.get_by_text("Project Continue", exact=False).filter(has_text="Sign in").wait_for(timeout=20000)
+            except PlaywrightTimeoutError as exc:
+                body = page.locator("body").inner_text()[:3000]
+                raise AssertionError("Production login gate missing; browser body: " + body) from exc
             if page.get_by_text("Project registry", exact=True).count():
                 raise AssertionError("Production dashboard rendered before authentication")
             page.get_by_label("Email").fill("browser-admin@example.invalid")
@@ -180,7 +184,11 @@ def main() -> int:
         try:
             production_url = "http://127.0.0.1:" + str(production_port)
             wait_for_health(production_url + "/_stcore/health", production, log_path)
-            browser_login_round_trip(production_url)
+            try:
+                browser_login_round_trip(production_url)
+            except Exception:
+                print("PRODUCTION_STREAMLIT_LOG_TAIL=" + log_path.read_text(errors="replace")[-5000:])
+                raise
         finally:
             stop_app(production)
         if production.poll() is None:
