@@ -12,6 +12,8 @@ from typing import Any
 _ALLOWED_NOTEBOOKS = {
     "notebooks/ProjectContinue-Recovery.ipynb": "544c131c97101485c4f328f83de1f96e65162dad",
     "tests/fixtures/notebooks/harmless_execution.ipynb": "b62de83fd65d7faa0713ce52b8c87b4741ed9832",
+    "tests/fixtures/notebooks/kernel_crash.ipynb": "43abfb0ea50c22f7321797ea32fb71a55d59e897",
+    "tests/fixtures/notebooks/timeout.ipynb": "24bcb31a908db92035aa801b1e09e17d2714c7d3",
 }
 _GIT_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 _REQUIRED_FIELDS = frozenset({"notebook_path", "commit_sha", "blob_sha"})
