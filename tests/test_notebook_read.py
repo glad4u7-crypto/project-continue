@@ -20,7 +20,7 @@ def _payload():
                 ],
                 "source": [
                     "token = 'plain-secret-value'\n",
-                    "github_token = 'ghp_" + "A" * 36 + "'\n",
+                    "plain token string: ghp_" + "A" * 36 + "\n",
                 ],
             }
         ],
