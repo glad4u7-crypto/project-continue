@@ -22,10 +22,10 @@ MAX_METADATA_DEPTH = 8
 MAX_INVENTORY_ENTRIES = 500
 MAX_INVENTORY_DEPTH = 4
 _SECRET_PATTERNS = (
-    re.compile(r"(?i)(api[_-]?key|access[_-]?token|refresh[_-]?token|password|secret)(\\s*[=:]\\s*)([^\\s,;]+)"),
-    re.compile(r"(?i)(bearer\\s+)[A-Za-z0-9._~+/=-]{12,}"),
+    re.compile(r"(?i)(api[_-]?key|access[_-]?token|refresh[_-]?token|password|secret)(\s*[=:]\s*)([^\s,;]+)"),
+    re.compile(r"(?i)(bearer\s+)[A-Za-z0-9._~+/=-]{12,}"),
     re.compile(r"gh[pousr]_[A-Za-z0-9]{20,}"),
-    re.compile(r"(?i)(-----BEGIN [A-Z ]*PRIVATE KEY-----)[\\s\\S]*?(-----END [A-Z ]*PRIVATE KEY-----)"),
+    re.compile(r"(?i)(-----BEGIN [A-Z ]*PRIVATE KEY-----)[\s\S]*?(-----END [A-Z ]*PRIVATE KEY-----)"),
 )
 
 
