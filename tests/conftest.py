@@ -1,4 +1,4 @@
-"""Global pytest safety gate: every file-backed SQLite DB stays under tmp_path."""
+"""Global pytest safety gate: file-backed SQLite databases stay in temporary roots; live path is blocked."""
 from __future__ import annotations
 
 import os
