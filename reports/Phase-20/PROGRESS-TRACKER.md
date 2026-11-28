@@ -1,7 +1,7 @@
 # Phase 20 — Live Progress Tracker
 
-**Overall:** PHASE 20.0 COMPLETE / PHASE 20.1 NOT STARTED  
-**Last updated:** 2026-11-28 06:47 (Asia/Kolkata)  
+**Overall:** PHASE 20.0 COMPLETE / PHASE 20.1 AUDIT COMPLETE WITH 4 UNAVAILABLE LIMITATIONS / PHASE 20.2 NOT STARTED  
+**Last updated:** 2026-11-28 07:04 (Asia/Kolkata)  
 **Plan branch:** docs/phase-20-master-checklist
 
 ## Parent phase status
@@ -9,7 +9,7 @@
 | Phase | Status | Passed units | Total units | Latest evidence | Next action |
 |---|---|---:|---:|---|---|
 | 20.0 Phase 19 handoff ও entry gate | COMPLETE | 7 | 7 | GitHub Actions CI run 46021825415; 2026-11-28 U20-0-04 notebook read-back addendum | All 7 units PASS; uploaded notebook matches reported 714-byte size and SHA-256; proceed to 20.1 without Colab/Codespaces |
-| 20.1 GitHub capability ও permission audit | NOT STARTED | 0 | 12 | Initial planning baseline only | Start only after Phase 20.0 disposition; audit GitHub Actions capabilities and permissions |
+| 20.1 GitHub capability ও permission audit | AUDIT COMPLETE — 4 UNAVAILABLE | 8 | 12 | `reports/Phase-20/2026-11-28-Phase20-1-GitHub-Capability-Audit.md`; PR #70 CI run `46093587157` PASS (321 tests) | 8 PASS; 4 connector capabilities UNAVAILABLE (workflow dispatch, Codespaces lifecycle, Secrets/Variables write, direct Colab execution); proceed to 20.2 with these hard constraints |
 | 20.2 Authentication ও least-privilege security | NOT STARTED | 0 | 9 | Initial planning baseline only | Complete in order; see unit register |
 | 20.3 Secure dispatcher ও command protocol | NOT STARTED | 0 | 9 | Initial planning baseline only | Complete in order; see unit register |
 | 20.4 Ephemeral execution runner | NOT STARTED | 0 | 10 | Initial planning baseline only | Complete in order; see unit register |
@@ -26,11 +26,13 @@
 ## Global counters
 
 - Total atomic checkpoints: 142
-- PASS: 7 (Phase 20.0 only)
+- PASS: 15 (20.0: 7; 20.1: 8)
 - FAIL: 0
 - BLOCKED: 0
-- NOT STARTED: 135
+- UNAVAILABLE: 4 (20.1: 4)
+- NOT STARTED: 123
 - Phase 20.0 exit gate: COMPLETE
+- Phase 20.1 capability audit: COMPLETE WITH 4 UNAVAILABLE LIMITATIONS; all 12 units have explicit evidence-backed dispositions.
 
 ## Update rules
 
