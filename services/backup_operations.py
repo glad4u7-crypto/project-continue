@@ -2,11 +2,26 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+from dataclasses import dataclass
 from pathlib import Path
+import hashlib
+import json
+import secrets
 import sqlite3
 
 from database.backup import sha256_file
 from database.connection import Database
+
+
+@dataclass(frozen=True)
+class DestructiveApproval:
+    """Opaque, single-use approval bound to one preview and one target."""
+    token: str
+    action: str
+    target: str
+    preview_sha256: str
+    approved_by: str
+    issued_at: str
 
 
 class BackupOperations:
@@ -19,6 +34,9 @@ class BackupOperations:
         self.database = database
         self.root = Path(backup_root).expanduser().resolve()
         self.clock = clock or (lambda: datetime.now(timezone.utc))
+        self._issued_approvals: dict[str, tuple[str, str, str]] = {}
+        self._consumed_approvals: set[str] = set()
+        self._approval_audit: list[dict] = []
         source = Path(database.path).expanduser().resolve()
         if database.path != ":memory:" and self.root == source.parent:
             raise ValueError("Backup directory must differ from the live database directory")
@@ -112,18 +130,76 @@ class BackupOperations:
         return {"keep_days": keep_days, "cutoff": cutoff.isoformat(),
                 "candidate_count": len(candidates), "candidates": sorted(candidates)}
 
-    def apply_retention(self, preview: dict, *, confirm=False) -> list[str]:
-        if confirm is not True:
-            raise PermissionError("Explicit confirm=True is required for retention deletion")
+    @staticmethod
+    def _preview_digest(preview: dict) -> str:
+        canonical = json.dumps(preview, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+    @property
+    def approval_audit(self) -> tuple[dict, ...]:
+        """Sanitized in-process audit events; callers may persist these externally."""
+        return tuple(dict(item) for item in self._approval_audit)
+
+    def issue_delete_approval(
+        self, preview: dict, target: str | Path, *, approved_by: str, confirmation: str,
+    ) -> DestructiveApproval:
+        """Issue a one-use delete approval for exactly one preview candidate."""
         if not isinstance(preview, dict) or not isinstance(preview.get("candidates"), list):
             raise ValueError("A valid retention preview is required")
+        if not isinstance(approved_by, str) or not approved_by.strip():
+            raise PermissionError("A named approver is required")
+        path = Path(target).expanduser().resolve()
+        if str(path) not in preview["candidates"]:
+            raise PermissionError("Approval target is not in the supplied retention preview")
+        if path.parent != self.root or not path.name.startswith(self.PREFIX) or not path.name.endswith(self.SUFFIX):
+            raise ValueError("Approval target is outside the managed backup namespace")
+        required = f"APPROVE DELETE {path.name}"
+        if confirmation != required:
+            raise PermissionError("Exact target-specific deletion confirmation is required")
+        token = secrets.token_urlsafe(32)
+        digest = self._preview_digest(preview)
+        issued = self.clock().astimezone(timezone.utc).isoformat()
+        approval = DestructiveApproval(token, "delete", str(path), digest, approved_by.strip(), issued)
+        self._issued_approvals[token] = (approval.action, approval.target, approval.preview_sha256)
+        self._approval_audit.append({
+            "event": "approval_issued", "action": "delete", "target": path.name,
+            "approved_by": approval.approved_by, "issued_at": issued,
+        })
+        return approval
+
+    def apply_retention(
+        self, preview: dict, *, approvals: dict[str, DestructiveApproval] | None = None, confirm=False,
+    ) -> list[str]:
+        # The legacy boolean is deliberately never accepted as authorization.
+        if confirm is True:
+            raise PermissionError("Boolean confirmation is not an approval; use a scoped one-time approval")
+        if not isinstance(preview, dict) or not isinstance(preview.get("candidates"), list):
+            raise ValueError("A valid retention preview is required")
+        approvals = approvals or {}
+        digest = self._preview_digest(preview)
         deleted = []
         for raw in preview["candidates"]:
             path = Path(raw)
-            if path.parent.resolve() != self.root or path.name.startswith(self.PREFIX) is False or not path.name.endswith(self.SUFFIX):
+            if path.parent.resolve() != self.root or not path.name.startswith(self.PREFIX) or not path.name.endswith(self.SUFFIX):
                 raise ValueError("Retention candidate is outside the managed backup namespace")
             if path.is_symlink() or not path.is_file():
                 continue
+            approval = approvals.get(str(path))
+            if not isinstance(approval, DestructiveApproval):
+                raise PermissionError("Every deletion requires a target-specific approval")
+            issued_scope = self._issued_approvals.get(approval.token)
+            if (approval.token in self._consumed_approvals or issued_scope is None
+                    or issued_scope != ("delete", str(path), digest)
+                    or approval.action != "delete" or approval.target != str(path)
+                    or approval.preview_sha256 != digest):
+                raise PermissionError("Approval is invalid, mismatched, or already consumed")
+            # Consume before the filesystem mutation so retries cannot replay it.
+            self._consumed_approvals.add(approval.token)
+            self._approval_audit.append({
+                "event": "approval_consumed", "action": "delete", "target": path.name,
+                "approved_by": approval.approved_by,
+                "consumed_at": self.clock().astimezone(timezone.utc).isoformat(),
+            })
             path.unlink()
             deleted.append(str(path))
         return deleted

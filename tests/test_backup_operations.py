@@ -39,9 +39,17 @@ def test_retention_is_preview_first_and_namespace_limited(tmp_path):
     assert preview["candidate_count"] == 1
     with pytest.raises(PermissionError):
         ops.apply_retention(preview)
-    assert backup.exists()
-    assert ops.apply_retention(preview, confirm=True) == [str(backup)]
+    with pytest.raises(PermissionError, match="Boolean confirmation"):
+        ops.apply_retention(preview, confirm=True)
+    approval = ops.issue_delete_approval(
+        preview, backup, approved_by="test-operator",
+        confirmation=f"APPROVE DELETE {backup.name}",
+    )
+    assert ops.apply_retention(preview, approvals={str(backup): approval}) == [str(backup)]
     assert not backup.exists()
+    assert [event["event"] for event in ops.approval_audit] == ["approval_issued", "approval_consumed"]
+    with pytest.raises(PermissionError):
+        ops.apply_retention(preview, approvals={str(backup): approval})
     db.close()
 
 
@@ -276,3 +284,53 @@ def test_idempotent_restore_still_rejects_live_database_target(tmp_path):
         ops.restore_drill_idempotent(backup, live_db.path)
     assert Database.verify_backup(backup) is True
     live_db.close()
+
+
+
+def test_delete_approval_is_target_specific_and_requires_exact_phrase(tmp_path):
+    db = Database(tmp_path / "live.sqlite3")
+    ops = BackupOperations(db, tmp_path / "backups")
+    backup = ops.create_backup()
+    old = datetime.now(timezone.utc) - timedelta(days=45)
+    os.utime(backup, (old.timestamp(), old.timestamp()))
+    preview = ops.preview_retention(keep_days=30)
+    with pytest.raises(PermissionError, match="Exact target-specific"):
+        ops.issue_delete_approval(
+            preview, backup, approved_by="operator", confirmation="yes",
+        )
+    with pytest.raises(PermissionError, match="named approver"):
+        ops.issue_delete_approval(
+            preview, backup, approved_by=" ", confirmation=f"APPROVE DELETE {backup.name}",
+        )
+    approval = ops.issue_delete_approval(
+        preview, backup, approved_by="operator",
+        confirmation=f"APPROVE DELETE {backup.name}",
+    )
+    other_preview = dict(preview, keep_days=31)
+    with pytest.raises(PermissionError, match="invalid, mismatched"):
+        ops.apply_retention(other_preview, approvals={str(backup): approval})
+    assert backup.exists()
+    db.close()
+
+
+def test_delete_approval_cannot_be_replayed_or_used_for_another_target(tmp_path):
+    db = Database(tmp_path / "live.sqlite3")
+    ops = BackupOperations(db, tmp_path / "backups")
+    first = ops.create_backup()
+    second = ops.create_backup()
+    old = datetime.now(timezone.utc) - timedelta(days=45)
+    os.utime(first, (old.timestamp(), old.timestamp()))
+    os.utime(second, (old.timestamp(), old.timestamp()))
+    preview = ops.preview_retention(keep_days=30)
+    approval = ops.issue_delete_approval(
+        preview, first, approved_by="operator",
+        confirmation=f"APPROVE DELETE {first.name}",
+    )
+    with pytest.raises(PermissionError):
+        ops.apply_retention(preview, approvals={str(second): approval})
+    assert first.exists() and second.exists()
+    assert ops.apply_retention(preview, approvals={str(first): approval}) == [str(first)]
+    with pytest.raises(PermissionError):
+        ops.apply_retention(preview, approvals={str(first): approval})
+    assert second.exists()
+    db.close()
