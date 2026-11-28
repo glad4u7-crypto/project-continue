@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import importlib.util
 import os
 import re
 import subprocess
@@ -56,13 +57,13 @@ def build_command(task: str) -> tuple[str, ...] | None:
     """Map a fixed task ID to immutable argv; never accept shell fragments."""
     py = sys.executable
     if task == "compile":
-        return (py, "-m", "compileall", "-q", "app", "config.py", "core", "database", "integrations", "services", "src", "tests")
+        return (py, "-m", "compileall", "-q", "app", "config.py", "core", "database", "integrations", "services", "src", "scripts", "tests")
     if task == "focused":
         return (py, "-m", "pytest", "-q", "tests/test_dispatcher_admission.py", "tests/test_dispatcher_audit_log.py", "tests/test_dispatcher_execution_state.py", "tests/test_dispatcher_request_guard.py", "tests/test_dispatcher_repository_guard.py", "tests/test_dispatcher_runtime.py", "tests/test_phase20_runner.py", "tests/test_phase20_test_harness.py")
     if task == "full":
         return (py, "-m", "pytest", "-q")
     if task == "lint":
-        if __import__("importlib").util.find_spec("ruff") is None:
+        if importlib.util.find_spec("ruff") is None:
             return None
         return (py, "-m", "ruff", "check", "app", "config.py", "core", "database", "integrations", "services", "src", "tests")
     if task == "failure-probe":
