@@ -13,6 +13,22 @@ from scripts.notebook_read import read_notebook_redacted
 from scripts.notebook_validation import MAX_NOTEBOOK_BYTES
 
 
+def normalize_notebook_text_fields(document: dict[str, Any]) -> dict[str, Any]:
+    """Normalize legacy line-array text fields to the strings nbformat expects."""
+    for cell in document.get("cells", []):
+        if isinstance(cell.get("source"), list) and all(isinstance(part, str) for part in cell["source"]):
+            cell["source"] = "".join(cell["source"])
+        for output in cell.get("outputs", []):
+            if isinstance(output.get("text"), list) and all(isinstance(part, str) for part in output["text"]):
+                output["text"] = "".join(output["text"])
+            data = output.get("data")
+            if isinstance(data, dict):
+                for mime, value in tuple(data.items()):
+                    if isinstance(value, list) and all(isinstance(part, str) for part in value):
+                        data[mime] = "".join(value)
+    return document
+
+
 def summarize_notebook(document: dict[str, Any], status: str, artifact_bytes: int, artifact_sha256: str) -> dict[str, Any]:
     code_cells = [cell for cell in document.get("cells", []) if cell.get("cell_type") == "code"]
     return {
@@ -55,7 +71,7 @@ def execute_notebook(input_path: str | Path, output_path: str | Path) -> dict[st
     from nbclient import NotebookClient
     from nbclient.exceptions import CellExecutionError
 
-    notebook = nbformat.from_dict(document)
+    notebook = nbformat.from_dict(normalize_notebook_text_fields(document))
     status = "completed"
     try:
         NotebookClient(
