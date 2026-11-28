@@ -107,9 +107,9 @@ def browser_round_trip(base_url: str, *, expect_existing: bool, screenshot_path:
             page.get_by_text("Project registry", exact=True).wait_for(timeout=10000)
             page.screenshot(path=str(screenshot_path), full_page=True)
             if expect_existing:
-                page.get_by_text("Browser acceptance project updated", exact=True).wait_for(timeout=15000)
+                page.get_by_text("Browser acceptance project updated", exact=True).first.wait_for(timeout=15000)
                 page.get_by_role("button", name="Open details").click()
-                page.get_by_text("Browser acceptance task updated", exact=True).wait_for(timeout=15000)
+                page.get_by_text("Browser acceptance task updated", exact=True).first.wait_for(timeout=15000)
                 page.screenshot(path=str(screenshot_path), full_page=True)
                 return
 
