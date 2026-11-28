@@ -96,12 +96,12 @@
 | U20-5-03 | প্রতিটি পরিবর্তনের জন্য আলাদা feature branch ব্যবহার | PASS | Dedicated phase20/feature branch enforcement tests; CI `46110628207` PASS, SHA `4a4f2a7` |
 | U20-5-04 | Path traversal, hidden path ও disallowed extension block করা | PASS | Traversal/hidden/symlink/sensitive-extension rejection tests; CI `46110628207` PASS, SHA `4a4f2a7` |
 | U20-5-05 | File size, encoding ও content validation | PASS | UTF-8/size/JSON/secret/blob-SHA patch validation tests; CI `46110628207` PASS, SHA `4a4f2a7` |
-| U20-5-06 | Existing file overwrite-এর আগে blob SHA compare করা | NOT STARTED | — |
-| U20-5-07 | Stale SHA conflict হলে write বন্ধ করে re-read করা | NOT STARTED | — |
-| U20-5-08 | Diff review-এ changed files ও line count প্রকাশ | NOT STARTED | — |
-| U20-5-09 | Compile/lint/focused test সফল হলে PR তৈরি | NOT STARTED | — |
-| U20-5-10 | PR body-তে evidence, risk, rollback ও test result যুক্ত করা | NOT STARTED | — |
-| U20-5-11 | Main branch-এ direct write নিষিদ্ধ থাকার পরীক্ষা | NOT STARTED | — |
+| U20-5-06 | Existing file overwrite-এর আগে blob SHA compare করা | PASS | Existing overwrite requires current Git blob SHA; stale/missing SHA is rejected by prepare_patch and tests; CI `46111096455` SUCCESS, code SHA `cf6e342` |
+| U20-5-07 | Stale SHA conflict হলে write বন্ধ করে re-read করা | PASS | Stale base/blob SHA returns rejection and no patch; caller must re-read before retry; CI `46111096455` SUCCESS, code SHA `cf6e342` |
+| U20-5-08 | Diff review-এ changed files ও line count প্রকাশ | PASS | summarize_diff reports file, additions, deletions, old/new blob SHA; PR records per-file stats; CI `46111096455` SUCCESS, code SHA `cf6e342` |
+| U20-5-09 | Compile/lint/focused test সফল হলে PR তৈরি | PASS | Draft PR #71 created after compile/focused/full CI success; no merge; CI `46111096455` SUCCESS, code SHA `cf6e342` |
+| U20-5-10 | PR body-তে evidence, risk, rollback ও test result যুক্ত করা | PASS | PR #71 body includes summary, reviewed diff, tests, risks, rollback, base/head refs; CI `46111096455` SUCCESS, code SHA `cf6e342` |
+| U20-5-11 | Main branch-এ direct write নিষিদ্ধ থাকার পরীক্ষা | PASS | prepare_patch rejects main/master; tests prove writes require phase20/ or feature/; CI `46111096455` SUCCESS, code SHA `cf6e342` |
 
 **20.5 exit gate:** 11 of 11 unit checkpoints must have evidence-backed PASS, or an explicitly approved limitation recorded in the final report. No silent skips.
 
