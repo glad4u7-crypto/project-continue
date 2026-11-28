@@ -67,7 +67,7 @@ class RepositoryGuardTests(unittest.TestCase):
             self.snapshot.read_file("linked.txt", expected_commit_sha=SHA)
 
     def test_invalid_utf8_and_oversized_files_rejected(self):
-        (self.root / "bad.txt").write_bytes(b"\\xff")
+        (self.root / "bad.txt").write_bytes(bytes([0xff]))
         with self.assertRaises(RepositoryAccessRejected):
             self.snapshot.read_file("bad.txt", expected_commit_sha=SHA)
         (self.root / "large.txt").write_bytes(b"x" * (256 * 1024 + 1))
@@ -127,7 +127,7 @@ class RepositoryGuardTests(unittest.TestCase):
                 )
 
     def test_nul_and_empty_patch_rejected(self):
-        for content in ("", "a\\x00b"):
+        for content in ("", "a" + chr(0) + "b"):
             with self.subTest(content=content), self.assertRaises(RepositoryAccessRejected):
                 validate_patch(
                     path="file.txt", content=content,
