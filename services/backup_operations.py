@@ -33,9 +33,7 @@ class BackupOperations:
         self.clock = clock or (lambda: datetime.now(timezone.utc))
         source = Path(database.path).expanduser().resolve()
         if database.path != ":memory:" and (
-            self.root == source.parent
-            or self.root.is_relative_to(source.parent)
-            or source.parent.is_relative_to(self.root)
+            self.root == source.parent or source.parent.is_relative_to(self.root)
         ):
             raise ValueError("Backup directory must be separate from the live database directory")
         self._retention_previews: dict[str, list[dict]] = {}
