@@ -93,12 +93,16 @@ class SQLiteAdmissionController:
         return connection, raw
 
     @staticmethod
-    def _commit(connection: Any) -> None:
-        connection.__exit__(None, None, None)
+    def _commit(manager: Any, connection: Any) -> None:
+        # Database.connection() closes its connection on context exit but does
+        # not commit explicit transactions. Commit the SQLite transaction first.
+        connection.commit()
+        manager.__exit__(None, None, None)
 
     @staticmethod
-    def _rollback(connection: Any, exc: BaseException) -> None:
-        connection.__exit__(type(exc), exc, exc.__traceback__)
+    def _rollback(manager: Any, connection: Any, exc: BaseException) -> None:
+        connection.rollback()
+        manager.__exit__(type(exc), exc, exc.__traceback__)
 
     def _purge(self, connection: Any, now_text: str, cutoff_text: str) -> None:
         connection.execute("DELETE FROM dispatcher_admissions WHERE lease_expires_at <= ?", (now_text,))
@@ -141,9 +145,9 @@ class SQLiteAdmissionController:
                 "INSERT INTO dispatcher_rate_events(request_id, actor_id, occurred_at) VALUES (?, ?, ?)",
                 (request_id, actor_id, now_text),
             )
-            self._commit(manager)
+            self._commit(manager, connection)
         except BaseException as exc:
-            self._rollback(manager, exc)
+            self._rollback(manager, connection, exc)
             if isinstance(exc, sqlite3.IntegrityError):
                 raise AdmissionRejected("duplicate request admission") from exc
             raise
