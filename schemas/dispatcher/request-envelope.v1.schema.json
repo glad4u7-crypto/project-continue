@@ -2,112 +2,39 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://project-continue.invalid/schemas/dispatcher/request-envelope.v1.schema.json",
   "title": "Project Continue Dispatcher Request Envelope v1",
-  "description": "Transport-neutral, versioned request envelope. All identity, idempotency, repository, immutable revision and time-bound fields are mandatory. This schema validates structure only; it does not authorize or execute a task. The dispatcher must treat all supplied values as untrusted input.",
+  "description": "Transport-neutral request contract. All fields are untrusted claims; runtime authorization uses the authenticated GitHub connector identity.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "schema_version": {
-      "type": "string",
-      "const": "1.0",
-      "description": "Protocol envelope version."
-    },
-    "request_id": {
-      "type": "string",
-      "format": "uuid",
-      "description": "Globally unique UUID for one accepted request; duplicate request IDs must be rejected."
-    },
-    "idempotency_key": {
-      "type": "string",
-      "minLength": 16,
-      "maxLength": 128,
-      "pattern": "^[A-Za-z0-9._:-]+$",
-      "description": "Stable retry key, unique within actor + repository + task scope. Reuse with the same canonical payload returns the original result; reuse with a different payload must be rejected."
-    },
+    "schema_version": {"type": "string", "const": "1.0"},
+    "request_id": {"type": "string", "format": "uuid"},
+    "nonce": {"type": "string", "format": "uuid"},
+    "idempotency_key": {"type": "string", "minLength": 16, "maxLength": 128, "pattern": "^[A-Za-z0-9._:-]+$"},
     "actor": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "id": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 128
-        },
-        "type": {
-          "type": "string",
-          "enum": [
-            "user",
-            "service"
-          ]
-        }
-      },
-      "required": [
-        "id",
-        "type"
-      ]
+      "type": "object", "additionalProperties": false,
+      "properties": {"id": {"type": "string", "pattern": "^[0-9]+$"}, "type": {"const": "user"}},
+      "required": ["id", "type"]
     },
     "repository": {
-      "type": "object",
-      "additionalProperties": false,
+      "type": "object", "additionalProperties": false,
       "properties": {
-        "full_name": {
-          "type": "string",
-          "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$",
-          "maxLength": 200
-        },
-        "commit_sha": {
-          "type": "string",
-          "pattern": "^[a-fA-F0-9]{40}$",
-          "description": "Immutable 40-character Git commit SHA."
-        }
+        "id": {"type": "integer", "minimum": 1},
+        "full_name": {"type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$", "maxLength": 200},
+        "commit_sha": {"type": "string", "pattern": "^[a-f0-9]{40}$"}
       },
-      "required": [
-        "full_name",
-        "commit_sha"
-      ]
+      "required": ["id", "full_name", "commit_sha"]
     },
     "task": {
-      "type": "object",
-      "additionalProperties": false,
+      "type": "object", "additionalProperties": false,
       "properties": {
-        "task_id": {
-          "type": "string",
-          "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
-        },
-        "arguments": {
-          "type": "object",
-          "description": "Task-specific data; a fixed task registry and per-task argument schemas must validate this before any handler is called.",
-          "additionalProperties": true
-        }
+        "task_id": {"type": "string", "enum": ["repo.read_file", "repo.list_tree", "tests.run_pytest"]},
+        "arguments": {"type": "object", "additionalProperties": true}
       },
-      "required": [
-        "task_id",
-        "arguments"
-      ]
+      "required": ["task_id", "arguments"]
     },
-    "issued_at": {
-      "type": "string",
-      "format": "date-time",
-      "description": "RFC 3339 date-time when the request was created."
-    },
-    "expires_at": {
-      "type": "string",
-      "format": "date-time",
-      "description": "RFC 3339 date-time deadline. Runtime validation must reject expired requests and require expires_at to be later than issued_at."
-    },
-    "trace_id": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 128
-    }
+    "issued_at": {"type": "string", "format": "date-time"},
+    "expires_at": {"type": "string", "format": "date-time"},
+    "trace_id": {"type": "string", "minLength": 1, "maxLength": 128}
   },
-  "required": [
-    "schema_version",
-    "request_id",
-    "idempotency_key",
-    "actor",
-    "repository",
-    "task",
-    "issued_at",
-    "expires_at"
-  ]
+  "required": ["schema_version", "request_id", "nonce", "idempotency_key", "actor", "repository", "task", "issued_at", "expires_at"]
 }
