@@ -9,6 +9,7 @@ import pytest
 
 from scripts import notebook_sandbox
 from scripts.notebook_container_runner import normalize_notebook_text_fields, summarize_notebook, write_artifact_exclusive
+from scripts.notebook_read import read_notebook_redacted
 from scripts.notebook_sandbox import (
     EXECUTION_TIMEOUT_SECONDS, SANDBOX_IMAGE, SANDBOX_UID,
     build_sandbox_command, git_blob_sha1, run_sandbox,
@@ -167,7 +168,7 @@ def test_artifact_summary_counts_execution_and_traceback_cells():
     assert summary["status"] == "cell_error"
 
 
-def test_artifact_writer_is_exclusive_and_size_bounded(tmp_path):
+def test_duplicate_artifact_name_is_rejected_and_size_bounded(tmp_path):
     output = tmp_path / "output"
     output.mkdir()
     path = output / "executed.ipynb"
@@ -290,3 +291,9 @@ def test_sandbox_rejects_symlink_input_before_container_launch(tmp_path):
     symlink.symlink_to(notebook)
     with pytest.raises(ValueError):
         build_sandbox_command(symlink)
+
+def test_malformed_notebook_json_is_rejected_before_execution():
+    valid, document, errors = read_notebook_redacted(b'{"cells": [}')
+    assert not valid
+    assert document is None
+    assert errors
