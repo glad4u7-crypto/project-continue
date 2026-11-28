@@ -10,6 +10,7 @@ from scripts.phase20_runner import (
     TASK_TIMEOUT_SECONDS,
     build_command,
     run_task,
+    _apply_child_limits,
 )
 
 
@@ -38,6 +39,7 @@ class Phase20RunnerTests(unittest.TestCase):
         kwargs = popen.call_args.kwargs
         self.assertEqual(kwargs["cwd"], REPOSITORY_ROOT)
         self.assertTrue(kwargs["start_new_session"])
+        self.assertIs(kwargs["preexec_fn"], _apply_child_limits)
         self.assertFalse(kwargs["shell"])
         self.assertEqual(kwargs["stdout"], unittest.mock.ANY)
         self.assertEqual(
@@ -61,6 +63,15 @@ class Phase20RunnerTests(unittest.TestCase):
         popen.return_value = process
         self.assertEqual(run_task("full-tests"), 124)
         killpg.assert_called_once()
+
+    @patch("scripts.phase20_runner.resource.setrlimit")
+    def test_child_cpu_and_core_dump_limits_are_applied(self, setrlimit):
+        import resource
+        _apply_child_limits()
+        setrlimit.assert_any_call(
+            resource.RLIMIT_CPU, (TASK_TIMEOUT_SECONDS, TASK_TIMEOUT_SECONDS + 10)
+        )
+        setrlimit.assert_any_call(resource.RLIMIT_CORE, (0, 0))
 
     @patch("scripts.phase20_runner.subprocess.Popen")
     def test_output_is_truncated_to_fixed_bound(self, popen):
