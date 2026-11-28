@@ -30,8 +30,11 @@ def authorize_notebook(
         raise PermissionError("notebook execution commit binding mismatch")
     if not isinstance(approval_id, str) or not approval_id.strip() or len(approval_id) > 128:
         raise PermissionError("explicit approval identifier is required")
-    root = Path(notebook_root).resolve(strict=True)
-    if not root.is_dir() or root.is_symlink():
+    root_candidate = Path(notebook_root).expanduser()
+    if root_candidate.is_symlink():
+        raise PermissionError("unsafe notebook root")
+    root = root_candidate.resolve(strict=True)
+    if not root.is_dir():
         raise PermissionError("unsafe notebook root")
     relative = Path(notebook_name)
     if relative.is_absolute() or any(part in ("", ".", "..") or part.startswith(".") for part in relative.parts):
