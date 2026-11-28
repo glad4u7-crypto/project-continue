@@ -36,12 +36,12 @@ class SandboxResult:
 
 
 def git_blob_sha1(payload: bytes) -> str:
-    return hashlib.sha1(f"blob {len(payload)}\\0".encode("ascii") + payload).hexdigest()
+    return hashlib.sha1(f"blob {len(payload)}\0".encode("ascii") + payload).hexdigest()
 
 
 def _mount_path(path: Path) -> str:
     value = str(path)
-    if any(character in value for character in (",", "\\n", "\\r")):
+    if any(character in value for character in (",", "\n", "\r")):
         raise ValueError("sandbox mount path contains unsupported characters")
     return value
 
