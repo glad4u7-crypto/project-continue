@@ -60,3 +60,33 @@ The runtime selector only chooses a backend; it does not migrate data, copy SQLi
 create backups, or change a running deployment. Run PostgreSQL integration and migration
 acceptance against a disposable database before any production decision. The current live
 application remains on SQLite until all application services and acceptance gates pass.
+
+
+## Backup inventory and restore preview (read-only)
+
+Use the backup helpers to inventory a designated backup directory and inspect one candidate
+without restoring it:
+
+```python
+from database import inventory_backups, preview_backup_restore
+
+items = inventory_backups("/path/to/designated-backups")
+for item in items:
+    print(item.name, item.size_bytes, item.sha256, item.inspection_error)
+
+preview = preview_backup_restore(
+    "/path/to/designated-backups/project-backup.sqlite3",
+    expected_sha256="<trusted-sha256-from-backup-manifest>",
+)
+print(preview.eligible_for_manual_restore_review, preview.reason)
+```
+
+The inventory is non-recursive, capped at 500 regular database files, and skips symlinks.
+It records file metadata, SHA-256, and read-only SQLite schema/integrity results. Invalid
+SQLite files remain visible in the inventory with a sanitized inspection status.
+
+A restore preview requires a matching SHA-256, supported schema version, successful
+`integrity_check`, and no `foreign_key_check` violations. It has no destination parameter,
+does not copy or replace any file, and always reports `restore_performed=False`.
+Eligibility means only that a candidate may proceed to a separate human review; it is
+not permission to restore, overwrite, delete, or change a live database.
