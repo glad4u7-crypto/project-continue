@@ -17,6 +17,7 @@ from dotenv import dotenv_values, load_dotenv
 load_dotenv(override=False)
 _ORIGINAL_DATABASE_SETTING = os.environ.get("PROJECT_CONTINUE_DB")
 _DOTENV_DATABASE_SETTING = dotenv_values(".env").get("PROJECT_CONTINUE_DB")
+_PRODUCTION_DOTENV_DATABASE_SETTING = dotenv_values(".env.production").get("PROJECT_CONTINUE_DB")
 _TEST_DATABASE_ROOT = Path(tempfile.mkdtemp(prefix="project-continue-pytest-")).resolve()
 
 
@@ -45,7 +46,7 @@ def _protected_live_database_paths() -> frozenset[Path]:
         (Path.cwd() / ".data" / "project_continue.sqlite3").resolve(),
         Path("/var/lib/project-continue/project_continue.sqlite3").resolve(),
     }
-    for configured in (_ORIGINAL_DATABASE_SETTING, _DOTENV_DATABASE_SETTING):
+    for configured in (_ORIGINAL_DATABASE_SETTING, _DOTENV_DATABASE_SETTING, _PRODUCTION_DOTENV_DATABASE_SETTING):
         normalized = _canonical_database_path(configured)
         if normalized is not None:
             candidates.add(normalized)
