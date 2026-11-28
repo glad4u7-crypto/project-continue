@@ -36,11 +36,12 @@ def _request():
 
 def test_sandbox_uses_nonroot_readonly_and_bounded_container(tmp_path):
     notebook, output = _fixtures(tmp_path)
-    command = build_sandbox_command(notebook, output)
-    assert command[:3] == ("docker", "run", "--rm")
+    command = build_sandbox_command(notebook)
+    assert command[:2] == ("docker", "run")
+    assert "--rm" not in command
     assert "--network=none" in command
     assert "--stop-timeout=5" in command
-    assert ("--user", f"{SANDBOX_UID}:{SANDBOX_UID}") == command[7:9]
+    assert ("--user", f"{SANDBOX_UID}:{SANDBOX_UID}") == command[6:8]
     assert "--read-only" in command
     assert "--cap-drop=ALL" in command
     assert "--security-opt=no-new-privileges" in command
@@ -50,8 +51,8 @@ def test_sandbox_uses_nonroot_readonly_and_bounded_container(tmp_path):
     assert SANDBOX_IMAGE in command
     assert "scripts.notebook_container_runner" in command
     mounts = [command[index + 1] for index, value in enumerate(command[:-1]) if value == "--mount"]
-    assert len(mounts) == 2 and mounts[0].endswith(",readonly")
-    assert "/workspace/output" in mounts[1]
+    assert len(mounts) == 1 and mounts[0].endswith(",readonly")
+    assert any(value.startswith("/workspace/output:") and "size=1m" in value for value in command)
 
 
 def test_sandbox_does_not_forward_host_secrets_or_production_mounts(tmp_path):
@@ -68,24 +69,15 @@ def test_sandbox_rejects_non_notebook_and_missing_paths(tmp_path):
     output = tmp_path / "output"
     output.mkdir()
     with pytest.raises(ValueError):
-        build_sandbox_command(wrong, output)
+        build_sandbox_command(wrong)
     with pytest.raises(FileNotFoundError):
-        build_sandbox_command(tmp_path / "missing.ipynb", output)
-
-
-def test_sandbox_rejects_non_directory_output(tmp_path):
-    notebook = tmp_path / "safe.ipynb"
-    notebook.write_text("{}", encoding="utf-8")
-    output = tmp_path / "not-a-directory"
-    output.write_text("x", encoding="utf-8")
-    with pytest.raises(ValueError):
-        build_sandbox_command(notebook, output)
+        build_sandbox_command(tmp_path / "missing.ipynb")
 
 
 def test_sandbox_rejects_container_name_injection(tmp_path):
     notebook, output = _fixtures(tmp_path)
     with pytest.raises(ValueError):
-        build_sandbox_command(notebook, output, container_name="--privileged")
+        build_sandbox_command(notebook, container_name="--privileged")
 
 
 def test_git_blob_sha_matches_reviewed_notebook_blob():
