@@ -1,4 +1,4 @@
-"""Fail-closed authorization for the single reviewed notebook identity.
+"""Fail-closed authorization for reviewed production and harmless test notebook identities.
 
 This module authorizes identity only. It does not start a kernel or execute code.
 A notebook content change requires an explicit reviewed allow-list update.
@@ -11,6 +11,7 @@ from typing import Any
 
 _ALLOWED_NOTEBOOKS = {
     "notebooks/ProjectContinue-Recovery.ipynb": "544c131c97101485c4f328f83de1f96e65162dad",
+    "tests/fixtures/notebooks/harmless_execution.ipynb": "b62de83fd65d7faa0713ce52b8c87b4741ed9832",
 }
 _GIT_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 _REQUIRED_FIELDS = frozenset({"notebook_path", "commit_sha", "blob_sha"})
