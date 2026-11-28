@@ -58,15 +58,15 @@
 
 | Unit ID | Checkpoint | Status | Evidence / run reference |
 |---|---|---|---|
-| U20-3-01 | Versioned JSON request envelope schema তৈরি | NOT STARTED | — |
-| U20-3-02 | Unique request ID, idempotency key, actor, repo, SHA ও expiry বাধ্যতামূলক করা | NOT STARTED | — |
-| U20-3-03 | Fixed task registry এবং strict argument schema তৈরি | NOT STARTED | — |
-| U20-3-04 | Natural language-কে সরাসরি shell/Python/SQL হিসেবে চালানো নিষিদ্ধ করা | NOT STARTED | — |
-| U20-3-05 | Authenticated actor ও allowed repository যাচাই | NOT STARTED | — |
-| U20-3-06 | Malformed, expired, duplicate ও replayed request reject করা | NOT STARTED | — |
-| U20-3-07 | ACK/RUNNING/PASS/FAIL/BLOCKED/CANCELLED state machine তৈরি | NOT STARTED | — |
-| U20-3-08 | Queue depth, concurrency ও rate limit নির্ধারণ | NOT STARTED | — |
-| U20-3-09 | Request/result ID correlation এবং audit event test | NOT STARTED | — |
+| U20-3-01 | Versioned JSON request envelope schema তৈরি | PASS | `reports/Phase-20/2026-11-28-U20-3-01-Request-Envelope-Schema.md`; final CI `46109666102` PASS, SHA `a029c3e` |
+| U20-3-02 | Unique request ID, idempotency key, actor, repo, SHA ও expiry বাধ্যতামূলক করা | PASS | `reports/Phase-20/2026-11-28-U20-3-02-Mandatory-Envelope-Fields.md`; final CI `46109666102` PASS, SHA `a029c3e` |
+| U20-3-03 | Fixed task registry এবং strict argument schema তৈরি | PASS | `reports/Phase-20/2026-11-28-U20-3-03-Fixed-Task-Registry.md`; final CI `46109666102` PASS, SHA `a029c3e` |
+| U20-3-04 | Natural language-কে সরাসরি shell/Python/SQL হিসেবে চালানো নিষিদ্ধ করা | PASS | `reports/Phase-20/2026-11-28-U20-3-04-Natural-Language-Execution-Policy.md`; final CI `46109666102` PASS, SHA `a029c3e` |
+| U20-3-05 | Authenticated actor ও allowed repository যাচাই | PASS | `reports/Phase-20/2026-11-28-U20-3-05-Actor-Repository-Authorization.md`; final CI `46109666102` PASS, SHA `a029c3e` |
+| U20-3-06 | Malformed, expired, duplicate ও replayed request reject করা | PASS | `reports/Phase-20/2026-11-28-U20-3-06-Request-Replay-Protection.md`; final CI `46109666102` PASS, SHA `a029c3e` |
+| U20-3-07 | ACK/RUNNING/PASS/FAIL/BLOCKED/CANCELLED state machine তৈরি | PASS | `reports/Phase-20/2026-11-28-U20-3-07-Execution-State-Machine.md`; final CI `46109666102` PASS, SHA `a029c3e` |
+| U20-3-08 | Queue depth, concurrency ও rate limit নির্ধারণ | PASS | `reports/Phase-20/2026-11-28-U20-3-08-Queue-Concurrency-Rate-Limits.md`; transaction fix and rate-limit test isolation verified by final CI `46109666102` PASS, SHA `a029c3e` |
+| U20-3-09 | Request/result ID correlation এবং audit event test | PASS | `reports/Phase-20/2026-11-28-U20-3-09-Request-Result-Audit-Correlation.md`; final CI `46109666102` PASS, SHA `a029c3e` |
 
 **20.3 exit gate:** 9 of 9 unit checkpoints must have evidence-backed PASS, or an explicitly approved limitation recorded in the final report. No silent skips.
 
@@ -74,16 +74,16 @@
 
 | Unit ID | Checkpoint | Status | Evidence / run reference |
 |---|---|---|---|
-| U20-4-01 | নিরাপদ workflow trigger mechanism নির্বাচন ও প্রমাণ করা | NOT STARTED | — |
-| U20-4-02 | Workflow-এ explicit minimal permissions নির্ধারণ | NOT STARTED | — |
-| U20-4-03 | Actions ব্যবহার করলে action version SHA pin করা | NOT STARTED | — |
-| U20-4-04 | Exact immutable commit SHA checkout করা | NOT STARTED | — |
-| U20-4-05 | Fixed task handler ছাড়া অন্য execution নিষিদ্ধ করা | NOT STARTED | — |
-| U20-4-06 | Runner workspace ও test data isolated রাখা | NOT STARTED | — |
-| U20-4-07 | Timeout, CPU/output/artifact size bound করা | NOT STARTED | — |
-| U20-4-08 | Cancellation ও failure cleanup test | NOT STARTED | — |
-| U20-4-09 | Runner শেষে কোনো production state বা credential রেখে যায় না যাচাই | NOT STARTED | — |
-| U20-4-10 | বাস্তব workflow run-এর URL, run ID, job ID ও SHA সংরক্ষণ | NOT STARTED | — |
+| U20-4-01 | নিরাপদ workflow trigger mechanism নির্বাচন ও প্রমাণ করা | PASS | Push `phase20/**` + PR to `main`; dedicated run `46110154120` PASS; workflow-dispatch unavailable via connector |
+| U20-4-02 | Workflow-এ explicit minimal permissions নির্ধারণ | PASS | Workflow/job permission `contents: read` only; main CI `46110154179` PASS |
+| U20-4-03 | Actions ব্যবহার করলে action version SHA pin করা | PASS | checkout/setup-python action SHA pins; dedicated run `46110154120` PASS |
+| U20-4-04 | Exact immutable commit SHA checkout করা | PASS | Checkout exact PR head/push SHA, depth 1, no persisted credentials; SHA `29a06b4` |
+| U20-4-05 | Fixed task handler ছাড়া অন্য execution নিষিদ্ধ করা | PASS | Fixed allow-list compile/dispatcher-tests/full-tests; no shell or caller commands; 6 safety tests pass |
+| U20-4-06 | Runner workspace ও test data isolated রাখা | PASS | Ephemeral GitHub-hosted workspace, temporary HOME, minimal child env; dedicated run `46110154120` PASS |
+| U20-4-07 | Timeout, CPU/output/artifact size bound করা | PASS | 20-minute job, 600s wall/CPU cap, 64 KiB output cap, no artifacts, core dumps disabled; tests pass |
+| U20-4-08 | Cancellation ও failure cleanup test | PASS | Concurrency cancellation + process-group kill + temporary HOME cleanup; safety tests pass |
+| U20-4-09 | Runner শেষে কোনো production state বা credential রেখে যায় না যাচাই | PASS | Read-only token, no persisted credentials/secrets/production mounts; source review + CI pass |
+| U20-4-10 | বাস্তব workflow run-এর URL, run ID, job ID ও SHA সংরক্ষণ | PASS | Dedicated run `46110154120` / job `140871655026`; main CI `46110154179` / job `140871654899`; SHA `29a06b4` |
 
 **20.4 exit gate:** 10 of 10 unit checkpoints must have evidence-backed PASS, or an explicitly approved limitation recorded in the final report. No silent skips.
 
