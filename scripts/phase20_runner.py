@@ -51,13 +51,22 @@ def _read_bounded(path: Path) -> tuple[str, int]:
 
 
 def parse_test_counts(output: str) -> dict[str, int]:
-    """Parse pytest's final summary without treating absent counts as zero."""
-    summary = re.findall(r"(?m)^=+\s*(.*?)\s*in\s+[0-9.]+s\s*=+\s*$", output)
-    if not summary:
+    """Parse both pytest -q and verbose terminal summary formats."""
+    summary_line = None
+    for line in output.splitlines():
+        if re.search(r"\\bin\\s+[0-9.]+s\\s*$", line) and re.search(
+            r"\\d+\\s+(?:subtests passed|passed|failed|errors?|skipped|xfailed|xpassed|deselected)\\b",
+            line,
+        ):
+            summary_line = line
+    if summary_line is None:
         return {}
     counts: dict[str, int] = {}
-    for count, label in re.findall(r"(\d+)\s+(passed|failed|error|errors|skipped|xfailed|xpassed|deselected)", summary[-1]):
-        key = "errors" if label == "error" else label
+    pattern = r"(\\d+)\\s+(subtests passed|passed|failed|errors?|skipped|xfailed|xpassed|deselected)"
+    for count, label in re.findall(pattern, summary_line):
+        key = "subtests_passed" if label == "subtests passed" else (
+            "errors" if label in ("error", "errors") else label
+        )
         counts[key] = counts.get(key, 0) + int(count)
     return counts
 
