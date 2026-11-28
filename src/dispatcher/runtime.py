@@ -89,7 +89,7 @@ class SecureDispatcher:
         allowed_actors = self.policy.get("allowed_actors", [])
         actor_rule = next(
             (item for item in allowed_actors
-             if item.get("id") == identity.get("id")
+             if str(item.get("id")) == str(identity.get("id"))
              and item.get("login") == identity.get("login")
              and item.get("type") == identity.get("type") == "user"),
             None,
@@ -98,7 +98,7 @@ class SecureDispatcher:
             raise AuthorizationRejected("authenticated actor is not allow-listed")
         actor_claim = envelope.get("actor")
         if not isinstance(actor_claim, Mapping) or (
-            actor_claim.get("id") != identity.get("id")
+            actor_claim.get("id") != str(identity.get("id"))
             or actor_claim.get("type") != identity.get("type")
         ):
             raise AuthorizationRejected("request actor does not match authenticated identity")
@@ -111,8 +111,8 @@ class SecureDispatcher:
             (item for item in self.policy.get("repository_allowlist", [])
              if item.get("id") == repo_id
              and item.get("full_name") == repository_claim.get("full_name")
-             and item.get("owner_id") == identity.get("id")
-             and item.get("owner_id") == actor_rule.get("id")),
+             and str(item.get("owner_id")) == str(identity.get("id"))
+             and str(item.get("owner_id")) == str(actor_rule.get("id"))),
             None,
         )
         if repo_rule is None:
