@@ -1,3 +1,4 @@
+import base64
 import json
 from pathlib import Path
 import subprocess
@@ -38,7 +39,7 @@ def test_sandbox_uses_nonroot_readonly_and_bounded_container(tmp_path):
     notebook, output = _fixtures(tmp_path)
     command = build_sandbox_command(notebook)
     assert command[:2] == ("docker", "run")
-    assert "--rm" not in command
+    assert "--rm" in command
     assert "--network=none" in command
     assert "--stop-timeout=5" in command
     assert ("--user", f"{SANDBOX_UID}:{SANDBOX_UID}") == command[6:8]
@@ -209,18 +210,16 @@ def test_successful_runner_copies_and_persists_redacted_execution_artifact(tmp_p
         staged_path = Path(mount.split(",dst=", 1)[0].removeprefix("type=bind,src="))
         assert staged_path.read_bytes() == _recovery_file().read_bytes()
         assert staged_path.stat().st_mode & 0o777 == 0o644
-        kwargs["stdout"].write(json.dumps(summary).encode("utf-8"))
+        output = (
+            json.dumps(summary) + "\\nNOTEBOOK_ARTIFACT_BASE64="
+            + base64.b64encode(payload).decode("ascii") + "\\n"
+        )
+        kwargs["stdout"].write(output.encode("utf-8"))
         kwargs["stdout"].flush()
         return process
 
-    def fake_run(command, **kwargs):
-        if command[1] == "cp":
-            Path(command[-1]).write_bytes(payload)
-        return SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
-
     monkeypatch.setattr(notebook_sandbox, "_load_trusted_blob", lambda *args, **kwargs: _recovery_file().read_bytes())
     monkeypatch.setattr(notebook_sandbox.subprocess, "Popen", fake_popen)
-    monkeypatch.setattr(notebook_sandbox.subprocess, "run", fake_run)
     result = run_sandbox(
         _recovery_file(), output, request=_request(),
         checked_out_commit_sha=COMMIT, resolved_notebook_path=RECOVERY_PATH,
