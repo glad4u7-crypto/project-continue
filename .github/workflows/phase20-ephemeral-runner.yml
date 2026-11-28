@@ -127,7 +127,7 @@ jobs:
         run: |
           python -m pip install --disable-pip-version-check playwright==1.56.0
           python -m playwright install --with-deps chromium
-      - name: Run Phase 20.9 Streamlit browser acceptance
+      - name: Run Phase 20.9 Streamlit browser acceptance (retry after harness correction)
         run: python scripts/phase20_streamlit_browser_acceptance.py
       - name: Run full regression and collect result
         run: python scripts/phase20_test_harness.py full
