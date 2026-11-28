@@ -52,13 +52,13 @@
 | U20-2-08 | Unauthorized actor এবং revoked credential fail-closed test | UNAVAILABLE | Same report — no disposable secondary identity/credential lifecycle interface; live credential revocation test unsafe and unavailable. |
 | U20-2-09 | কোনো credential value ChatGPT-তে না চাওয়া এবং না দেখানোর নিশ্চয়তা | PASS | Same report — no credential value requested/read/displayed; chat credential-handling rule recorded. |
 
-**20.2 exit gate:** 9 of 9 unit checkpoints must have evidence-backed PASS, or an explicitly approved limitation recorded in the final report. No silent skips.
+**20.2 exit gate:** APPROVED TO PROCEED WITH 2 EXPLICIT UNAVAILABLE LIMITATIONS (2026-11-28 user approval). U20-2-06 and U20-2-08 remain UNAVAILABLE; 7/9 PASS. This is not a full PASS and no limitation was reclassified.
 
 ## 20.3 — Secure dispatcher ও command protocol
 
 | Unit ID | Checkpoint | Status | Evidence / run reference |
 |---|---|---|---|
-| U20-3-01 | Versioned JSON request envelope schema তৈরি | NOT STARTED | — |
+| U20-3-01 | Versioned JSON request envelope schema তৈরি | PASS | Schema Draft 2020-12; JSON.parse syntax check + GitHub read-back PASS; commit `263da3f6e60c48720abb23a4e86891a030c5096f`; report `reports/Phase-20/2026-11-28-U20-3-01-Request-Envelope-Schema.md`; read-back blob `4a79379eaee81b400d11d88dcb174a49489c4025`. |
 | U20-3-02 | Unique request ID, idempotency key, actor, repo, SHA ও expiry বাধ্যতামূলক করা | NOT STARTED | — |
 | U20-3-03 | Fixed task registry এবং strict argument schema তৈরি | NOT STARTED | — |
 | U20-3-04 | Natural language-কে সরাসরি shell/Python/SQL হিসেবে চালানো নিষিদ্ধ করা | NOT STARTED | — |
