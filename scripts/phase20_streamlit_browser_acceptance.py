@@ -99,6 +99,7 @@ def browser_round_trip(base_url: str, *, expect_existing: bool) -> None:
             page.get_by_text("Project registry", exact=True).wait_for(timeout=10000)
             if expect_existing:
                 page.get_by_text("Browser acceptance project", exact=True).wait_for(timeout=15000)
+                page.get_by_role("button", name="Open details").click()
                 page.get_by_text("Browser acceptance task", exact=True).wait_for(timeout=15000)
                 return
 
