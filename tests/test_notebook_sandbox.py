@@ -187,7 +187,7 @@ def test_artifact_writer_is_exclusive_and_size_bounded(tmp_path):
     with pytest.raises(ValueError):
         write_artifact_exclusive(output / "executed.ipynb", b"x" * (64 * 1024 + 1), output_root=output)
 
-def test_successful_runner_copies_and_persists_redacted_execution_artifact(tmp_path, monkeypatch):
+def test_successful_runner_streams_and_persists_redacted_execution_artifact(tmp_path, monkeypatch):
     import hashlib
 
     output = tmp_path / "output"
@@ -247,3 +247,46 @@ def test_runner_normalizes_legacy_source_and_output_text_arrays():
     assert normalized["cells"][0]["source"] == "answer = 42\\nprint(answer)"
     assert normalized["cells"][0]["outputs"][0]["text"] == "42\\n"
     assert normalized["cells"][0]["outputs"][1]["data"]["text/plain"] == "42\\n"
+
+def test_unallowlisted_malicious_notebook_is_rejected_before_container_launch(tmp_path, monkeypatch):
+    output = tmp_path / "output"
+    output.mkdir()
+    marker = tmp_path / "malicious-code-ran.txt"
+    notebook = tmp_path / "evil.ipynb"
+    malicious_source = f"from pathlib import Path\\nPath({str(marker)!r}).write_text('executed')"
+    document = {
+        "cells": [{
+            "cell_type": "code", "id": "evil-cell-01", "metadata": {},
+            "execution_count": None, "outputs": [], "source": malicious_source,
+        }],
+        "metadata": {"kernelspec": {"name": "python3", "display_name": "Python 3", "language": "python"}},
+        "nbformat": 4, "nbformat_minor": 5,
+    }
+    notebook.write_text(json.dumps(document), encoding="utf-8")
+    popen = Mock()
+    monkeypatch.setattr(notebook_sandbox.subprocess, "Popen", popen)
+
+    result = run_sandbox(
+        notebook, output,
+        request={
+            "notebook_path": "tests/fixtures/notebooks/evil.ipynb",
+            "commit_sha": COMMIT,
+            "blob_sha": "e" * 40,
+        },
+        checked_out_commit_sha=COMMIT,
+        resolved_notebook_path="tests/fixtures/notebooks/evil.ipynb",
+        resolved_blob_sha="e" * 40,
+    )
+
+    assert result.exit_code == 3
+    assert "not authorized" in result.stderr
+    popen.assert_not_called()
+    assert not marker.exists()
+
+
+def test_sandbox_rejects_symlink_input_before_container_launch(tmp_path):
+    notebook, _ = _fixtures(tmp_path)
+    symlink = tmp_path / "linked.ipynb"
+    symlink.symlink_to(notebook)
+    with pytest.raises(ValueError):
+        build_sandbox_command(symlink)
