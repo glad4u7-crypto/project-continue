@@ -64,7 +64,7 @@ jobs:
         run: docker build --pull --file notebook-sandbox/Dockerfile --tag project-continue-notebook-sandbox:ci .
       - name: Verify non-root kernel runtime and pinned packages
         run: |
-          docker run --rm --entrypoint python project-continue-notebook-sandbox:ci -c "import os, ipykernel, nbclient, nbformat; from scripts.notebook_container_runner import execute_notebook, write_artifact_exclusive; assert os.getuid() == 10001; print('NONROOT_KERNEL_IMAGE_AND_NOTEBOOK_RUNNER: PASS')"
+          docker run --rm --entrypoint python project-continue-notebook-sandbox:ci -c "import os, ipykernel, nbclient, nbformat; from jupyter_client.kernelspec import KernelSpecManager; from scripts.notebook_container_runner import execute_notebook, write_artifact_exclusive; assert os.getuid() == 10001; KernelSpecManager().get_kernel_spec("python3"); print('NONROOT_KERNEL_IMAGE_AND_NOTEBOOK_RUNNER: PASS')"
       - name: Verify default-deny network policy
         shell: bash
         run: |
