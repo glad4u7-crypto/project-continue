@@ -109,17 +109,17 @@
 
 | Unit ID | Checkpoint | Status | Evidence / run reference |
 |---|---|---|---|
-| U20-6-01 | Python version ও dependency lock/baseline যাচাই | NOT STARTED | — |
-| U20-6-02 | Compile-only task handler তৈরি | NOT STARTED | — |
-| U20-6-03 | Focused pytest task handler তৈরি | NOT STARTED | — |
-| U20-6-04 | Full pytest suite task handler তৈরি | NOT STARTED | — |
-| U20-6-05 | Lint/type-check task handler প্রযোজ্য হলে যুক্ত করা | NOT STARTED | — |
-| U20-6-06 | stdout/stderr/exit code/duration/test count সংগ্রহ | NOT STARTED | — |
-| U20-6-07 | Failure classification: code/environment/dependency/permission/timeout/infrastructure | NOT STARTED | — |
-| U20-6-08 | একটি intentional failing fixture দিয়ে FAIL detection পরীক্ষা | NOT STARTED | — |
-| U20-6-09 | ChatGPT-প্রস্তুত patch feature branch-এ commit করা | NOT STARTED | — |
-| U20-6-10 | নতুন exact SHA-তে focused ও regression retest | NOT STARTED | — |
-| U20-6-11 | সীমিত retry; repeated failure হলে BLOCKED ও human decision | NOT STARTED | — |
+| U20-6-01 | Python version ও dependency lock/baseline যাচাই | PASS | Dedicated run 46112817942, exact SHA 014703741d2c4b50f433967a41757bb0d319cb5c: Python 3.11.18 and resolved package inventory captured. requirements.txt uses bounded version ranges; no lockfile exists, so runtime baseline (not lockfile reproducibility) is recorded in the Phase 20.6 report. |
+| U20-6-02 | Compile-only task handler তৈরি | PASS | Fixed compile task in scripts/phase20_test_harness.py; compiles app/config/core/database/integrations/services/src/scripts/tests. Dedicated run 46112817942: PASS. |
+| U20-6-03 | Focused pytest task handler তৈরি | PASS | Fixed focused task; 85 passed, 52 subtests passed on exact SHA 014703741d2c4b50f433967a41757bb0d319cb5c, dedicated run 46112817942. |
+| U20-6-04 | Full pytest suite task handler তৈরি | PASS | Fixed full task; 395 passed, 11 PostgreSQL DSN-dependent skips, 52 subtests passed (10.507s) on exact SHA above; dedicated run 46112817942. |
+| U20-6-05 | Lint/type-check task handler প্রযোজ্য হলে যুক্ত করা | PASS | Optional fixed lint task added. Ruff is not installed and no lint/type-check configuration exists; task returns explicit SKIPPED / not-installed, adds no dependency, and workflow remains green without claiming lint passed. |
+| U20-6-06 | stdout/stderr/exit code/duration/test count সংগ্রহ | PASS | Structured JSON TaskResult captures separate bounded/redacted stdout/stderr, exit code, monotonic duration, pytest passed/failed/skipped/error counts, attempts and retryability; tested by test_phase20_test_harness.py and run 46112817942. |
+| U20-6-07 | Failure classification: code/environment/dependency/permission/timeout/infrastructure | PASS | Deterministic classifier and unit coverage for all six classes; code/dependency/permission/environment do not retry; timeout/infrastructure are retryable. |
+| U20-6-08 | একটি intentional failing fixture দিয়ে FAIL detection পরীক্ষা | PASS | failure-probe deliberately raises AssertionError; exact run 46112817942 returned EXPECTED_FAILURE_DETECTED, intentional-code-failure, while the harness itself exited 0. |
+| U20-6-09 | ChatGPT-প্রস্তুত patch feature branch-এ commit করা | PASS | Feature branch phase20/u20-6-python-test-debug; code and tests committed; final tested code SHA 014703741d2c4b50f433967a41757bb0d319cb5c; Draft PR #72 stacked on Phase 20.5 branch. |
+| U20-6-10 | নতুন exact SHA-তে focused ও regression retest | PASS | Dedicated runner 46112817942, main CI push 46112817976, PR CI 46112838101, and Phase 14 compatibility workflow 46112838067 all SUCCESS on exact SHA 014703741d2c4b50f433967a41757bb0d319cb5c; full suite 395 passed / 11 skipped. |
+| U20-6-11 | সীমিত retry; repeated failure হলে BLOCKED ও human decision | PASS | Retry cap is 1 and CLI accepts only 0/1. Unit tests prove transient infrastructure failure retries once, repeated transient failure returns BLOCKED, and code failure is not retried. |
 
 **20.6 exit gate:** 11 of 11 unit checkpoints must have evidence-backed PASS, or an explicitly approved limitation recorded in the final report. No silent skips.
 
