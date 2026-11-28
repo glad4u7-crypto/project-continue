@@ -93,8 +93,13 @@ class Phase20RunnerTests(unittest.TestCase):
         self.assertNotIn("stdout-sentinel", result["stderr"])
 
     def test_output_parser_extracts_pytest_counts(self):
-        output = "================ 12 passed, 2 skipped in 3.21s ================\n"
-        self.assertEqual(parse_test_counts(output), {"passed": 12, "skipped": 2})
+        verbose = "================ 12 passed, 2 skipped in 3.21s ================\n"
+        quiet = "391 passed, 11 skipped, 52 subtests passed in 9.11s\n"
+        self.assertEqual(parse_test_counts(verbose), {"passed": 12, "skipped": 2})
+        self.assertEqual(
+            parse_test_counts(quiet),
+            {"passed": 391, "skipped": 11, "subtests_passed": 52},
+        )
 
     def test_intentional_failing_fixture_is_classified_as_code_failure(self):
         # Synthetic pytest failure fixture: deliberately failing assertion evidence.
