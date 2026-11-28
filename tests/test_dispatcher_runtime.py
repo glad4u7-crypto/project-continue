@@ -66,6 +66,12 @@ class SecureDispatcherTests(unittest.TestCase):
         self.assertEqual(result, {"ok": True})
         self.assertEqual(len(self.calls), 1)
 
+    def test_numeric_github_provider_id_is_normalized_safely(self):
+        dispatcher = self.make_dispatcher(
+            authenticated_identity=lambda: {"id": 354281323, "login": "glad4u7-crypto", "type": "user"}
+        )
+        self.assertEqual(dispatcher.dispatch(self.envelope(), now=self.now), {"ok": True})
+
     def test_untrusted_actor_claim_cannot_override_authenticated_identity(self):
         envelope = self.envelope(actor={"id": "999", "type": "user"})
         with self.assertRaises(AuthorizationRejected):
