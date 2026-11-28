@@ -105,6 +105,7 @@ def browser_round_trip(base_url: str, *, expect_existing: bool, screenshot_path:
                 raise AssertionError("Streamlit browser document did not return HTTP 200")
             page.get_by_text("Project Continue", exact=False).first.wait_for(timeout=20000)
             page.get_by_text("Project registry", exact=True).wait_for(timeout=10000)
+            page.screenshot(path=str(screenshot_path), full_page=True)
             if expect_existing:
                 page.get_by_text("Browser acceptance project updated", exact=True).wait_for(timeout=15000)
                 page.get_by_role("button", name="Open details").click()
@@ -120,7 +121,7 @@ def browser_round_trip(base_url: str, *, expect_existing: bool, screenshot_path:
 
             page.get_by_role("button", name="Open details").click()
             page.locator("summary").filter(has_text="Edit project details").click()
-            page.get_by_label("Name").fill("Browser acceptance project updated")
+            page.get_by_role("textbox", name="Name", exact=True).fill("Browser acceptance project updated")
             page.get_by_label("Description").last.fill("Updated by Chromium browser acceptance")
             page.get_by_role("button", name="Save changes").click()
             page.get_by_text("Browser acceptance project updated", exact=True).wait_for(timeout=15000)
