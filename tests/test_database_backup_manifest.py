@@ -83,7 +83,7 @@ def test_verified_backup_requires_database_instance(tmp_path):
 
 
 def _create_application_backup(destination):
-    source = Database(destination.parent / "source.sqlite3")
+    source = Database(destination.parent.parent / f"{destination.stem}-source.sqlite3")
     repository = ProjectRepository(source)
     repository.initialize()
     repository.create_project("preview-project", "Preview project")
