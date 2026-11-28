@@ -35,8 +35,44 @@ class SandboxResult:
     execution_status: str | None = None
 
 
+REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+
+
 def git_blob_sha1(payload: bytes) -> str:
     return hashlib.sha1(f"blob {len(payload)}\\0".encode("ascii") + payload).hexdigest()
+
+
+def _load_trusted_blob(
+    notebook_path: str | Path,
+    *,
+    checked_out_commit_sha: str,
+    resolved_notebook_path: str,
+    resolved_blob_sha: str,
+) -> bytes:
+    candidate = Path(notebook_path)
+    if candidate.is_symlink():
+        raise ValueError("notebook path must not be a symlink")
+    if candidate.resolve(strict=True) != (REPOSITORY_ROOT / resolved_notebook_path).resolve(strict=True):
+        raise ValueError("local notebook path does not match the authorized repository path")
+    head = subprocess.run(
+        ("git", "rev-parse", "HEAD"), cwd=REPOSITORY_ROOT,
+        capture_output=True, text=True, check=False, timeout=5,
+    )
+    if head.returncode != 0 or head.stdout.strip() != checked_out_commit_sha:
+        raise ValueError("working checkout does not match the trusted commit SHA")
+    tree_blob = subprocess.run(
+        ("git", "rev-parse", "--verify", f"{checked_out_commit_sha}:{resolved_notebook_path}"),
+        cwd=REPOSITORY_ROOT, capture_output=True, text=True, check=False, timeout=5,
+    )
+    if tree_blob.returncode != 0 or tree_blob.stdout.strip() != resolved_blob_sha:
+        raise ValueError("trusted commit tree does not contain the authorized notebook blob")
+    blob = subprocess.run(
+        ("git", "cat-file", "blob", resolved_blob_sha), cwd=REPOSITORY_ROOT,
+        capture_output=True, text=False, check=False, timeout=5,
+    )
+    if blob.returncode != 0 or git_blob_sha1(blob.stdout) != resolved_blob_sha:
+        raise ValueError("could not read the exact authorized Git blob")
+    return blob.stdout
 
 
 def _mount_path(path: Path) -> str:
@@ -127,20 +163,25 @@ def run_sandbox(
         notebook, destination = raw_notebook.resolve(strict=True), raw_output.resolve(strict=True)
         if not notebook.is_file() or notebook.suffix.lower() != ".ipynb" or not destination.is_dir():
             return SandboxResult(3, False, "", "invalid notebook or output path", False, False)
-        payload = notebook.read_bytes()
     except OSError:
         return SandboxResult(3, False, "", "notebook or output path is unavailable", False, False)
-    if len(payload) > MAX_NOTEBOOK_BYTES:
-        return SandboxResult(3, False, "", "notebook exceeds the 64 KiB input limit", False, False)
-    actual_blob_sha = git_blob_sha1(payload)
-    if actual_blob_sha != resolved_blob_sha:
-        return SandboxResult(3, False, "", "resolved notebook blob does not match file bytes", False, False)
     authorized, _ = authorize_notebook_execution(
         request, checked_out_commit_sha=checked_out_commit_sha,
-        resolved_notebook_path=resolved_notebook_path, resolved_blob_sha=actual_blob_sha,
+        resolved_notebook_path=resolved_notebook_path, resolved_blob_sha=resolved_blob_sha,
     )
     if not authorized:
         return SandboxResult(3, False, "", "notebook execution request is not authorized", False, False)
+    try:
+        payload = _load_trusted_blob(
+            notebook, checked_out_commit_sha=checked_out_commit_sha,
+            resolved_notebook_path=resolved_notebook_path, resolved_blob_sha=resolved_blob_sha,
+        )
+    except (OSError, ValueError, subprocess.TimeoutExpired):
+        return SandboxResult(3, False, "", "could not resolve the exact authorized notebook blob", False, False)
+    if len(payload) > MAX_NOTEBOOK_BYTES:
+        return SandboxResult(3, False, "", "notebook exceeds the 64 KiB input limit", False, False)
+    if git_blob_sha1(payload) != resolved_blob_sha:
+        return SandboxResult(3, False, "", "resolved notebook blob does not match Git object bytes", False, False)
     valid, _, _ = read_notebook_redacted(payload)
     if not valid:
         return SandboxResult(3, False, "", "notebook failed structural validation", False, False)
