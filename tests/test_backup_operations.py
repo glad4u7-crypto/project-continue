@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+import sqlite3
 import os
 import pytest
 
@@ -135,4 +136,80 @@ def test_inventory_ignores_symlinked_backup(tmp_path):
         pytest.skip("Symlinks are unavailable on this runner")
     inventory = ops.inventory_backups()
     assert [entry["name"] for entry in inventory["entries"]] == [backup.name]
+    db.close()
+
+
+
+def test_interrupted_restore_removes_partial_file_and_new_parent_directories(tmp_path, monkeypatch):
+    db = Database(tmp_path / "live" / "db.sqlite3")
+    repository = ProjectRepository(db)
+    repository.initialize()
+    repository.create_project("interrupt-project", "Preserve source")
+    ops = BackupOperations(db, tmp_path / "backups")
+    backup = ops.create_backup()
+    destination = tmp_path / "interrupted" / "nested" / "restored.sqlite3"
+
+    original_connect = sqlite3.connect
+    readonly_calls = 0
+
+    class InterruptedSource:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, traceback):
+            return False
+
+        def backup(self, target_connection):
+            raise RuntimeError("injected interruption during SQLite backup copy")
+
+    def interrupt_copy(database, *args, **kwargs):
+        nonlocal readonly_calls
+        if isinstance(database, str) and database.startswith("file:") and "mode=ro" in database:
+            readonly_calls += 1
+            if readonly_calls == 2:
+                return InterruptedSource()
+        return original_connect(database, *args, **kwargs)
+
+    monkeypatch.setattr(sqlite3, "connect", interrupt_copy)
+    with pytest.raises(RuntimeError, match="injected interruption"):
+        ops.restore_drill(backup, destination)
+
+    assert backup.exists()
+    assert Database.verify_backup(backup) is True
+    assert repository.get_project("interrupt-project")["name"] == "Preserve source"
+    assert not destination.exists()
+    assert not destination.parent.exists()
+    assert not (tmp_path / "interrupted").exists()
+    db.close()
+
+
+def test_restore_verification_failure_rolls_back_restored_file(tmp_path, monkeypatch):
+    db = Database(tmp_path / "live" / "db.sqlite3")
+    repository = ProjectRepository(db)
+    repository.initialize()
+    repository.create_project("rollback-project", "Keep live data")
+    ops = BackupOperations(db, tmp_path / "backups")
+    backup = ops.create_backup()
+    destination = tmp_path / "rollback" / "nested" / "restored.sqlite3"
+
+    original_verify = Database.verify_backup
+    verification_calls = 0
+
+    def fail_after_copy(path):
+        nonlocal verification_calls
+        verification_calls += 1
+        if verification_calls == 2:
+            return False
+        return original_verify(path)
+
+    monkeypatch.setattr(Database, "verify_backup", staticmethod(fail_after_copy))
+    with pytest.raises(sqlite3.DatabaseError, match="Restored database failed integrity"):
+        ops.restore_drill(backup, destination)
+
+    assert verification_calls == 2
+    assert backup.exists()
+    assert not destination.exists()
+    assert not destination.parent.exists()
+    assert not (tmp_path / "rollback").exists()
+    assert repository.get_project("rollback-project")["name"] == "Keep live data"
     db.close()
