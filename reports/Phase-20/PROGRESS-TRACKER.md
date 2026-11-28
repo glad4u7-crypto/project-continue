@@ -11,7 +11,7 @@
 | 20.0 Phase 19 handoff ও entry gate | COMPLETE | 7 | 7 | GitHub Actions CI run 46021825415; 2026-11-28 U20-0-04 notebook read-back addendum | All 7 units PASS; uploaded notebook matches reported 714-byte size and SHA-256; proceed to 20.1 without Colab/Codespaces |
 | 20.1 GitHub capability ও permission audit | AUDIT COMPLETE — 4 UNAVAILABLE | 8 | 12 | `reports/Phase-20/2026-11-28-Phase20-1-GitHub-Capability-Audit.md`; PR #70 CI run `46093587157` PASS (321 tests) | 8 PASS; 4 connector capabilities UNAVAILABLE (workflow dispatch, Codespaces lifecycle, Secrets/Variables write, direct Colab execution); proceed to 20.2 with these hard constraints |
 | 20.2 Authentication ও least-privilege security | APPROVED TO PROCEED — 2 UNAVAILABLE (not full PASS) | 7 | 9 | Review report + user approval recorded 2026-11-28 | U20-2-06 and U20-2-08 remain UNAVAILABLE; user explicitly approved carrying both limitations forward; no credential action performed |
-| 20.3 Secure dispatcher ও command protocol | IN PROGRESS | 3 | 9 | U20-3-01, U20-3-02 and U20-3-03 evidence reports | U20-3-01 PASS; U20-3-02 PASS (12/12 contract checks); U20-3-03 PASS (fixed 3-task allow-list + 16/16 contract checks); next U20-3-04: prohibit natural-language-to-shell/Python/SQL execution |
+| 20.3 Secure dispatcher ও command protocol | IN PROGRESS | 4 | 9 | U20-3-04 policy report `reports/Phase-20/2026-11-28-U20-3-04-Natural-Language-Execution-Policy.md` | U20-3-01..04 PASS; U20-3-04 policy has 10/10 deterministic contract checks and read-back; runtime enforcement is not claimed; next U20-3-05: authenticated actor and allowed repository validation |
 | 20.4 Ephemeral execution runner | NOT STARTED | 0 | 10 | Initial planning baseline only | Complete in order; see unit register |
 | 20.5 Repository read/write ও patch workflow | NOT STARTED | 0 | 11 | Initial planning baseline only | Complete in order; see unit register |
 | 20.6 Python compile, unit test ও debugging | NOT STARTED | 0 | 11 | Initial planning baseline only | Complete in order; see unit register |
@@ -26,11 +26,11 @@
 ## Global counters
 
 - Total atomic checkpoints: 142
-- PASS: 25 (20.0: 7; 20.1: 8; 20.2: 7; 20.3: 3)
+- PASS: 26 (20.0: 7; 20.1: 8; 20.2: 7; 20.3: 4)
 - FAIL: 0
 - BLOCKED: 0
 - UNAVAILABLE: 6 (20.1: 4; 20.2: 2)
-- NOT STARTED: 111
+- NOT STARTED: 110
 - Phase 20.0 exit gate: COMPLETE
 - Phase 20.1 capability audit: COMPLETE WITH 4 UNAVAILABLE LIMITATIONS; all 12 units have explicit evidence-backed dispositions.
 - Phase 20.2 progress: 7/9 PASS; U20-2-06 and U20-2-08 remain UNAVAILABLE with reasons in the review/follow-up reports. User explicitly approved proceeding with these limitations on 2026-11-28; this is an accepted-limitation disposition, not a full PASS.
