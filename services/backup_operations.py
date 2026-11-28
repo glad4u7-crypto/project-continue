@@ -1,10 +1,11 @@
-"""Safe backup orchestration, preview-first retention and isolated restore drills."""
+"""Safe backup orchestration, inventory, preview-first retention and restore drills."""
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import sqlite3
 
+from database.backup import sha256_file
 from database.connection import Database
 
 
@@ -22,6 +23,13 @@ class BackupOperations:
         if database.path != ":memory:" and self.root == source.parent:
             raise ValueError("Backup directory must differ from the live database directory")
 
+    def _is_managed_backup(self, item: Path) -> bool:
+        return (
+            item.parent.resolve() == self.root
+            and item.name.startswith(self.PREFIX)
+            and item.name.endswith(self.SUFFIX)
+        )
+
     def create_backup(self) -> Path:
         self.root.mkdir(parents=True, exist_ok=True)
         stamp = self.clock().astimezone(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
@@ -31,6 +39,62 @@ class BackupOperations:
             created.unlink(missing_ok=True)
             raise sqlite3.DatabaseError("Backup verification failed")
         return created
+
+    def inventory_backups(self) -> dict:
+        """Return metadata-only inventory; ignore symlinks and unmanaged files."""
+        entries = []
+        if not self.root.is_dir():
+            return {"backup_root": str(self.root), "entry_count": 0,
+                    "entries": (), "preview_only": True}
+        for item in sorted(self.root.iterdir(), key=lambda candidate: candidate.name):
+            if item.is_symlink() or not item.is_file() or not self._is_managed_backup(item):
+                continue
+            stat = item.stat(follow_symlinks=False)
+            digest = None
+            integrity_verified = False
+            error_type = None
+            try:
+                digest = sha256_file(item)
+                integrity_verified = Database.verify_backup(item)
+            except (OSError, sqlite3.DatabaseError) as exc:
+                error_type = type(exc).__name__
+            entries.append({
+                "name": item.name,
+                "size_bytes": stat.st_size,
+                "modified_at": datetime.fromtimestamp(stat.st_mtime, timezone.utc).isoformat(),
+                "sha256": digest,
+                "integrity_verified": integrity_verified,
+                "eligible_for_restore": integrity_verified and digest is not None,
+                "error_type": error_type,
+            })
+        return {"backup_root": str(self.root), "entry_count": len(entries),
+                "entries": tuple(entries), "preview_only": True}
+
+    def preview_restore(self, backup_path: str | Path, destination: str | Path) -> dict:
+        """Validate a prospective restore without creating or changing any file."""
+        raw_source = Path(backup_path).expanduser()
+        if raw_source.is_symlink():
+            raise ValueError("Restore source must not be a symbolic link")
+        source = raw_source.resolve(strict=True)
+        if not self._is_managed_backup(source) or not source.is_file():
+            raise ValueError("Restore source must be a managed backup")
+        target = Path(destination).expanduser().resolve()
+        live = Path(self.database.path).expanduser().resolve()
+        if self.database.path != ":memory:" and target == live:
+            raise ValueError("Restore preview cannot target the live database")
+        if target.exists():
+            raise FileExistsError("Restore destination already exists")
+        if target == source:
+            raise ValueError("Restore destination must differ from backup source")
+        if not Database.verify_backup(source):
+            raise sqlite3.DatabaseError("Restore source failed integrity verification")
+        return {
+            "preview_only": True, "eligible": True, "source_name": source.name,
+            "source_size_bytes": source.stat().st_size, "source_sha256": sha256_file(source),
+            "destination_name": target.name, "destination_parent_exists": target.parent.is_dir(),
+            "destination_exists": target.exists(), "integrity_verified": True,
+            "actions_performed": (),
+        }
 
     def preview_retention(self, *, keep_days=30) -> dict:
         if isinstance(keep_days, bool) or not isinstance(keep_days, int) or not 1 <= keep_days <= 3650:
@@ -82,7 +146,6 @@ class BackupOperations:
         target.parent.mkdir(parents=True, exist_ok=True)
         destination_db = Database(target)
         try:
-            # Use SQLite's backup API for a consistent, isolated copy.
             from urllib.parse import quote
             source_uri = f"file:{quote(str(source), safe='/:')}?mode=ro"
             with sqlite3.connect(source_uri, uri=True) as src:
