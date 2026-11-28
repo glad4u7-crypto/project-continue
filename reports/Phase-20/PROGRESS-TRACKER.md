@@ -1,7 +1,7 @@
 # Phase 20 — Live Progress Tracker
 
-**Overall:** PHASE 20.0 COMPLETE / PHASE 20.1 AUDIT COMPLETE WITH 4 UNAVAILABLE LIMITATIONS / PHASE 20.2 NOT STARTED  
-**Last updated:** 2026-11-28 07:04 (Asia/Kolkata)  
+**Overall:** PHASE 20.0 COMPLETE / PHASE 20.1 AUDIT COMPLETE WITH 4 UNAVAILABLE LIMITATIONS / PHASE 20.2 IN PROGRESS (U20-2-01 PASS)  
+**Last updated:** 2026-11-28 07:23 (Asia/Kolkata)  
 **Plan branch:** docs/phase-20-master-checklist
 
 ## Parent phase status
@@ -10,7 +10,7 @@
 |---|---|---:|---:|---|---|
 | 20.0 Phase 19 handoff ও entry gate | COMPLETE | 7 | 7 | GitHub Actions CI run 46021825415; 2026-11-28 U20-0-04 notebook read-back addendum | All 7 units PASS; uploaded notebook matches reported 714-byte size and SHA-256; proceed to 20.1 without Colab/Codespaces |
 | 20.1 GitHub capability ও permission audit | AUDIT COMPLETE — 4 UNAVAILABLE | 8 | 12 | `reports/Phase-20/2026-11-28-Phase20-1-GitHub-Capability-Audit.md`; PR #70 CI run `46093587157` PASS (321 tests) | 8 PASS; 4 connector capabilities UNAVAILABLE (workflow dispatch, Codespaces lifecycle, Secrets/Variables write, direct Colab execution); proceed to 20.2 with these hard constraints |
-| 20.2 Authentication ও least-privilege security | NOT STARTED | 0 | 9 | Initial planning baseline only | Complete in order; see unit register |
+| 20.2 Authentication ও least-privilege security | IN PROGRESS | 1 | 9 | `reports/Phase-20/2026-11-28-U20-2-01-GitHub-App-Connector-Sufficiency.md` | U20-2-01 PASS: current connector is sufficient for supported GitHub subset, not full end-to-end; no PAT requested. Next: U20-2-02 permission map |
 | 20.3 Secure dispatcher ও command protocol | NOT STARTED | 0 | 9 | Initial planning baseline only | Complete in order; see unit register |
 | 20.4 Ephemeral execution runner | NOT STARTED | 0 | 10 | Initial planning baseline only | Complete in order; see unit register |
 | 20.5 Repository read/write ও patch workflow | NOT STARTED | 0 | 11 | Initial planning baseline only | Complete in order; see unit register |
@@ -26,13 +26,14 @@
 ## Global counters
 
 - Total atomic checkpoints: 142
-- PASS: 15 (20.0: 7; 20.1: 8)
+- PASS: 16 (20.0: 7; 20.1: 8; 20.2: 1)
 - FAIL: 0
 - BLOCKED: 0
 - UNAVAILABLE: 4 (20.1: 4)
-- NOT STARTED: 123
+- NOT STARTED: 122
 - Phase 20.0 exit gate: COMPLETE
 - Phase 20.1 capability audit: COMPLETE WITH 4 UNAVAILABLE LIMITATIONS; all 12 units have explicit evidence-backed dispositions.
+- Phase 20.2 progress: 1/9 PASS; next sequential checkpoint U20-2-02.
 
 ## Update rules
 
