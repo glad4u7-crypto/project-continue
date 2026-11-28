@@ -84,6 +84,26 @@ def test_restore_never_overwrites_existing_destination_or_live_database(tmp_path
     db.close()
 
 
+def test_restore_replay_is_idempotently_rejected_without_overwriting_existing_rows(tmp_path):
+    db, repo, ops = prepared(tmp_path)
+    backup = ops.create_backup()
+    destination = tmp_path / "restore" / "replayed.sqlite3"
+    restored = ops.restore_drill(backup, destination)
+    with sqlite3.connect(restored) as connection:
+        before = connection.execute(
+            "SELECT id, name FROM projects WHERE id='p1'"
+        ).fetchone()
+    assert before == ("p1", "Recovery test")
+    with pytest.raises(FileExistsError):
+        ops.restore_drill(backup, destination)
+    with sqlite3.connect(restored) as connection:
+        after = connection.execute(
+            "SELECT id, name FROM projects WHERE id='p1'"
+        ).fetchone()
+    assert after == before
+    db.close()
+
+
 def test_retention_requires_fresh_preview_confirmation_and_approval(tmp_path):
     db, repo, ops = prepared(tmp_path)
     backup = ops.create_backup()
