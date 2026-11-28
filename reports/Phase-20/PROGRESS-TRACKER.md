@@ -1,6 +1,6 @@
 # Phase 20 — Live Progress Tracker
 
-**Overall:** PHASE 20.0 COMPLETE / PHASE 20.1 AUDIT COMPLETE WITH 4 UNAVAILABLE LIMITATIONS / PHASE 20.2 APPROVED TO PROCEED WITH 2 UNAVAILABLE LIMITATIONS / PHASE 20.3 IN PROGRESS  
+**Overall:** PHASE 20.0 COMPLETE / PHASE 20.1 AUDIT COMPLETE WITH 4 UNAVAILABLE LIMITATIONS / PHASE 20.2 APPROVED TO PROCEED WITH 2 UNAVAILABLE LIMITATIONS / PHASE 20.3 COMPLETE  
 **Last updated:** 2026-11-28 (Asia/Kolkata)  
 **Plan branch:** docs/phase-20-master-checklist
 
@@ -11,7 +11,7 @@
 | 20.0 Phase 19 handoff ও entry gate | COMPLETE | 7 | 7 | GitHub Actions CI run 46021825415; 2026-11-28 U20-0-04 notebook read-back addendum | All 7 units PASS; uploaded notebook matches reported 714-byte size and SHA-256; proceed to 20.1 without Colab/Codespaces |
 | 20.1 GitHub capability ও permission audit | AUDIT COMPLETE — 4 UNAVAILABLE | 8 | 12 | `reports/Phase-20/2026-11-28-Phase20-1-GitHub-Capability-Audit.md`; PR #70 CI run `46093587157` PASS (321 tests) | 8 PASS; 4 connector capabilities UNAVAILABLE (workflow dispatch, Codespaces lifecycle, Secrets/Variables write, direct Colab execution); proceed to 20.2 with these hard constraints |
 | 20.2 Authentication ও least-privilege security | APPROVED TO PROCEED — 2 UNAVAILABLE (not full PASS) | 7 | 9 | Review report + user approval recorded 2026-11-28 | U20-2-06 and U20-2-08 remain UNAVAILABLE; user explicitly approved carrying both limitations forward; no credential action performed |
-| 20.3 Secure dispatcher ও command protocol | IN PROGRESS | 8 | 9 | U20-3-08 report `reports/Phase-20/2026-11-28-U20-3-08-Queue-Concurrency-Rate-Limits.md`; CI run `46108860907` SUCCESS (344 passed, 11 skipped, 23 subtests; 79% coverage) | U20-3-01..08 PASS; U20-3-09 remains; trusted live GitHub adapters remain host-injected |
+| 20.3 Secure dispatcher ও command protocol | COMPLETE | 9 | 9 | U20-3-08/U20-3-09 reports; final CI run `46109666102` SUCCESS on `a029c3e09351fe70838b319acfee4430dbb9a010` (363 passed, 11 skipped, 29 subtests; 79% coverage) | All 9 units PASS; trusted live GitHub adapters remain host-injected; SQLite requires shared durable storage |
 | 20.4 Ephemeral execution runner | NOT STARTED | 0 | 10 | Initial planning baseline only | Complete in order; see unit register |
 | 20.5 Repository read/write ও patch workflow | NOT STARTED | 0 | 11 | Initial planning baseline only | Complete in order; see unit register |
 | 20.6 Python compile, unit test ও debugging | NOT STARTED | 0 | 11 | Initial planning baseline only | Complete in order; see unit register |
@@ -26,14 +26,15 @@
 ## Global counters
 
 - Total atomic checkpoints: 142
-- PASS: 30 (20.0: 7; 20.1: 8; 20.2: 7; 20.3: 8)
+- PASS: 31 (20.0: 7; 20.1: 8; 20.2: 7; 20.3: 9)
 - FAIL: 0
 - BLOCKED: 0
 - UNAVAILABLE: 6 (20.1: 4; 20.2: 2)
-- NOT STARTED: 106
+- NOT STARTED: 105
 - Phase 20.0 exit gate: COMPLETE
 - Phase 20.1 capability audit: COMPLETE WITH 4 UNAVAILABLE LIMITATIONS; all 12 units have explicit evidence-backed dispositions.
 - Phase 20.2 progress: 7/9 PASS; U20-2-06 and U20-2-08 remain UNAVAILABLE with reasons in the review/follow-up reports. User explicitly approved proceeding with these limitations on 2026-11-28; this is an accepted-limitation disposition, not a full PASS.
+- Phase 20.3 progress: 9/9 PASS. Final CI run `46109666102` verifies all code and tests on exact SHA `a029c3e09351fe70838b319acfee4430dbb9a010`; full suite 363 passed, 11 PostgreSQL skips, 29 subtests; coverage 79%. Artifact ID `15248872135`.
 
 ## Update rules
 
