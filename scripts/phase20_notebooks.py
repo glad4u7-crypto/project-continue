@@ -139,6 +139,7 @@ def validate_notebook_document(document: dict[str, Any]) -> dict[str, Any]:
             for output in outputs:
                 if not isinstance(output, dict):
                     raise ValueError("invalid code cell output")
+                _check_depth(output)
                 output_type = output.get("output_type")
                 if output_type not in {"stream", "display_data", "execute_result", "error"}:
                     raise ValueError("unsupported notebook output type")
