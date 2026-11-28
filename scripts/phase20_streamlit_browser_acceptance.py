@@ -103,14 +103,14 @@ def browser_round_trip(base_url: str, *, expect_existing: bool) -> None:
                 page.get_by_text("Browser acceptance task", exact=True).wait_for(timeout=15000)
                 return
 
-            page.get_by_role("button", name="＋ Register a project").click()
+            page.get_by_role("button", name="Register a project").click()
             page.get_by_label("Project name").fill("Browser acceptance project")
             page.get_by_label("Description").fill("Created by isolated Chromium acceptance")
             page.get_by_role("button", name="Create project").click()
             page.get_by_text("Browser acceptance project", exact=True).wait_for(timeout=15000)
 
             page.get_by_role("button", name="Open details").click()
-            page.get_by_role("button", name="＋ Create task").click()
+            page.get_by_role("button", name="Create task").first.click()
             page.get_by_label("Task title").fill("Browser acceptance task")
             page.get_by_label("Description").last.fill("Persist across app restart")
             page.get_by_role("button", name="Create task").click()
