@@ -56,6 +56,16 @@ class TestHarnessTests(unittest.TestCase):
         self.assertEqual(result.attempts, 2)
 
     @patch("scripts.phase20_test_harness.subprocess.run")
+    def test_repeated_infrastructure_failure_becomes_blocked(self, mocked):
+        from types import SimpleNamespace
+        mocked.return_value = SimpleNamespace(stdout="", stderr="503 Service Unavailable", returncode=1)
+        result = run_task("full", retries=1)
+        self.assertEqual(result.status, "BLOCKED")
+        self.assertEqual(result.failure_class, "infrastructure")
+        self.assertEqual(result.attempts, 2)
+        self.assertTrue(result.retryable)
+
+    @patch("scripts.phase20_test_harness.subprocess.run")
     def test_code_failure_is_not_retried(self, mocked):
         from types import SimpleNamespace
         mocked.return_value = SimpleNamespace(stdout="", stderr="AssertionError", returncode=1)
