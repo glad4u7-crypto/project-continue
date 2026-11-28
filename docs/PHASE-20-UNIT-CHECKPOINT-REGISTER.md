@@ -42,7 +42,7 @@
 
 | Unit ID | Checkpoint | Status | Evidence / run reference |
 |---|---|---|---|
-| U20-2-01 | GitHub App/বর্তমান connector-ই যথেষ্ট কি না নির্ধারণ | NOT STARTED | — |
+| U20-2-01 | GitHub App/বর্তমান connector-ই যথেষ্ট কি না নির্ধারণ | PASS | `reports/Phase-20/2026-11-28-U20-2-01-GitHub-App-Connector-Sufficiency.md` — evidence-backed qualified NO for full end-to-end; current connector retained for supported GitHub subset; no PAT requested. |
 | U20-2-02 | প্রয়োজনীয় প্রতিটি action-এর permission map তৈরি | NOT STARTED | — |
 | U20-2-03 | Contents, Issues, Pull Requests, Actions ও Codespaces permission আলাদা করা | NOT STARTED | — |
 | U20-2-04 | PAT একান্ত দরকার হলে fine-grained repository-only scope প্রস্তাব | NOT STARTED | — |
