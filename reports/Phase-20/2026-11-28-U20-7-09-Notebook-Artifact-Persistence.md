@@ -14,7 +14,7 @@
 - Artifact metadata includes status, executed code-cell count, error-cell count, byte length and SHA-256.
 - Artifact creation uses exclusive create + no-follow semantics, a fixed output filename and a 64 KiB maximum.
 - Host `run_sandbox` now verifies the exact checked-out commit, resolves the notebook blob from that commit's Git tree/object database, and stages those exact immutable blob bytes as the sole read-only host mount.
-- Container output now lives on a 1 MiB no-exec tmpfs, not a writable host bind mount. The host retrieves only the fixed artifact with `docker cp`, removes the container, validates/redacts the copied notebook again, verifies artifact length/SHA-256, then writes a unique exclusive artifact in the requested output directory.
+- Container output now lives on a 1 MiB no-exec tmpfs, not a writable host bind mount. The runner streams the redacted artifact as a bounded base64 stdout record before Docker auto-removes the container; the host decodes only that fixed record, validates/redacts the notebook again, verifies artifact length/SHA-256, then writes a unique exclusive artifact in the requested output directory. This avoids relying on stopped-container tmpfs persistence or a writable host output mount.
 - The sandbox no longer relies on checkout working-tree bytes for notebook identity, avoiding line-ending/filter differences.
 
 ## Tests and exact-SHA evidence
@@ -35,4 +35,8 @@ Workflow `46127711561` checked out exact SHA `8949e57fc8e6d582dd72e8691aeb9cc943
 - Container output storage is capped by a 1 MiB tmpfs; the final notebook artifact is capped at 64 KiB.
 - No Colab, Google Drive, production mounts, production secrets or production data were accessed.
 
-**Disposition:** U20-7-09 PASS on the exact code/test SHA above. PR #71 remains draft/unmerged; `main` is unchanged.
+## Subsequent hardening verified by U20-7-10
+
+The artifact handoff was refined from docker-cp retrieval to bounded stdout streaming so the 1 MiB output tmpfs can remain ephemeral and the container can use automatic removal. Exact-SHA workflow `46129247588` on `742280ca80160d52f28bbe27c74c1430027a063c` passed 20 sandbox/policy tests and executed the harmless fixture end-to-end; artifact size and SHA-256 checks passed. See `2026-11-28-U20-7-10-Harmless-Notebook-E2E.md`.
+
+**Disposition:** U20-7-09 PASS. Its artifact handoff refinement is also verified by U20-7-10. PR #71 remains draft/unmerged; `main` is unchanged.
