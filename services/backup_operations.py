@@ -50,9 +50,10 @@ class BackupOperations:
 
     def _managed_backup(self, value: str | Path) -> Path:
         raw = Path(value).expanduser()
-        if raw.is_symlink():
-            raise ValueError("Backup source must not be a symbolic link")
-        source = raw.resolve(strict=True)
+        absolute = Path(os.path.abspath(raw))
+        if any(part.is_symlink() for part in (absolute, *absolute.parents)):
+            raise ValueError("Backup source path must not contain symbolic links")
+        source = absolute.resolve(strict=True)
         if (source.parent != self.root or not source.is_file()
                 or not source.name.startswith(self.PREFIX)
                 or not source.name.endswith(self.SUFFIX)):
