@@ -1,34 +1,40 @@
-# U20-3-06 — Malformed, expired, duplicate and replayed request rejection
+# U20-3-06 — Request replay protection and secure dispatcher validation boundary
 
 - Repository: `glad4u7-crypto/project-continue`
 - Branch: `phase20/secure-dispatcher-u20-3-01`
 - Date: 2026-11-28 (Asia/Kolkata)
-- Disposition: IMPLEMENTED — 11-TEST CI PASS; FINAL 13-TEST CI PENDING
+- Status: IMPLEMENTED — FINAL CI RUN PENDING; NOT PASS UNTIL GREEN
 
-## Implemented
+## Implemented artifacts
 
-- `src/dispatcher/request_guard.py`: strict envelope shape, UUID request ID and nonce, actor/repository/commit/task shape checks, timezone-aware timestamp parsing, future/expired/invalid lifetime and maximum-TTL checks. `RequestGuard` provides a reusable fail-closed boundary and calls the replay store before a caller resolves or invokes a task handler.
-- `src/dispatcher/replay_store.py`: durable SQLite replay store using the repository's existing `Database` transaction manager. It creates a namespaced primary-key table, expires stale rows, and atomically claims request ID + nonce. If either value collides, a deliberate rollback prevents partial consumption. Storage errors propagate (fail closed).
-- `tests/test_dispatcher_request_guard.py`: 13 deterministic unittest cases cover valid and malformed requests, timestamp and TTL rules, duplicate/replay rejection, fail-closed store errors, replay-store contract validation, guard-to-store integration, durable duplicate detection, rollback of partial claims, and expiry cleanup.
-- `.github/workflows/ci.yml`: added `phase20/**` to the push-trigger branch filter. Evidence-only changes under `reports/**` are ignored to avoid unnecessary full container builds and conserve free GitHub Actions minutes.
+1. `schemas/dispatcher/request-envelope.v1.schema.json`
+   - Canonical v1.0 envelope now agrees with the runtime shape: request UUID, nonce UUID, idempotency key, actor, repository numeric ID/name/commit SHA, nested task ID/arguments, issue/expiry times, optional trace ID.
+2. `src/dispatcher/request_guard.py`
+   - Strict envelope validation, actor/repository/task shape, commit SHA, idempotency-key format, timezone-aware timestamps, future/expired/TTL checks, and fail-closed atomic request-ID + nonce claims.
+3. `src/dispatcher/replay_store.py`
+   - SQLite replay claims through the repository's existing transaction manager. Atomic paired claims, duplicate rollback, expiry cleanup, and fail-closed storage errors.
+4. `src/dispatcher/runtime.py`
+   - `SecureDispatcher` orchestrates trusted authenticated-identity lookup, actor claim comparison, exact repository allow-list + live metadata check, minimum permission check, commit membership verifier, fixed task registry, closed task-argument validation, replay claim, then fixed handler lookup/invocation. Request-supplied actor fields are never authentication.
+5. Tests:
+   - `tests/test_dispatcher_request_guard.py`: canonical envelope, malformed/expired/future requests, replay store durability, rollback, and storage failure tests.
+   - `tests/test_dispatcher_runtime.py`: allow-listed dispatch, numeric/string GitHub ID normalization, actor spoof rejection, repository mismatch, insufficient permission, invalid commit, unknown task, unsafe arguments, replay rejection, and identity lookup failure.
 
-## Storage and deployment constraints
+## Runtime adapter boundary and explicit limitations
 
-- SQLite is already a supported application backend. The replay store must use the same durable database file as the dispatcher and that file must be on persistent storage shared by every worker that can receive the same requests.
-- Do not use SQLite `:memory:`, ephemeral runner storage, or separate per-worker database files for production replay protection.
-- `RequestGuard` is now an explicit reusable validation boundary, but there is not yet an application dispatcher handler lookup/runtime entrypoint that invokes it and combines it with U20-3-05 authenticated identity, repository permission and commit-SHA verification. End-to-end runtime enforcement is not claimed.
+- The dispatcher requires host-supplied trusted adapters for authenticated GitHub identity, live repository metadata, permission lookup, and commit-SHA membership verification. It never treats envelope claims as proof.
+- The connected ChatGPT GitHub connector's identity and repository permission evidence are recorded in U20-3-05. The current repository/application does not expose a credential-safe in-process adapter that can reuse ChatGPT's connected GitHub credential. No token/secret was read or copied into the app, and no pretend adapter was added.
+- Therefore the authorization orchestration and handler ordering are implemented and testable, but live production credential adapter wiring is not claimed. It must be supplied through an approved host integration before deployment.
+- SQLite replay protection requires a persistent database path shared by every worker. Do not use `:memory:`, ephemeral storage, or per-worker files in production. PostgreSQL backend support would need a matching replay-store adapter before selecting PostgreSQL for this dispatcher.
 
 ## CI evidence
 
-- Earlier full CI run (11-test version): https://github.com/glad4u7-crypto/project-continue/actions/runs/46098486057 — **SUCCESS**. Secret scan, dependency installation/audit, Python compile, Docker build, Compose validation, production-container health smoke test, focused test categories, and complete pytest suite all completed successfully.
-- Final CI run for the 13-test version and final workflow: https://github.com/glad4u7-crypto/project-continue/actions/runs/46098670631 — queued/in progress at the time of this report. Its result must be checked before changing this unit to PASS.
-- Final source/test files must be read back from the target branch and their SHAs recorded after CI completion.
+- Earlier 11-test version full CI: https://github.com/glad4u7-crypto/project-continue/actions/runs/46098486057 — SUCCESS.
+- Finalized 13-test guard-only version full CI: https://github.com/glad4u7-crypto/project-continue/actions/runs/46098670631 — SUCCESS.
+- First canonical-envelope migration run: https://github.com/glad4u7-crypto/project-continue/actions/runs/46105007656 — FAILED because an older replay-store integration test still used the superseded flat envelope (4 failures; 319 passed; 11 skipped). Failure logs were inspected and the stale test was rewritten to the canonical v1.0 envelope.
+- Final runtime-integrated CI: https://github.com/glad4u7-crypto/project-continue/actions/runs/46105092157 — pending at report update time. This run includes the canonical guard tests, dispatcher runtime tests, full compile, production container, compose validation, smoke test, focused test categories, and full suite.
 
-## Remaining acceptance gates
+## Acceptance
 
-1. Final CI run 46098670631 must complete successfully, including compile, focused tests, complete pytest suite, container build and smoke test.
-2. If CI fails, inspect job logs, fix the cause, and rerun.
-3. A later dispatcher runtime entrypoint must call `RequestGuard.validate()` before handler lookup and combine it with U20-3-05 authenticated actor/repository/commit authorization.
-4. Read back the final implementation, tests, workflow and report from the branch and record their SHAs.
-
-No merge to main and no live service/data modification.
+- Do not mark PASS until run 46105092157 is completed successfully and final files are read back from this branch.
+- If the run fails, inspect its job logs, fix and rerun.
+- No merge to main, no production credentials, and no live service/data modification.
