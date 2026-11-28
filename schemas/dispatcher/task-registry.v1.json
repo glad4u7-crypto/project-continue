@@ -1,0 +1,189 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://project-continue.invalid/schemas/dispatcher/task-registry.v1.schema.json",
+  "title": "Project Continue Fixed Dispatcher Task Registry v1",
+  "description": "Declarative allow-list for the dispatcher. Entries are the only task IDs accepted by protocol version 1. Handler references are symbolic contracts, not executable commands. Every arguments_schema is closed to undeclared properties. No shell, Python, SQL, URL fetch, arbitrary workflow, or free-form command task is registered.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "registry_version",
+    "tasks"
+  ],
+  "properties": {
+    "registry_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "tasks": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "task_id",
+          "handler_ref",
+          "description",
+          "risk",
+          "arguments_schema"
+        ],
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
+          },
+          "handler_ref": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 240
+          },
+          "risk": {
+            "type": "string",
+            "enum": [
+              "read_only",
+              "test_only"
+            ]
+          },
+          "arguments_schema": {
+            "type": "object",
+            "required": [
+              "type",
+              "additionalProperties",
+              "properties"
+            ],
+            "properties": {
+              "type": {
+                "const": "object"
+              },
+              "additionalProperties": {
+                "const": false
+              },
+              "required": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "uniqueItems": true
+              },
+              "properties": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tasks": [
+    {
+      "task_id": "repo.read_file",
+      "handler_ref": "repo.read_file.v1",
+      "description": "Read one repository file at the envelope-bound immutable commit SHA.",
+      "risk": "read_only",
+      "arguments_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 240,
+            "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\)[A-Za-z0-9_.@/-]+$"
+          }
+        },
+        "required": [
+          "path"
+        ]
+      }
+    },
+    {
+      "task_id": "repo.list_tree",
+      "handler_ref": "repo.list_tree.v1",
+      "description": "List repository paths beneath an optional safe relative directory at the envelope-bound immutable commit SHA.",
+      "risk": "read_only",
+      "arguments_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\)[A-Za-z0-9_.@/-]+$"
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "task_id": "tests.run_pytest",
+      "handler_ref": "tests.run_pytest.v1",
+      "description": "Run the repository's preconfigured pytest suite or one allow-listed tests/ path; no caller-supplied command or pytest flags.",
+      "risk": "test_only",
+      "arguments_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "scope": {
+            "type": "string",
+            "enum": [
+              "full",
+              "focused"
+            ]
+          },
+          "test_path": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160,
+            "pattern": "^tests/test_[A-Za-z0-9_]+\\.py$"
+          }
+        },
+        "required": [
+          "scope"
+        ],
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "scope": {
+                  "const": "focused"
+                }
+              },
+              "required": [
+                "scope"
+              ]
+            },
+            "then": {
+              "required": [
+                "test_path"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "scope": {
+                  "const": "full"
+                }
+              },
+              "required": [
+                "scope"
+              ]
+            },
+            "then": {
+              "not": {
+                "required": [
+                  "test_path"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
