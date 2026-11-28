@@ -186,10 +186,10 @@ class SQLiteAdmissionController:
             cursor = connection.execute(
                 "DELETE FROM dispatcher_admissions WHERE request_id=?", (request_id,)
             )
-            self._commit(manager)
+            self._commit(manager, connection)
             return cursor.rowcount == 1
         except BaseException as exc:
-            self._rollback(manager, exc)
+            self._rollback(manager, connection, exc)
             raise
 
     def snapshot(self, *, now: datetime | None = None) -> dict[str, int]:
