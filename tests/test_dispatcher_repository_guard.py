@@ -169,8 +169,8 @@ class RepositoryGuardTests(unittest.TestCase):
 
     def test_diff_review_reports_line_additions_deletions_and_blob_hashes(self):
         diff = summarize_diff(
-            path="README.md", old_content="one\\ntwo\\n",
-            new_content="one\\nthree\\nfour\\n",
+            path="README.md", old_content="one" + chr(10) + "two" + chr(10),
+            new_content="one" + chr(10) + "three" + chr(10) + "four" + chr(10),
         )
         self.assertEqual(diff.additions, 2)
         self.assertEqual(diff.deletions, 1)
