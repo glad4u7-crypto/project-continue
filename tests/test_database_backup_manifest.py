@@ -195,3 +195,28 @@ def test_restore_preview_rejects_symlink_and_missing_path(tmp_path):
         preview_backup_restore(alias, sha256_file(actual))
     with pytest.raises(FileNotFoundError):
         preview_backup_restore(tmp_path / "missing.sqlite3", "0" * 64)
+
+
+
+def test_backup_verifier_rejects_corrupt_zero_byte_and_truncated_files(tmp_path):
+    backup_dir = tmp_path / "backup-fixtures"
+    backup_dir.mkdir()
+    manifest = _create_application_backup(backup_dir / "valid.sqlite3")
+
+    corrupt = backup_dir / "corrupt.sqlite3"
+    corrupt.write_bytes(b"not a SQLite database")
+    assert Database.verify_backup(corrupt) is False
+    corrupt_preview = preview_backup_restore(corrupt, sha256_file(corrupt))
+    assert corrupt_preview.eligible_for_manual_restore_review is False
+
+    empty = backup_dir / "empty.sqlite3"
+    empty.write_bytes(b"")
+    assert Database.verify_backup(empty) is False
+    empty_preview = preview_backup_restore(empty, sha256_file(empty))
+    assert empty_preview.eligible_for_manual_restore_review is False
+
+    truncated = backup_dir / "truncated.sqlite3"
+    truncated.write_bytes(manifest.path.read_bytes()[: max(1, manifest.size_bytes // 2)])
+    assert Database.verify_backup(truncated) is False
+    truncated_preview = preview_backup_restore(truncated, sha256_file(truncated))
+    assert truncated_preview.eligible_for_manual_restore_review is False
