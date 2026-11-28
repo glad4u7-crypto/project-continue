@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 import subprocess
 from types import SimpleNamespace
@@ -172,8 +173,15 @@ def test_artifact_writer_is_exclusive_and_size_bounded(tmp_path):
     output = tmp_path / "output"
     output.mkdir()
     path = output / "executed.ipynb"
-    write_artifact_exclusive(path, b"{}", output_root=output)
-    assert path.read_bytes() == b"{}"
+    document = {"cells": [{"cell_type": "code", "execution_count": 1, "outputs": [
+        {"output_type": "error", "ename": "ValueError", "evalue": "bad",
+         "traceback": ["Traceback (most recent call last):", "ValueError: bad"]}
+    ]}]}
+    payload = json.dumps(document).encode("utf-8")
+    write_artifact_exclusive(path, payload, output_root=output)
+    saved = json.loads(path.read_text(encoding="utf-8"))
+    assert saved["cells"][0]["execution_count"] == 1
+    assert saved["cells"][0]["outputs"][0]["traceback"][-1] == "ValueError: bad"
     with pytest.raises(FileExistsError):
         write_artifact_exclusive(path, b'{"changed":true}', output_root=output)
     with pytest.raises(ValueError):
