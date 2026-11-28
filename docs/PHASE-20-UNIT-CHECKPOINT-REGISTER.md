@@ -91,11 +91,11 @@
 
 | Unit ID | Checkpoint | Status | Evidence / run reference |
 |---|---|---|---|
-| U20-5-01 | Repository tree ও file content পড়া | NOT STARTED | — |
-| U20-5-02 | File write-এর আগে branch ও base SHA যাচাই | NOT STARTED | — |
-| U20-5-03 | প্রতিটি পরিবর্তনের জন্য আলাদা feature branch ব্যবহার | NOT STARTED | — |
-| U20-5-04 | Path traversal, hidden path ও disallowed extension block করা | NOT STARTED | — |
-| U20-5-05 | File size, encoding ও content validation | NOT STARTED | — |
+| U20-5-01 | Repository tree ও file content পড়া | PASS | Immutable snapshot file/tree read and hash tests; report `2026-11-28-Phase20-5-Repository-Read-Write-Guard.md`; CI `46110628207` PASS, SHA `4a4f2a7` |
+| U20-5-02 | File write-এর আগে branch ও base SHA যাচাই | PASS | Base branch full-SHA compare and stale-base rejection tests; CI `46110628207` PASS, SHA `4a4f2a7` |
+| U20-5-03 | প্রতিটি পরিবর্তনের জন্য আলাদা feature branch ব্যবহার | PASS | Dedicated phase20/feature branch enforcement tests; CI `46110628207` PASS, SHA `4a4f2a7` |
+| U20-5-04 | Path traversal, hidden path ও disallowed extension block করা | PASS | Traversal/hidden/symlink/sensitive-extension rejection tests; CI `46110628207` PASS, SHA `4a4f2a7` |
+| U20-5-05 | File size, encoding ও content validation | PASS | UTF-8/size/JSON/secret/blob-SHA patch validation tests; CI `46110628207` PASS, SHA `4a4f2a7` |
 | U20-5-06 | Existing file overwrite-এর আগে blob SHA compare করা | NOT STARTED | — |
 | U20-5-07 | Stale SHA conflict হলে write বন্ধ করে re-read করা | NOT STARTED | — |
 | U20-5-08 | Diff review-এ changed files ও line count প্রকাশ | NOT STARTED | — |
