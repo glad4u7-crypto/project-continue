@@ -128,9 +128,9 @@
 | Unit ID | Checkpoint | Status | Evidence / run reference |
 |---|---|---|---|
 | U20-7-01 | Notebook inventory read-only ভাবে সংগ্রহ | PASS | Recursive Git tree at branch snapshot `1348eef990f1d3021c6697e4f7623729ae4b15d7`: 280 entries, `truncated=false`, exactly 1 notebook `notebooks/ProjectContinue-Recovery.ipynb`, 6,787 bytes, blob `a4f0baa30eb7b844a09851925a9d43365ddeb4ec`; report `reports/Phase-20/2026-11-28-U20-7-01-Notebook-Inventory.md`. Read-only; no Drive/Colab access or execution claimed. |
-| U20-7-02 | Notebook JSON এবং nbformat version validation | NOT STARTED | — |
-| U20-7-03 | Cell type, metadata, size ও output bounds যাচাই | NOT STARTED | — |
-| U20-7-04 | Exclusive create এবং existing file no-overwrite test | NOT STARTED | — |
+| U20-7-02 | Notebook JSON এবং nbformat version validation | PASS | `scripts/notebook_validation.py` strict UTF-8 JSON + nbformat 4/version validation; 4.5 cell-ID enforcement; current notebook read-back PASS. Exact-head CI `46123632152` SUCCESS; report `2026-11-28-U20-7-02-04-Notebook-Validation-and-Creation.md`. |
+| U20-7-03 | Cell type, metadata, size ও output bounds যাচাই | PASS | Validator enforces markdown/code/raw, metadata/source shape, 64 KiB notebook, 32 KiB cell source, 200 cells, 100 outputs/code cell, output structure and fail-closed malformed values; 11 validation tests in exact-head CI `46123632152` SUCCESS. Report `2026-11-28-U20-7-02-04-Notebook-Validation-and-Creation.md`. |
+| U20-7-04 | Exclusive create এবং existing file no-overwrite test | PASS | Existing `scripts/colab_notebook_creation.py` uses `O_CREAT|O_EXCL` and `O_NOFOLLOW`; tests cover existing file preservation, symlink collision/destination and successful JSON read-back; exact-head full CI `46123632152` SUCCESS. Report `2026-11-28-U20-7-02-04-Notebook-Validation-and-Creation.md`. |
 | U20-7-05 | Notebook read-এর সময় secret/token redaction | NOT STARTED | — |
 | U20-7-06 | Execution allow-list এবং explicit notebook identity/commit binding | NOT STARTED | — |
 | U20-7-07 | Isolated kernel/runner; production Drive mount ও secrets ছাড়া execution | NOT STARTED | — |
