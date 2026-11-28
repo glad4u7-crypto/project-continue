@@ -163,19 +163,19 @@
 
 | Unit ID | Checkpoint | Status | Evidence / run reference |
 |---|---|---|---|
-| U20-9-01 | Isolated test DB দিয়ে Streamlit app start | NOT STARTED | — |
-| U20-9-02 | /_stcore/health HTTP 200 পরীক্ষা | NOT STARTED | — |
-| U20-9-03 | App startup, import error ও dependency error capture | NOT STARTED | — |
-| U20-9-04 | Browser smoke test harness স্থাপন | NOT STARTED | — |
-| U20-9-05 | Login/access flow (যদি প্রযোজ্য) test | NOT STARTED | — |
-| U20-9-06 | Project create/read/update flow test | NOT STARTED | — |
-| U20-9-07 | Task create/update/complete/dependency flow test | NOT STARTED | — |
-| U20-9-08 | GitHub panel এবং error/empty/loading state test | NOT STARTED | — |
-| U20-9-09 | Process restart-এর পর test DB persistence যাচাই | NOT STARTED | — |
-| U20-9-10 | Test শেষে isolated app process বন্ধ; live app untouched | NOT STARTED | — |
-| U20-9-11 | Browser evidence ও exact SHA report archive | NOT STARTED | — |
+| U20-9-01 | Isolated test DB দিয়ে Streamlit app start | PASS | Runner 46121735439 SUCCESS; Main CI 46121735454 SUCCESS; SHA `b046d23403ebf59f1966bb47af7124caaa0b04bb`; artifact 15253188930; report `2026-11-28-Phase20-9-Streamlit-Browser-Acceptance.md` |
+| U20-9-02 | /_stcore/health HTTP 200 পরীক্ষা | PASS | Runner 46121735439 SUCCESS; Main CI 46121735454 SUCCESS; SHA `b046d23403ebf59f1966bb47af7124caaa0b04bb`; artifact 15253188930; report `2026-11-28-Phase20-9-Streamlit-Browser-Acceptance.md` |
+| U20-9-03 | App startup, import error ও dependency error capture | PASS | Runner 46121735439 SUCCESS; Main CI 46121735454 SUCCESS; SHA `b046d23403ebf59f1966bb47af7124caaa0b04bb`; artifact 15253188930; report `2026-11-28-Phase20-9-Streamlit-Browser-Acceptance.md` |
+| U20-9-04 | Browser smoke test harness স্থাপন | PASS | Runner 46121735439 SUCCESS; Main CI 46121735454 SUCCESS; SHA `b046d23403ebf59f1966bb47af7124caaa0b04bb`; artifact 15253188930; report `2026-11-28-Phase20-9-Streamlit-Browser-Acceptance.md` |
+| U20-9-05 | Login/access flow (যদি প্রযোজ্য) test | PASS | Runner 46121735439 SUCCESS; Main CI 46121735454 SUCCESS; SHA `b046d23403ebf59f1966bb47af7124caaa0b04bb`; artifact 15253188930; report `2026-11-28-Phase20-9-Streamlit-Browser-Acceptance.md` |
+| U20-9-06 | Project create/read/update flow test | PASS | Runner 46121735439 SUCCESS; Main CI 46121735454 SUCCESS; SHA `b046d23403ebf59f1966bb47af7124caaa0b04bb`; artifact 15253188930; report `2026-11-28-Phase20-9-Streamlit-Browser-Acceptance.md` |
+| U20-9-07 | Task create/update/complete/dependency flow test | PASS | Runner 46121735439 SUCCESS; Main CI 46121735454 SUCCESS; SHA `b046d23403ebf59f1966bb47af7124caaa0b04bb`; artifact 15253188930; report `2026-11-28-Phase20-9-Streamlit-Browser-Acceptance.md` |
+| U20-9-08 | GitHub panel এবং error/empty/loading state test | PASS | Runner 46121735439 SUCCESS; Main CI 46121735454 SUCCESS; SHA `b046d23403ebf59f1966bb47af7124caaa0b04bb`; artifact 15253188930; report `2026-11-28-Phase20-9-Streamlit-Browser-Acceptance.md` |
+| U20-9-09 | Process restart-এর পর test DB persistence যাচাই | PASS | Runner 46121735439 SUCCESS; Main CI 46121735454 SUCCESS; SHA `b046d23403ebf59f1966bb47af7124caaa0b04bb`; artifact 15253188930; report `2026-11-28-Phase20-9-Streamlit-Browser-Acceptance.md` |
+| U20-9-10 | Test শেষে isolated app process বন্ধ; live app untouched | PASS | Runner 46121735439 SUCCESS; Main CI 46121735454 SUCCESS; SHA `b046d23403ebf59f1966bb47af7124caaa0b04bb`; artifact 15253188930; report `2026-11-28-Phase20-9-Streamlit-Browser-Acceptance.md` |
+| U20-9-11 | Browser evidence ও exact SHA report archive | PASS | Runner 46121735439 SUCCESS; Main CI 46121735454 SUCCESS; SHA `b046d23403ebf59f1966bb47af7124caaa0b04bb`; artifact 15253188930; report `2026-11-28-Phase20-9-Streamlit-Browser-Acceptance.md` |
 
-**20.9 exit gate:** 11 of 11 unit checkpoints must have evidence-backed PASS, or an explicitly approved limitation recorded in the final report. No silent skips.
+**20.9 exit gate:** 11 of 11 unit checkpoints PASS. Task dependency rules and GitHub API error sanitization are covered by service/unit tests; no live GitHub token/API request was used. Browser proof and limitations are detailed in the dated report.
 
 ## 20.10 — Recovery, idempotency ও resumability
 
