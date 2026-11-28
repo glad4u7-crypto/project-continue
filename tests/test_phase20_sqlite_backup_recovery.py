@@ -149,6 +149,19 @@ def test_backup_does_not_touch_drive_like_sentinel(tmp_path):
     db.close()
 
 
+def test_restore_rejects_symlink_destination_and_symlink_backup_root(tmp_path):
+    db, repo, ops = prepared(tmp_path)
+    backup = ops.create_backup()
+    outside = tmp_path / "outside.sqlite3"
+    outside.write_text("preserve", encoding="utf-8")
+    link = tmp_path / "restore-link.sqlite3"
+    link.symlink_to(outside)
+    with pytest.raises(ValueError, match="symbolic links"):
+        ops.restore_drill(backup, link)
+    assert outside.read_text(encoding="utf-8") == "preserve"
+    db.close()
+
+
 def test_schema_version_mismatch_is_rejected(tmp_path):
     db, repo, ops = prepared(tmp_path)
     bad = tmp_path / "backups" / "project-continue-bad.sqlite3"
