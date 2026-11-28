@@ -36,36 +36,34 @@ class SandboxResult:
 
 
 def git_blob_sha1(payload: bytes) -> str:
-    return hashlib.sha1(f"blob {len(payload)}\0".encode("ascii") + payload).hexdigest()
+    return hashlib.sha1(f"blob {len(payload)}\\0".encode("ascii") + payload).hexdigest()
 
 
 def _mount_path(path: Path) -> str:
     value = str(path)
-    if any(character in value for character in (",", "\n", "\r")):
+    if any(character in value for character in (",", "\\n", "\\r")):
         raise ValueError("sandbox mount path contains unsupported characters")
     return value
 
 
-def build_sandbox_command(notebook_path: str | Path, output_dir: str | Path, *, container_name: str | None = None) -> tuple[str, ...]:
-    """Return fixed Docker argv with network disabled and no host env/Drive mount."""
-    raw_notebook, raw_output = Path(notebook_path), Path(output_dir)
-    if raw_notebook.is_symlink() or raw_output.is_symlink():
-        raise ValueError("sandbox paths must not be symlinks")
-    notebook, output = raw_notebook.resolve(strict=True), raw_output.resolve(strict=True)
+def build_sandbox_command(notebook_path: str | Path, *, container_name: str | None = None) -> tuple[str, ...]:
+    """Return fixed Docker argv; the only host bind mount is the read-only notebook."""
+    raw_notebook = Path(notebook_path)
+    if raw_notebook.is_symlink():
+        raise ValueError("sandbox notebook path must not be a symlink")
+    notebook = raw_notebook.resolve(strict=True)
     if not notebook.is_file() or notebook.suffix.lower() != ".ipynb":
         raise ValueError("notebook input must be a regular .ipynb file")
-    if not output.is_dir():
-        raise ValueError("output path must be an existing directory")
     name = container_name or f"pc-notebook-{uuid.uuid4().hex}"
     if not isinstance(name, str) or not _CONTAINER_NAME_RE.fullmatch(name):
         raise ValueError("sandbox container name is invalid")
     return (
-        "docker", "run", "--rm", "--name", name, "--network=none", "--stop-timeout=5",
+        "docker", "run", "--name", name, "--network=none", "--stop-timeout=5",
         "--user", f"{SANDBOX_UID}:{SANDBOX_UID}", "--read-only", "--cap-drop=ALL",
         "--security-opt=no-new-privileges", "--pids-limit=64", "--memory=512m", "--cpus=1",
-        "--tmpfs", "/tmp:rw,noexec,nosuid,size=64m",
+        "--tmpfs", "/tmp:rw,noexec,nosuid,nodev,size=64m",
+        "--tmpfs", "/workspace/output:rw,noexec,nosuid,nodev,size=1m,uid=10001,gid=10001,mode=700",
         "--mount", f"type=bind,src={_mount_path(notebook)},dst=/workspace/input.ipynb,readonly",
-        "--mount", f"type=bind,src={_mount_path(output)},dst=/workspace/output",
         "--workdir", "/workspace", SANDBOX_IMAGE,
         "python", "-m", "scripts.notebook_container_runner",
         "/workspace/input.ipynb", "/workspace/output/executed.ipynb",
@@ -83,12 +81,21 @@ def _read_bounded(stream) -> tuple[str, bool]:
     return data[:MAX_OUTPUT_BYTES].decode("utf-8", errors="replace"), len(data) > MAX_OUTPUT_BYTES
 
 
+def _remove_container(container_name: str) -> None:
+    try:
+        subprocess.run(("docker", "rm", "--force", container_name), shell=False,
+            check=False, capture_output=True, timeout=5)
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+
+
 def _cleanup_container(container_name: str) -> None:
-    for command in (("docker", "kill", container_name), ("docker", "rm", "--force", container_name)):
-        try:
-            subprocess.run(command, shell=False, check=False, capture_output=True, timeout=5)
-        except (OSError, subprocess.TimeoutExpired):
-            pass
+    try:
+        subprocess.run(("docker", "kill", container_name), shell=False,
+            check=False, capture_output=True, timeout=5)
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+    _remove_container(container_name)
 
 
 def _write_exclusive(path: Path, payload: bytes) -> None:
@@ -141,8 +148,7 @@ def run_sandbox(
     container_name = f"pc-notebook-{uuid.uuid4().hex}"
     with tempfile.TemporaryDirectory(prefix="pc-notebook-output-") as temp_output:
         temp_dir = Path(temp_output)
-        os.chmod(temp_dir, 0o777)
-        command = build_sandbox_command(notebook, temp_dir, container_name=container_name)
+        command = build_sandbox_command(notebook, container_name=container_name)
         with tempfile.TemporaryFile() as stdout_file, tempfile.TemporaryFile() as stderr_file:
             try:
                 process = subprocess.Popen(command, stdout=stdout_file, stderr=stderr_file,
@@ -164,9 +170,23 @@ def run_sandbox(
             stdout, stdout_truncated = _read_bounded(stdout_file)
             stderr, stderr_truncated = _read_bounded(stderr_file)
 
+        raw_artifact = temp_dir / "executed.ipynb"
+        if return_code == 0 and not timed_out:
+            try:
+                copied = subprocess.run(
+                    ("docker", "cp", f"{container_name}:/workspace/output/executed.ipynb", str(raw_artifact)),
+                    shell=False, check=False, capture_output=True, timeout=10,
+                )
+            except (OSError, subprocess.TimeoutExpired):
+                copied = None
+            _remove_container(container_name)
+            if copied is None or copied.returncode != 0 or not raw_artifact.is_file():
+                return SandboxResult(3, False, stdout, "sandbox did not produce a retrievable notebook artifact", stdout_truncated, stderr_truncated)
+        else:
+            _remove_container(container_name)
+
         artifact_path = None
         execution_status = None
-        raw_artifact = temp_dir / "executed.ipynb"
         if return_code == 0 and raw_artifact.is_file():
             if raw_artifact.stat().st_size > MAX_NOTEBOOK_BYTES:
                 return SandboxResult(3, timed_out, stdout, "executed notebook artifact exceeds 64 KiB", stdout_truncated, stderr_truncated)
