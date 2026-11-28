@@ -58,6 +58,12 @@ def test_sandbox_rejects_non_notebook_and_missing_paths(tmp_path):
         build_sandbox_command(tmp_path / "missing.ipynb", output)
 
 
+def test_sandbox_rejects_container_name_injection(tmp_path):
+    notebook, output = _fixtures(tmp_path)
+    with pytest.raises(ValueError):
+        build_sandbox_command(notebook, output, container_name="--privileged")
+
+
 def test_sandbox_rejects_non_directory_output(tmp_path):
     notebook = tmp_path / "safe.ipynb"
     notebook.write_text("{}", encoding="utf-8")
