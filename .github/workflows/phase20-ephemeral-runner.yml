@@ -131,3 +131,11 @@ jobs:
         run: python scripts/phase20_streamlit_browser_acceptance.py
       - name: Run full regression and collect result
         run: python scripts/phase20_test_harness.py full
+      - name: Upload sanitized Streamlit browser evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: phase20-streamlit-browser-evidence
+          path: reports/phase20-streamlit-browser/
+          if-no-files-found: warn
+          retention-days: 7
