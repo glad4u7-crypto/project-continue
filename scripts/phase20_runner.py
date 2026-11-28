@@ -26,6 +26,7 @@ _DISPATCHER_TESTS = (
     "tests/test_dispatcher_audit_log.py",
     "tests/test_dispatcher_execution_state.py",
     "tests/test_dispatcher_request_guard.py",
+    "tests/test_dispatcher_repository_guard.py",
     "tests/test_dispatcher_runtime.py",
 )
 
