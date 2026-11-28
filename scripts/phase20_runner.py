@@ -113,7 +113,8 @@ def _run_once(task: str) -> dict[str, object]:
                         os.killpg(process.pid, signal.SIGKILL)
                     except ProcessLookupError:
                         pass
-                    return_code = int(process.wait())
+                    process.wait()
+                    return_code = 124
         except OSError as exc:
             return_code = 127
             spawn_error = f"{type(exc).__name__}: {exc}"
