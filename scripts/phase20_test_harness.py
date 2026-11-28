@@ -56,6 +56,8 @@ def _bounded(data: str) -> str:
 def build_command(task: str) -> tuple[str, ...] | None:
     """Map a fixed task ID to immutable argv; never accept shell fragments."""
     py = sys.executable
+    if task == "baseline":
+        return (py, "-c", "import importlib.metadata as m, json, platform, sys; print(json.dumps({'python': sys.version, 'platform': platform.platform(), 'packages': sorted(f'{d.metadata.get(\"Name\')}=={d.version}' for d in m.distributions())}, sort_keys=True))")
     if task == "compile":
         return (py, "-m", "compileall", "-q", "app", "config.py", "core", "database", "integrations", "services", "src", "scripts", "tests")
     if task == "focused":
@@ -148,7 +150,7 @@ def run_task(task: str, retries: int = 0) -> TaskResult:
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Run a bounded, allow-listed Project Continue validation task")
-    parser.add_argument("task", choices=("compile", "focused", "full", "lint", "failure-probe"))
+    parser.add_argument("task", choices=("baseline", "compile", "focused", "full", "lint", "failure-probe"))
     parser.add_argument("--retries", type=int, default=0, choices=(0, 1))
     args = parser.parse_args(argv)
     result = run_task(args.task, args.retries)
