@@ -6,6 +6,10 @@ from pathlib import Path
 from src.dispatcher.repository_guard import (
     RepositoryAccessRejected,
     RepositorySnapshot,
+    assert_pull_request_ready,
+    build_pull_request_body,
+    prepare_patch,
+    summarize_diff,
     validate_patch,
     validate_target_branch,
 )
@@ -125,6 +129,87 @@ class RepositoryGuardTests(unittest.TestCase):
                     path="file.json" if content.startswith("{") else "file.txt",
                     content=content, current_content=None, expected_blob_sha=None,
                 )
+
+    def test_overwrite_requires_exact_current_blob_sha_and_stale_sha_fails_closed(self):
+        old = "before\\n"
+        correct_sha = validate_patch(
+            path="README.md", content=old, current_content=None, expected_blob_sha=None
+        ).new_blob_sha
+        prepared = prepare_patch(
+            target_branch="phase20/change-01", base_branch="main",
+            observed_base_sha=SHA, expected_base_sha=SHA,
+            path="README.md", new_content="after\\n",
+            current_content=old, expected_blob_sha=correct_sha,
+        )
+        self.assertEqual(prepared.previous_blob_sha, correct_sha)
+        with self.assertRaises(RepositoryAccessRejected):
+            prepare_patch(
+                target_branch="phase20/change-01", base_branch="main",
+                observed_base_sha=SHA, expected_base_sha=SHA,
+                path="README.md", new_content="after\\n",
+                current_content=old, expected_blob_sha="b" * 40,
+            )
+
+    def test_stale_base_sha_and_main_direct_write_are_blocked(self):
+        for branch in ("main", "master"):
+            with self.subTest(branch=branch), self.assertRaises(RepositoryAccessRejected):
+                prepare_patch(
+                    target_branch=branch, base_branch="main",
+                    observed_base_sha=SHA, expected_base_sha=SHA,
+                    path="README.md", new_content="x",
+                    current_content=None, expected_blob_sha=None,
+                )
+        with self.assertRaises(RepositoryAccessRejected):
+            prepare_patch(
+                target_branch="phase20/change-02", base_branch="main",
+                observed_base_sha="b" * 40, expected_base_sha=SHA,
+                path="README.md", new_content="x",
+                current_content=None, expected_blob_sha=None,
+            )
+
+    def test_diff_review_reports_line_additions_deletions_and_blob_hashes(self):
+        diff = summarize_diff(
+            path="README.md", old_content="one\\ntwo\\n",
+            new_content="one\\nthree\\nfour\\n",
+        )
+        self.assertEqual(diff.additions, 2)
+        self.assertEqual(diff.deletions, 1)
+        self.assertEqual(len(diff.new_blob_sha), 40)
+        with self.assertRaises(RepositoryAccessRejected):
+            summarize_diff(
+                path="README.md", old_content="old", new_content="new",
+                old_blob_sha="c" * 40,
+            )
+
+    def test_pr_body_contains_diff_risk_rollback_tests_and_exact_refs(self):
+        diff = summarize_diff(path="README.md", old_content="old", new_content="new")
+        body = build_pull_request_body(
+            summary="Guard repository writes",
+            risk="Path and stale SHA validation only",
+            rollback="Revert the feature branch commit",
+            test_results="Compile PASS; focused PASS; full PASS",
+            changed_files=(diff,), base_sha=SHA, head_sha="b" * 40,
+        )
+        for token in ("Reviewed changes", "Risk assessment", "Rollback", "Test evidence", SHA, "b" * 40):
+            self.assertIn(token, body)
+        with self.assertRaises(RepositoryAccessRejected):
+            build_pull_request_body(
+                summary="", risk="risk", rollback="rollback", test_results="tests",
+                changed_files=(diff,), base_sha=SHA, head_sha="b" * 40,
+            )
+
+    def test_pr_creation_gate_requires_green_compile_and_test_suites(self):
+        diff = summarize_diff(path="README.md", old_content="old", new_content="new")
+        args = dict(
+            target_branch="phase20/change-03", base_branch="main",
+            base_sha=SHA, head_sha="b" * 40, diff=(diff,),
+            compile_passed=True, focused_tests_passed=True, full_tests_passed=True,
+        )
+        assert_pull_request_ready(**args)
+        with self.assertRaises(RepositoryAccessRejected):
+            assert_pull_request_ready(**{**args, "full_tests_passed": False})
+        with self.assertRaises(RepositoryAccessRejected):
+            assert_pull_request_ready(**{**args, "target_branch": "main"})
 
     def test_nul_and_empty_patch_rejected(self):
         for content in ("", "a" + chr(0) + "b"):
