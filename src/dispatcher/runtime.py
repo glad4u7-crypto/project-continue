@@ -139,7 +139,7 @@ class SecureDispatcher:
             raise AuthorizationRejected("task is not in the fixed registry")
         permission = self.permission_lookup(identity["login"], repo_rule["full_name"])
         required_permission = self.policy.get("task_permission_map", {}).get(task_id)
-        permission_levels = {"none": 0, "read": 1, "pull": 1, "triage": 1,
+        permission_levels = {"none": 0, "pull": 1, "triage": 1,
                              "write": 2, "maintain": 3, "admin": 4}
         if (permission not in permission_levels or required_permission not in permission_levels
                 or permission_levels[permission] < permission_levels[required_permission]):
