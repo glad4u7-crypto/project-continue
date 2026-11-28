@@ -171,7 +171,10 @@ def run_sandbox(
             stderr, stderr_truncated = _read_bounded(stderr_file)
 
         raw_artifact = temp_dir / "executed.ipynb"
-        if return_code == 0 and not timed_out:
+        if timed_out:
+            # _cleanup_container already killed and removed the timed-out container.
+            pass
+        elif return_code == 0:
             try:
                 copied = subprocess.run(
                     ("docker", "cp", f"{container_name}:/workspace/output/executed.ipynb", str(raw_artifact)),
