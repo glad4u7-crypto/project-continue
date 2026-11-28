@@ -129,7 +129,10 @@ def browser_round_trip(base_url: str, *, expect_existing: bool, screenshot_path:
             page.get_by_label("Task title").fill("Browser acceptance task")
             page.get_by_label("Description").last.fill("Persist across app restart")
             page.get_by_role("button", name="Create task").click(force=True)
-            page.get_by_text("Browser acceptance task", exact=True).wait_for(timeout=15000)
+            try:
+                page.get_by_text("Browser acceptance task", exact=True).wait_for(timeout=15000)
+            except PlaywrightTimeoutError as exc:
+                raise AssertionError("First task create did not persist; browser body: " + page.locator("body").inner_text()[-4000:]) from exc
             page.locator("summary").filter(has_text="Edit task").first.click()
             page.get_by_role("textbox", name="Title", exact=True).fill("Browser acceptance task updated")
             page.get_by_role("button", name="Save task changes").click(force=True)
@@ -139,7 +142,10 @@ def browser_round_trip(base_url: str, *, expect_existing: bool, screenshot_path:
             page.get_by_label("Task title").fill("Browser acceptance dependent task")
             page.get_by_label("Description").last.fill("Dependency flow validation")
             page.get_by_role("button", name="Create task").click(force=True)
-            page.get_by_text("Browser acceptance dependent task", exact=True).wait_for(timeout=15000)
+            try:
+                page.get_by_text("Browser acceptance dependent task", exact=True).wait_for(timeout=15000)
+            except PlaywrightTimeoutError as exc:
+                raise AssertionError("Dependent task create did not persist; browser body: " + page.locator("body").inner_text()[-5000:]) from exc
 
             page.locator("summary").filter(has_text="Dependencies").last.click()
             page.get_by_role("combobox", name="This task depends on").click()
