@@ -110,9 +110,9 @@
 | Unit ID | Checkpoint | Status | Evidence / run reference |
 |---|---|---|---|
 | U20-6-01 | Python version ও dependency lock/baseline যাচাই | PASS | CPython 3.11 verified in main CI and Phase 20 runner; requirements ranges and pytest.ini inspected; no full transitive lockfile exists and is explicitly disclosed; report `reports/Phase-20/2026-11-28-U20-6-01-Python-Dependency-Baseline.md`; report commit `c1abe818b20284655559e270a85fa48a49a87899` |
-| U20-6-02 | Compile-only task handler তৈরি | NOT STARTED | — |
-| U20-6-03 | Focused pytest task handler তৈরি | NOT STARTED | — |
-| U20-6-04 | Full pytest suite task handler তৈরি | NOT STARTED | — |
+| U20-6-02 | Compile-only task handler তৈরি | PASS | Fixed `compile` task in `scripts/phase20_runner.py`; safety tests and dedicated Actions run `46111096475` SUCCESS on code SHA `cf6e342badd589f572ae05afecb64af2253ba58e`; report `reports/Phase-20/2026-11-28-U20-6-02-04-Fixed-Test-Handlers.md` |
+| U20-6-03 | Focused pytest task handler তৈরি | PASS | Fixed `dispatcher-tests` task and immutable test-file allow-list; dedicated Actions run `46111096475` SUCCESS on code SHA `cf6e342badd589f572ae05afecb64af2253ba58e`; report `reports/Phase-20/2026-11-28-U20-6-02-04-Fixed-Test-Handlers.md` |
+| U20-6-04 | Full pytest suite task handler তৈরি | PASS | Fixed `full-tests` task; dedicated Actions run `46111096475` SUCCESS on code SHA `cf6e342badd589f572ae05afecb64af2253ba58e`; report `reports/Phase-20/2026-11-28-U20-6-02-04-Fixed-Test-Handlers.md` |
 | U20-6-05 | Lint/type-check task handler প্রযোজ্য হলে যুক্ত করা | NOT STARTED | — |
 | U20-6-06 | stdout/stderr/exit code/duration/test count সংগ্রহ | NOT STARTED | — |
 | U20-6-07 | Failure classification: code/environment/dependency/permission/timeout/infrastructure | NOT STARTED | — |
