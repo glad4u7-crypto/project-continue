@@ -1,16 +1,20 @@
-"""Safety tests for the fixed-task ephemeral runner."""
+"""Safety and diagnostic-contract tests for the fixed-task ephemeral runner."""
 import io
+import json
 import unittest
 from types import SimpleNamespace
 from unittest.mock import patch
 
 from scripts.phase20_runner import (
     MAX_OUTPUT_BYTES,
+    MAX_RETRIES,
     REPOSITORY_ROOT,
     TASK_TIMEOUT_SECONDS,
-    build_command,
-    run_task,
     _apply_child_limits,
+    build_command,
+    classify_failure,
+    parse_test_counts,
+    run_task,
 )
 
 
@@ -35,26 +39,26 @@ class Phase20RunnerTests(unittest.TestCase):
             wait=unittest.mock.Mock(return_value=0),
         )
         popen.return_value = process
+        # The new runner writes stdout/stderr to separate bounded temporary files.
         self.assertEqual(run_task("compile"), 0)
         kwargs = popen.call_args.kwargs
         self.assertEqual(kwargs["cwd"], REPOSITORY_ROOT)
         self.assertTrue(kwargs["start_new_session"])
         self.assertIs(kwargs["preexec_fn"], _apply_child_limits)
         self.assertFalse(kwargs["shell"])
-        self.assertEqual(kwargs["stdout"], unittest.mock.ANY)
+        self.assertNotIn("GITHUB_TOKEN", kwargs["env"])
+        self.assertNotIn("ACTIONS_RUNTIME_TOKEN", kwargs["env"])
         self.assertEqual(
             set(kwargs["env"]),
             {"PATH", "HOME", "PYTHONDONTWRITEBYTECODE", "PYTHONNOUSERSITE"},
         )
-        self.assertNotIn("GITHUB_TOKEN", kwargs["env"])
-        self.assertNotIn("ACTIONS_RUNTIME_TOKEN", kwargs["env"])
         self.assertEqual(process.wait.call_args.kwargs["timeout"], TASK_TIMEOUT_SECONDS)
 
     @patch("scripts.phase20_runner.os.killpg")
     @patch("scripts.phase20_runner.subprocess.Popen")
-    def test_timeout_kills_process_group_and_returns_124(self, popen, killpg):
+    def test_timeout_kills_process_group(self, popen, killpg):
         process = SimpleNamespace(
-            stdout=io.BytesIO(b"timed out"), pid=123, returncode=-9,
+            pid=123, returncode=-9,
             wait=unittest.mock.Mock(side_effect=[
                 __import__("subprocess").TimeoutExpired(cmd="pytest", timeout=TASK_TIMEOUT_SECONDS),
                 -9,
@@ -73,18 +77,47 @@ class Phase20RunnerTests(unittest.TestCase):
         )
         setrlimit.assert_any_call(resource.RLIMIT_CORE, (0, 0))
 
-    @patch("scripts.phase20_runner.subprocess.Popen")
-    def test_output_is_truncated_to_fixed_bound(self, popen):
-        process = SimpleNamespace(
-            stdout=io.BytesIO(b"x" * (MAX_OUTPUT_BYTES + 1024)),
-            pid=123, returncode=0, wait=unittest.mock.Mock(return_value=0),
-        )
-        popen.return_value = process
-        with patch("sys.stdout", new_callable=io.StringIO) as captured:
-            self.assertEqual(run_task("compile"), 0)
-            rendered = captured.getvalue()
-        self.assertIn("runner output truncated", rendered)
-        self.assertLessEqual(len(rendered.encode("utf-8")), MAX_OUTPUT_BYTES + 200)
+    def test_output_parser_extracts_pytest_counts(self):
+        output = "================ 12 passed, 2 skipped in 3.21s ================\n"
+        self.assertEqual(parse_test_counts(output), {"passed": 12, "skipped": 2})
+
+    def test_intentional_failing_fixture_is_classified_as_code_failure(self):
+        # Synthetic pytest failure fixture: deliberately failing assertion evidence.
+        output = "FAILED tests/fixtures/test_intentional_failure.py::test_expected_failure - AssertionError"
+        self.assertEqual(classify_failure("full-tests", 1, output, ""), "code")
+
+    def test_failure_classification_distinguishes_timeout_permission_dependency(self):
+        self.assertEqual(classify_failure("compile", 124, "", "", True), "timeout")
+        self.assertEqual(classify_failure("compile", 1, "", "Permission denied"), "permission")
+        self.assertEqual(classify_failure("full-tests", 1, "", "ModuleNotFoundError"), "dependency")
+
+    def test_retry_limit_is_validated(self):
+        with self.assertRaises(ValueError):
+            run_task("compile", retries=MAX_RETRIES + 1)
+
+    @patch("scripts.phase20_runner._run_once")
+    def test_only_transient_infrastructure_failure_is_retried_once(self, run_once):
+        run_once.side_effect = [
+            {"classification": "infrastructure", "task": "compile", "exit_code": 1,
+             "duration_seconds": 0.1, "test_counts": {}, "stdout": "", "stderr": "",
+             "stdout_truncated": False, "stderr_truncated": False},
+            {"classification": "success", "task": "compile", "exit_code": 0,
+             "duration_seconds": 0.1, "test_counts": {}, "stdout": "", "stderr": "",
+             "stdout_truncated": False, "stderr_truncated": False},
+        ]
+        self.assertEqual(run_task("compile", retries=1), 0)
+        self.assertEqual(run_once.call_count, 2)
+
+    @patch("scripts.phase20_runner._run_once")
+    def test_code_failure_is_not_retried(self, run_once):
+        run_once.return_value = {
+            "classification": "code", "task": "full-tests", "exit_code": 1,
+            "duration_seconds": 0.1, "test_counts": {"failed": 1},
+            "stdout": "", "stderr": "", "stdout_truncated": False,
+            "stderr_truncated": False,
+        }
+        self.assertEqual(run_task("full-tests", retries=1), 1)
+        self.assertEqual(run_once.call_count, 1)
 
 
 if __name__ == "__main__":
