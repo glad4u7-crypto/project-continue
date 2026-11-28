@@ -115,8 +115,10 @@ def test_restore_preview_rejects_live_existing_and_unmanaged_destinations(tmp_pa
     existing.write_bytes(b"preserve")
     with pytest.raises(FileExistsError):
         ops.preview_restore(backup, existing)
+    unmanaged = tmp_path / "unmanaged.sqlite3"
+    unmanaged.write_bytes(b"unmanaged fixture")
     with pytest.raises(ValueError, match="managed backup"):
-        ops.preview_restore(tmp_path / "unmanaged.sqlite3", tmp_path / "new.sqlite3")
+        ops.preview_restore(unmanaged, tmp_path / "new.sqlite3")
     assert existing.read_bytes() == b"preserve"
     db.close()
 
