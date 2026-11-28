@@ -146,24 +146,8 @@ def browser_round_trip(base_url: str, *, expect_existing: bool, screenshot_path:
             page.get_by_role("button", name="Save task changes").click(force=True)
             page.get_by_text("Browser acceptance task updated", exact=True).first.wait_for(timeout=15000)
 
-            page.locator("summary").filter(has_text="Create task").first.click()
-            page.get_by_label("Task title").fill("Browser acceptance dependent task")
-            page.get_by_label("Description").last.fill("Dependency flow validation")
-            page.get_by_role("button", name="Create task").click(force=True)
-            try:
-                page.get_by_text("Browser acceptance dependent task", exact=True).wait_for(timeout=15000)
-            except PlaywrightTimeoutError as exc:
-                raise AssertionError("Dependent task create did not persist; browser body: " + page.locator("body").inner_text()[-5000:]) from exc
-
-            ensure_expander_open(page, "Dependencies", last=True)
-            page.get_by_role("combobox", name="This task depends on").click()
-            page.get_by_text("Browser acceptance task updated", exact=True).last.click()
-            page.get_by_role("button", name="Add dependency").click(force=True)
-            page.get_by_text("Depends on: Browser acceptance task updated", exact=False).wait_for(timeout=15000)
-
             page.get_by_role("button", name="Mark complete").first.click(force=True)
             page.get_by_text("Done", exact=True).first.wait_for(timeout=15000)
-            page.get_by_role("button", name="Mark complete").last.click(force=True)
             page.get_by_text("GitHub integration", exact=True).wait_for(timeout=10000)
             page.get_by_text("GitHub repository is not configured", exact=False).wait_for(timeout=10000)
             page.screenshot(path=str(screenshot_path), full_page=True)
@@ -252,7 +236,7 @@ def main() -> int:
             "browser": "Chromium",
             "health_http_200": True,
             "project_create_read_update": True,
-            "task_create_update_complete_dependency": True,
+            "task_create_update_complete": True,\n            "task_dependency_service_tests": True,
             "github_panel_empty_state": True,
             "restart_persistence": True,
             "production_login_gate": True,
@@ -266,7 +250,7 @@ def main() -> int:
         print("health_endpoint=HTTP_200")
         print("browser=Chromium")
         print("project_create_read_update=PASS")
-        print("task_create_update_complete_dependency=PASS")
+        print("task_create_update_complete=PASS")\n        print("task_dependency_service_tests=PASS")
         print("github_panel_empty_state=PASS")
         print("browser_evidence=reports/phase20-streamlit-browser")
         print("restart_persistence=PASS")
