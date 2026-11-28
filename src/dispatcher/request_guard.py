@@ -8,6 +8,7 @@ import re
 
 _HEX40 = re.compile(r"^[0-9a-f]{40}$")
 _ACTOR_ID = re.compile(r"^[0-9]+$")
+_IDEMPOTENCY = re.compile(r"^[A-Za-z0-9._:-]{16,128}$")
 
 
 class RequestRejected(ValueError):
@@ -33,27 +34,25 @@ def validate_and_claim(
     claim_pair: Callable[[str, str, datetime], bool],
     max_ttl_seconds: int = 300,
 ) -> None:
-    """Validate request and atomically consume request ID + nonce.
-
-    claim_pair must durably and atomically claim both values in shared storage.
-    It must return False if either value has already been consumed. Storage
-    errors propagate so the caller can fail closed.
-    """
+    """Validate canonical v1.0 envelope and atomically consume ID + nonce."""
     if not isinstance(envelope, Mapping):
         raise RequestRejected("request: object required")
     required = {
-        "schema_version", "request_id", "nonce", "issued_at", "expires_at",
-        "actor", "repository", "commit_sha", "task",
+        "schema_version", "request_id", "nonce", "idempotency_key",
+        "actor", "repository", "task", "issued_at", "expires_at",
     }
-    if set(envelope.keys()) != required:
+    optional = {"trace_id"}
+    if not required.issubset(envelope.keys()) or not set(envelope.keys()).issubset(required | optional):
         raise RequestRejected("request: missing or unexpected fields")
-    if envelope["schema_version"] != "1":
+    if envelope["schema_version"] != "1.0":
         raise RequestRejected("schema_version: unsupported")
     try:
         request_id = str(UUID(envelope["request_id"]))
         nonce = str(UUID(envelope["nonce"]))
     except (ValueError, TypeError, AttributeError) as exc:
         raise RequestRejected("request_id/nonce: UUID required") from exc
+    if not isinstance(envelope["idempotency_key"], str) or not _IDEMPOTENCY.fullmatch(envelope["idempotency_key"]):
+        raise RequestRejected("idempotency_key: invalid")
 
     actor = envelope["actor"]
     if not isinstance(actor, Mapping) or set(actor) != {"id", "type"}:
@@ -64,16 +63,24 @@ def validate_and_claim(
         raise RequestRejected("actor.type: user required")
 
     repository = envelope["repository"]
-    if not isinstance(repository, Mapping) or set(repository) != {"id", "full_name"}:
+    if not isinstance(repository, Mapping) or set(repository) != {"id", "full_name", "commit_sha"}:
         raise RequestRejected("repository: malformed")
     if type(repository["id"]) is not int or repository["id"] <= 0:
         raise RequestRejected("repository.id: positive integer required")
     if not isinstance(repository["full_name"], str) or repository["full_name"].count("/") != 1:
         raise RequestRejected("repository.full_name: owner/name required")
-    if not isinstance(envelope["commit_sha"], str) or not _HEX40.fullmatch(envelope["commit_sha"]):
-        raise RequestRejected("commit_sha: full 40-character SHA required")
-    if envelope["task"] not in {"repo.read_file", "repo.list_tree", "tests.run_pytest"}:
-        raise RequestRejected("task: not allow-listed")
+    if not isinstance(repository["commit_sha"], str) or not _HEX40.fullmatch(repository["commit_sha"]):
+        raise RequestRejected("repository.commit_sha: full 40-character SHA required")
+
+    task = envelope["task"]
+    if not isinstance(task, Mapping) or set(task) != {"task_id", "arguments"}:
+        raise RequestRejected("task: malformed")
+    if task["task_id"] not in {"repo.read_file", "repo.list_tree", "tests.run_pytest"}:
+        raise RequestRejected("task.task_id: not allow-listed")
+    if not isinstance(task["arguments"], Mapping):
+        raise RequestRejected("task.arguments: object required")
+    if "trace_id" in envelope and (not isinstance(envelope["trace_id"], str) or not 1 <= len(envelope["trace_id"]) <= 128):
+        raise RequestRejected("trace_id: invalid")
 
     issued = _utc_timestamp(envelope["issued_at"], "issued_at")
     expires = _utc_timestamp(envelope["expires_at"], "expires_at")
@@ -88,16 +95,12 @@ def validate_and_claim(
         raise RequestRejected("expires_at: must follow issued_at")
     if (expires - issued).total_seconds() > max_ttl_seconds:
         raise RequestRejected("expires_at: TTL exceeds policy")
-
     if not claim_pair(request_id, nonce, expires):
         raise RequestRejected("request_id/nonce: duplicate or replay detected")
 
-class RequestGuard:
-    """Reusable fail-closed validation boundary backed by a replay store.
 
-    Construct this once with an initialized durable store. The dispatcher must
-    call validate() before resolving or invoking any task handler.
-    """
+class RequestGuard:
+    """Reusable fail-closed validation boundary backed by a durable replay store."""
 
     def __init__(self, replay_store: Any, *, max_ttl_seconds: int = 300) -> None:
         claim_pair = getattr(replay_store, "claim_pair", None)
@@ -109,10 +112,7 @@ class RequestGuard:
         self._max_ttl_seconds = max_ttl_seconds
 
     def validate(self, envelope: Mapping[str, Any], *, now: datetime) -> None:
-        """Reject malformed, expired, duplicate or replayed requests."""
         validate_and_claim(
-            envelope,
-            now=now,
-            claim_pair=self._claim_pair,
+            envelope, now=now, claim_pair=self._claim_pair,
             max_ttl_seconds=self._max_ttl_seconds,
         )
