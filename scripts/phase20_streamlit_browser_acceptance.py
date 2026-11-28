@@ -48,6 +48,29 @@ def wait_for_health(url: str, process: subprocess.Popen, log_path: Path) -> None
     )
 
 
+def verify_startup_error_capture(root: Path) -> None:
+    probes = (
+        ("import-error", "raise ImportError('phase20 startup import probe')", "phase20 startup import probe"),
+        ("dependency-error", "import phase20_missing_dependency_probe", "No module named"),
+    )
+    for label, source, expected in probes:
+        log_path = root / (label + ".log")
+        with log_path.open("w", encoding="utf-8") as stream:
+            process = subprocess.Popen(
+                [sys.executable, "-c", source],
+                cwd=ROOT, stdout=stream, stderr=subprocess.STDOUT,
+            )
+            process.wait(timeout=5)
+        try:
+            wait_for_health("http://127.0.0.1:1/_stcore/health", process, log_path)
+        except RuntimeError as exc:
+            if expected not in str(exc):
+                raise AssertionError(f"{label} diagnostic was not captured") from exc
+        else:
+            raise AssertionError(f"{label} probe unexpectedly passed")
+    print("startup_import_dependency_error_capture=PASS")
+
+
 def start_app(database_path: Path, log_path: Path, port: int, *, production: bool = False) -> subprocess.Popen:
     env = os.environ.copy()
     for key in (
@@ -194,6 +217,7 @@ def main() -> int:
         health_url = f"{base_url}/_stcore/health"
         evidence_dir = ROOT / "reports" / "phase20-streamlit-browser"
         evidence_dir.mkdir(parents=True, exist_ok=True)
+        verify_startup_error_capture(root)
 
         first = start_app(database_path, log_path, port)
         try:
@@ -234,7 +258,7 @@ def main() -> int:
             "commit": os.environ.get("GITHUB_SHA", "local-unpinned"),
             "captured_at": datetime.now(timezone.utc).isoformat(),
             "browser": "Chromium",
-            "health_http_200": True,
+            "health_http_200": True,\n            "startup_import_dependency_error_capture": True,
             "project_create_read_update": True,
             "task_create_update_complete": True,
             "task_dependency_service_tests": True,
@@ -248,7 +272,7 @@ def main() -> int:
             json.dumps(evidence, sort_keys=True, indent=2) + "\\n", encoding="utf-8"
         )
         print("PHASE20_STREAMLIT_BROWSER_ACCEPTANCE=PASS")
-        print("health_endpoint=HTTP_200")
+        print("health_endpoint=HTTP_200")\n        print("startup_import_dependency_error_capture=PASS")
         print("browser=Chromium")
         print("project_create_read_update=PASS")
         print("task_create_update_complete=PASS")
