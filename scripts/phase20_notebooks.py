@@ -273,7 +273,7 @@ def create_notebook(root: str | Path, name: str, title: str | None = None) -> di
     document = {
         "cells": [
             {"cell_type": "markdown", "metadata": {}, "id": "project-continue-intro",
-             "source": [f"# {heading}\\n", "\\n", "Review this notebook before running any code.\\n"]},
+             "source": [f"# {heading}\n", "\n", "Review this notebook before running any code.\n"]},
             {"cell_type": "code", "execution_count": None, "metadata": {},
              "outputs": [], "id": "project-continue-first-cell", "source": []},
         ],
@@ -282,7 +282,7 @@ def create_notebook(root: str | Path, name: str, title: str | None = None) -> di
         "nbformat": 4, "nbformat_minor": 5,
     }
     validate_notebook_document(document)
-    payload = (json.dumps(document, ensure_ascii=False, indent=2) + "\\n").encode("utf-8")
+    payload = (json.dumps(document, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
     if len(payload) > MAX_NOTEBOOK_BYTES:
         raise ValueError("generated notebook exceeds size limit")
     flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
