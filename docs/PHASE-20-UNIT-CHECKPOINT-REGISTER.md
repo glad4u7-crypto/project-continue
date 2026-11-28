@@ -146,18 +146,18 @@
 
 | Unit ID | Checkpoint | Status | Evidence / run reference |
 |---|---|---|---|
-| U20-8-01 | Automated tests-এ temporary SQLite DB বাধ্যতামূলক | NOT STARTED | — |
-| U20-8-02 | Live database path শনাক্ত করে test runner-এ block | NOT STARTED | — |
-| U20-8-03 | Schema version, integrity_check ও foreign_key_check চালানো | NOT STARTED | — |
-| U20-8-04 | Backup create এবং SHA-256 checksum যাচাই | NOT STARTED | — |
-| U20-8-05 | Backup inventory ও restore preview-only report | NOT STARTED | — |
-| U20-8-06 | Corrupt/truncated backup reject test | NOT STARTED | — |
-| U20-8-07 | Interrupted restore ও rollback test disposable fixture-এ | NOT STARTED | — |
-| U20-8-08 | Idempotent recovery এবং existing row no-overwrite test | NOT STARTED | — |
-| U20-8-09 | Google Drive backup preservation যাচাই; কোনো mount পরিবর্তন নয় | NOT STARTED | — |
-| U20-8-10 | Real restore/delete/overwrite-এর জন্য আলাদা explicit approval gate | NOT STARTED | — |
+| U20-8-01 | Automated tests-এ temporary SQLite DB বাধ্যতামূলক | PASS | Runner 46118338614 SUCCESS; 33 SQLite acceptance tests; code SHA `068b7d5230f4a1dd0102ee9363460effc3ff6fd6`; report `reports/Phase-20/2026-11-28-Phase20-8-SQLite-Backup-Recovery.md` |
+| U20-8-02 | Live database path শনাক্ত করে test runner-এ block | PASS | Runner 46118338614 SUCCESS; 33 SQLite acceptance tests; code SHA `068b7d5230f4a1dd0102ee9363460effc3ff6fd6`; report `reports/Phase-20/2026-11-28-Phase20-8-SQLite-Backup-Recovery.md` |
+| U20-8-03 | Schema version, integrity_check ও foreign_key_check চালানো | PASS | Runner 46118338614 SUCCESS; 33 SQLite acceptance tests; code SHA `068b7d5230f4a1dd0102ee9363460effc3ff6fd6`; report `reports/Phase-20/2026-11-28-Phase20-8-SQLite-Backup-Recovery.md` |
+| U20-8-04 | Backup create এবং SHA-256 checksum যাচাই | PASS | Runner 46118338614 SUCCESS; 33 SQLite acceptance tests; code SHA `068b7d5230f4a1dd0102ee9363460effc3ff6fd6`; report `reports/Phase-20/2026-11-28-Phase20-8-SQLite-Backup-Recovery.md` |
+| U20-8-05 | Backup inventory ও restore preview-only report | PASS | Runner 46118338614 SUCCESS; 33 SQLite acceptance tests; code SHA `068b7d5230f4a1dd0102ee9363460effc3ff6fd6`; report `reports/Phase-20/2026-11-28-Phase20-8-SQLite-Backup-Recovery.md` |
+| U20-8-06 | Corrupt/truncated backup reject test | PASS | Runner 46118338614 SUCCESS; 33 SQLite acceptance tests; code SHA `068b7d5230f4a1dd0102ee9363460effc3ff6fd6`; report `reports/Phase-20/2026-11-28-Phase20-8-SQLite-Backup-Recovery.md` |
+| U20-8-07 | Interrupted restore ও rollback test disposable fixture-এ | PASS | Runner 46118338614 SUCCESS; 33 SQLite acceptance tests; code SHA `068b7d5230f4a1dd0102ee9363460effc3ff6fd6`; report `reports/Phase-20/2026-11-28-Phase20-8-SQLite-Backup-Recovery.md` |
+| U20-8-08 | Idempotent recovery এবং existing row no-overwrite test | PASS | Runner 46118338614 SUCCESS; 33 SQLite acceptance tests; code SHA `068b7d5230f4a1dd0102ee9363460effc3ff6fd6`; report `reports/Phase-20/2026-11-28-Phase20-8-SQLite-Backup-Recovery.md` |
+| U20-8-09 | Google Drive backup preservation যাচাই; কোনো mount পরিবর্তন নয় | PASS | Runner 46118338614 SUCCESS; 33 SQLite acceptance tests; code SHA `068b7d5230f4a1dd0102ee9363460effc3ff6fd6`; report `reports/Phase-20/2026-11-28-Phase20-8-SQLite-Backup-Recovery.md` |
+| U20-8-10 | Real restore/delete/overwrite-এর জন্য আলাদা explicit approval gate | PASS | Runner 46118338614 SUCCESS; 33 SQLite acceptance tests; code SHA `068b7d5230f4a1dd0102ee9363460effc3ff6fd6`; report `reports/Phase-20/2026-11-28-Phase20-8-SQLite-Backup-Recovery.md` |
 
-**20.8 exit gate:** 10 of 10 unit checkpoints must have evidence-backed PASS, or an explicitly approved limitation recorded in the final report. No silent skips.
+**20.8 exit gate:** 10 of 10 unit checkpoints PASS. No production restore/delete/overwrite performed. PostgreSQL-specific integration remains unverified without DSNs.
 
 ## 20.9 — Streamlit ও browser acceptance
 
