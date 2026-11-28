@@ -3,6 +3,7 @@ import hashlib
 import json
 import os
 import sqlite3
+from pathlib import Path
 
 import pytest
 
