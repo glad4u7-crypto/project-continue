@@ -173,9 +173,9 @@ class SQLiteAdmissionController:
             )
             if cursor.rowcount != 1:
                 raise AdmissionRejected("request is missing, expired or not queued")
-            self._commit(manager)
+            self._commit(manager, connection)
         except BaseException as exc:
-            self._rollback(manager, exc)
+            self._rollback(manager, connection, exc)
             raise
 
     def release(self, request_id: str) -> bool:
