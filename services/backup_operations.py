@@ -145,6 +145,11 @@ class BackupOperations:
             raise ValueError("Restore destination must differ from backup source")
         if not Database.verify_backup(source):
             raise sqlite3.DatabaseError("Restore source failed integrity verification")
+        missing_parent_dirs = []
+        parent = target.parent
+        while not parent.exists():
+            missing_parent_dirs.append(parent)
+            parent = parent.parent
         target.parent.mkdir(parents=True, exist_ok=True)
         destination_db = Database(target)
         try:
@@ -158,6 +163,11 @@ class BackupOperations:
             return target
         except BaseException:
             target.unlink(missing_ok=True)
+            for directory in missing_parent_dirs:
+                try:
+                    directory.rmdir()
+                except OSError:
+                    break
             raise
         finally:
             destination_db.close()
