@@ -39,7 +39,7 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 
 
 def git_blob_sha1(payload: bytes) -> str:
-    return hashlib.sha1(f"blob {len(payload)}\\0".encode("ascii") + payload).hexdigest()
+    return hashlib.sha1(f"blob {len(payload)}\0".encode("ascii") + payload).hexdigest()
 
 
 def _load_trusted_blob(
