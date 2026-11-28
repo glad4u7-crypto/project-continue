@@ -54,15 +54,15 @@ def parse_test_counts(output: str) -> dict[str, int]:
     """Parse both pytest -q and verbose terminal summary formats."""
     summary_line = None
     for line in output.splitlines():
-        if re.search(r"\\bin\\s+[0-9.]+s\\s*$", line) and re.search(
-            r"\\d+\\s+(?:subtests passed|passed|failed|errors?|skipped|xfailed|xpassed|deselected)\\b",
+        if re.search(r"\bin\s+[0-9.]+s\s*$", line) and re.search(
+            r"\d+\s+(?:subtests passed|passed|failed|errors?|skipped|xfailed|xpassed|deselected)\b",
             line,
         ):
             summary_line = line
     if summary_line is None:
         return {}
     counts: dict[str, int] = {}
-    pattern = r"(\\d+)\\s+(subtests passed|passed|failed|errors?|skipped|xfailed|xpassed|deselected)"
+    pattern = r"(\d+)\s+(subtests passed|passed|failed|errors?|skipped|xfailed|xpassed|deselected)"
     for count, label in re.findall(pattern, summary_line):
         key = "subtests_passed" if label == "subtests passed" else (
             "errors" if label in ("error", "errors") else label
