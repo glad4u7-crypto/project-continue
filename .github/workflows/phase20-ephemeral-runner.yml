@@ -13,6 +13,8 @@ on:
       - "tests/test_phase20_test_harness.py"
       - "scripts/phase20_notebooks.py"
       - "tests/test_phase20_notebooks.py"
+      - "scripts/phase20_notebook_policy.py"
+      - "tests/test_phase20_notebook_policy.py"
       - ".github/workflows/phase20-ephemeral-runner.yml"
   pull_request:
     branches: [main]
@@ -26,6 +28,8 @@ on:
       - "tests/test_phase20_test_harness.py"
       - "scripts/phase20_notebooks.py"
       - "tests/test_phase20_notebooks.py"
+      - "scripts/phase20_notebook_policy.py"
+      - "tests/test_phase20_notebook_policy.py"
       - ".github/workflows/phase20-ephemeral-runner.yml"
 
 permissions:
@@ -69,6 +73,6 @@ jobs:
       - name: Run optional lint check when installed
         run: python scripts/phase20_test_harness.py lint
       - name: Run Phase 20.7 notebook safety acceptance
-        run: python -m pytest -q tests/test_phase20_notebooks.py tests/test_colab_notebook_discovery.py tests/test_colab_notebook_creation.py
+        run: python -m pytest -q tests/test_phase20_notebooks.py tests/test_phase20_notebook_policy.py tests/test_colab_notebook_discovery.py tests/test_colab_notebook_creation.py
       - name: Run full regression and collect result
         run: python scripts/phase20_test_harness.py full
