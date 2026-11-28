@@ -59,6 +59,15 @@ def test_rejects_cell_source_output_and_metadata_bounds():
         validate_notebook_document(doc)
 
 
+def test_rejects_oversized_cell_output_text():
+    doc = notebook()
+    doc["cells"][0]["outputs"] = [{
+        "output_type": "stream", "text": "x" * 16385,
+    }]
+    with pytest.raises(ValueError):
+        validate_notebook_document(doc)
+
+
 def test_rejects_oversized_notebook_file(tmp_path):
     path = tmp_path / "large.ipynb"
     path.write_bytes(b" " * (MAX_NOTEBOOK_BYTES + 1))
