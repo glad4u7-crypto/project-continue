@@ -15,7 +15,7 @@
 | 20.4 Ephemeral execution runner | COMPLETE | 10 | 10 | `reports/Phase-20/2026-11-28-Phase20-4-Ephemeral-Runner.md`; dedicated run `46110154120` and main CI `46110154179` SUCCESS on `29a06b4f12bc61054af45e196f036ea480d82da1` (369 passed, 11 skipped, 34 subtests; 79% coverage) | All 10 units PASS; runner is fixed-task compile/test only; on-demand workflow_dispatch remains unavailable |
 | 20.5 Repository read/write ও patch workflow | COMPLETE | 11 | 11 | `reports/Phase-20/2026-11-28-Phase20-5-Repository-Read-Write-Guard.md`; dedicated run `46111096475` and main CI `46111096455` SUCCESS on code SHA `cf6e342`; PR #71 DRAFT, not merged; 385 passed, 11 skipped, 52 subtests; 79% coverage | All U20-5-01..11 PASS; host adapter remains an integration boundary; PostgreSQL tests skipped without DSNs |
 | 20.6 Python compile, unit test ও debugging | COMPLETE | 11 | 11 | `reports/Phase-20/2026-11-28-Phase20-6-Python-Compile-Test-Debugging.md`; exact code SHA `2ff748243837ab3f99898c173779d3f8cdb868ec`; runner `46122965873`, main CI `46122965859`, PostgreSQL `46122965932` all SUCCESS | All U20-6-01..11 PASS; U20-6-05 explicitly not applicable (no configured lint/type-check tool); next parent phase 20.7 notebook inventory/create/read/execute |
-| 20.7 Notebook inventory, create, read ও execute | IN PROGRESS | 4 | 12 | U20-7-01..04 PASS; reports `2026-11-28-U20-7-01-Notebook-Inventory.md` and `2026-11-28-U20-7-02-04-Notebook-Validation-and-Creation.md`; exact-head CI `46123632152` SUCCESS (402 passed, 11 skipped, 52 subtests) | Next: U20-7-05 notebook-read secret/token redaction, then explicit execution allow-list and isolated runner; no Colab/Drive execution assumed |
+| 20.7 Notebook inventory, create, read ও execute | IN PROGRESS | 5 | 12 | U20-7-01..05 PASS; exact-head CI `46124048442` SUCCESS (405 passed, 11 skipped, 52 subtests); reports `2026-11-28-U20-7-01-Notebook-Inventory.md`, `2026-11-28-U20-7-02-04-Notebook-Validation-and-Creation.md`, `2026-11-28-U20-7-05-Redacted-Notebook-Read.md` | Next: U20-7-06 execution allow-list and explicit notebook identity/commit binding; no Colab/Drive execution assumed |
 | 20.8 SQLite, backup ও recovery safety | NOT STARTED | 0 | 10 | Initial planning baseline only | Complete in order; see unit register |
 | 20.9 Streamlit ও browser acceptance | NOT STARTED | 0 | 11 | Initial planning baseline only | Complete in order; see unit register |
 | 20.10 Recovery, idempotency ও resumability | NOT STARTED | 0 | 10 | Initial planning baseline only | Complete in order; see unit register |
@@ -26,11 +26,11 @@
 ## Global counters
 
 - Total atomic checkpoints: 142
-- PASS: 67 (20.0: 7; 20.1: 8; 20.2: 7; 20.3: 9; 20.4: 10; 20.5: 11; 20.6: 11; 20.7: 4)
+- PASS: 68 (20.0: 7; 20.1: 8; 20.2: 7; 20.3: 9; 20.4: 10; 20.5: 11; 20.6: 11; 20.7: 5)
 - FAIL: 0
 - BLOCKED: 0
 - UNAVAILABLE: 6 (20.1: 4; 20.2: 2)
-- NOT STARTED: 69
+- NOT STARTED: 68
 - Phase 20.0 exit gate: COMPLETE
 - Phase 20.1 capability audit: COMPLETE WITH 4 UNAVAILABLE LIMITATIONS; all 12 units have explicit evidence-backed dispositions.
 - Phase 20.2 progress: 7/9 PASS; U20-2-06 and U20-2-08 remain UNAVAILABLE with reasons in the review/follow-up reports. User explicitly approved proceeding with these limitations on 2026-11-28; this is an accepted-limitation disposition, not a full PASS.
@@ -38,7 +38,7 @@
 - Phase 20.4 progress: 10/10 PASS. Dedicated runner workflow `46110154120` and main CI `46110154179` both passed on exact SHA `29a06b4f12bc61054af45e196f036ea480d82da1`; runner suite 6 passed, dispatcher suite 53 passed, full suite 369 passed/11 PostgreSQL skipped, 34 subtests; coverage 79%. Artifact ID `15249342536`.
 - Phase 20.5 progress: 11/11 PASS. Main CI `46111096455` and dedicated runner `46111096475` passed on code SHA `cf6e342badd589f572ae05afecb64af2253ba58e`; 385 passed, 11 PostgreSQL skips, 52 subtests; coverage 79%. Artifact `15249911064`. Draft PR #71 opened; no merge or main-branch mutation.
 - Phase 20.6 progress: COMPLETE, 11/11 PASS. Exact code SHA `2ff748243837ab3f99898c173779d3f8cdb868ec`; dedicated runner `46122965873`, main CI `46122965859`, PostgreSQL integration `46122965932`, Dashboard Browser `46122965838`, Phase 14 `46122965892`, Cloud Acceptance `46122965866`, Phase 13 `46122965856` all SUCCESS. Runner: 12 safety tests passed/5 subtests; compile PASS; dispatcher 69 passed/47 subtests; full suite 391 passed, 11 skipped, 52 subtests. PostgreSQL-enabled suite: 402 passed, 52 subtests. U20-6-05 passed applicability assessment (no configured lint/type-check tool; none claimed); U20-6-06..11 structured output, failure classification, synthetic intentional-failure detection, feature-branch patch, exact-SHA retest and one-retry policy verified. Report: `2026-11-28-Phase20-6-Python-Compile-Test-Debugging.md`. Next: Phase 20.7.
-- Phase 20.7 progress: 4/12 PASS. U20-7-01 repository inventory found one notebook; U20-7-02 JSON/nbformat validation, U20-7-03 cell/metadata/size/output bounds, and U20-7-04 exclusive create/no-overwrite are now PASS. The existing 4.5 notebook lacked required cell IDs; added deterministic IDs on feature branch and preserved sources/outputs. Validator/tests: `scripts/notebook_validation.py`, `tests/test_notebook_validation.py`; exact-head main CI `46123632152` SUCCESS, 402 passed, 11 skipped, 52 subtests. Reports: `2026-11-28-U20-7-01-Notebook-Inventory.md`, `2026-11-28-U20-7-02-04-Notebook-Validation-and-Creation.md`. No notebook code executed; no Colab/Drive used.
+- Phase 20.7 progress: 5/12 PASS. U20-7-01..04 cover read-only inventory, JSON/nbformat validation, bounded cell/metadata/output validation and exclusive no-overwrite creation. U20-7-05 adds validated, recursively redacted notebook read-back; exact-head CI `46124048442` SUCCESS (405 passed, 11 skipped, 52 subtests). Reports: `2026-11-28-U20-7-01-Notebook-Inventory.md`, `2026-11-28-U20-7-02-04-Notebook-Validation-and-Creation.md`, `2026-11-28-U20-7-05-Redacted-Notebook-Read.md`. U20-7-06..12 remain NOT STARTED. No notebook code executed; no Colab/Drive used.
 
 ## Update rules
 
