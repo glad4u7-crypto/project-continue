@@ -127,18 +127,18 @@
 
 | Unit ID | Checkpoint | Status | Evidence / run reference |
 |---|---|---|---|
-| U20-7-01 | Notebook inventory read-only ভাবে সংগ্রহ | NOT STARTED | — |
-| U20-7-02 | Notebook JSON এবং nbformat version validation | NOT STARTED | — |
-| U20-7-03 | Cell type, metadata, size ও output bounds যাচাই | NOT STARTED | — |
-| U20-7-04 | Exclusive create এবং existing file no-overwrite test | NOT STARTED | — |
-| U20-7-05 | Notebook read-এর সময় secret/token redaction | NOT STARTED | — |
-| U20-7-06 | Execution allow-list এবং explicit notebook identity/commit binding | NOT STARTED | — |
-| U20-7-07 | Isolated kernel/runner; production Drive mount ও secrets ছাড়া execution | NOT STARTED | — |
-| U20-7-08 | Network access default-deny এবং timeout enforce | NOT STARTED | — |
-| U20-7-09 | Cell output, execution count, traceback ও artifact সংরক্ষণ | NOT STARTED | — |
-| U20-7-10 | Harmless notebook real end-to-end execution | NOT STARTED | — |
-| U20-7-11 | Malicious/unauthorized notebook reject | NOT STARTED | — |
-| U20-7-12 | Duplicate name, malformed JSON, timeout ও kernel crash test | NOT STARTED | — |
+| U20-7-01 | Notebook inventory read-only ভাবে সংগ্রহ | PASS | Exact SHA e7201feecc43789c195f702e95212f2b39e2fb2d; scripts/phase20_notebooks.py inventory returns bounded relative paths, sizes, SHA-256 and valid/invalid/oversize status; hidden files and symlinks skipped; read-only inventory test passed in dedicated run 46116960061. |
+| U20-7-02 | Notebook JSON এবং nbformat version validation | PASS | UTF-8 JSON object and nbformat 4.0–4.5 enforced; malformed JSON, unsupported versions and cell types rejected; test suite passed. |
+| U20-7-03 | Cell type, metadata, size ও output bounds যাচাই | PASS | Limits: notebook 256 KiB, 200 cells, 32 KiB source/cell, 20 outputs/code cell, 16 KiB text/output and metadata nesting depth 8; malformed and oversize cases tested. |
+| U20-7-04 | Exclusive create এবং existing file no-overwrite test | PASS | Exclusive O_CREAT|O_EXCL + O_NOFOLLOW, mode 0600, JSON read-back/hash verification; duplicate and symlink collision leave original data untouched. |
+| U20-7-05 | Notebook read-এর সময় secret/token redaction | PASS | Recursive redaction covers cell source, output text/MIME data, tracebacks and metadata; API key, bearer, GitHub token and private-key patterns covered. |
+| U20-7-06 | Execution allow-list এবং explicit notebook identity/commit binding | PASS | Empty default-deny schema; authorization requires exact relative path, content SHA-256, explicit approval ID, current checked-out Git commit and network/secrets/external-mount flags all false; unlisted/mutated/stale entries rejected. |
+| U20-7-07 | Isolated kernel/runner; production Drive mount ও secrets ছাড়া execution | PASS | Disposable Docker runner: UID 65534, read-only rootfs, all capabilities dropped, no-new-privileges, 512 MiB memory, 1 CPU, 64 PID cap, bounded tmpfs; only sanitized notebook input mounted read-only; no host environment passed. CI fixture confirmed GITHUB_TOKEN absent. |
+| U20-7-08 | Network access default-deny এবং timeout enforce | PASS | Docker network=none; kernel timeout 1–120 seconds; real socket probe reported network-denied; 2-second infinite-loop probe terminated and retained failure artifact. |
+| U20-7-09 | Cell output, execution count, traceback ও artifact সংরক্ষণ | PASS | nbclient executes cells, preserves outputs/execution counts; bounded base64 artifact returned from ephemeral container; recursively redacted artifact saved with SHA-256; timeout and kernel-crash failure artifacts validated. |
+| U20-7-10 | Harmless notebook real end-to-end execution | PASS | Dedicated run 46116960061 on exact SHA: image built; harmless fixture executed; output read-back valid; network DENIED; GITHUB_TOKEN absent; artifact 1,495 bytes, SHA-256 8a4f6724f32cd726cffeb30c93de5484c104dcea75785c07f599cb860a0a81c. |
+| U20-7-11 | Malicious/unauthorized notebook reject | PASS | Default-deny policy rejects unlisted malicious notebook, wrong content hash, missing approval, unsafe capability flags and stale commit before Docker invocation; policy tests passed. |
+| U20-7-12 | Duplicate name, malformed JSON, timeout ও kernel crash test | PASS | Duplicate create/no-overwrite, malformed JSON/nbformat, oversized outputs, path traversal and symlinks tested; live CI timeout and os._exit kernel-crash probes both returned EXPECTED_FAILURE_RETAINED with valid sanitized artifacts. |
 
 **20.7 exit gate:** 12 of 12 unit checkpoints must have evidence-backed PASS, or an explicitly approved limitation recorded in the final report. No silent skips.
 

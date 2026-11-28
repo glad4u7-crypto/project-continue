@@ -15,7 +15,7 @@
 | 20.4 Ephemeral execution runner | COMPLETE | 10 | 10 | `reports/Phase-20/2026-11-28-Phase20-4-Ephemeral-Runner.md`; dedicated run `46110154120` and main CI `46110154179` SUCCESS on `29a06b4f12bc61054af45e196f036ea480d82da1` (369 passed, 11 skipped, 34 subtests; 79% coverage) | All 10 units PASS; runner is fixed-task compile/test only; on-demand workflow_dispatch remains unavailable |
 | 20.5 Repository read/write ও patch workflow | COMPLETE | 11 | 11 | `reports/Phase-20/2026-11-28-Phase20-5-Repository-Read-Write-Guard.md`; dedicated run `46111096475` and main CI `46111096455` SUCCESS on code SHA `cf6e342`; PR #71 DRAFT, not merged; 385 passed, 11 skipped, 52 subtests; 79% coverage | All U20-5-01..11 PASS; host adapter remains an integration boundary; PostgreSQL tests skipped without DSNs |
 | 20.6 Python compile, unit test ও debugging | COMPLETE | 11 | 11 | Phase 20.6 report; dedicated run 46112817942, main CI 46112817976, PR CI 46112838101 SUCCESS on exact SHA 014703741d2c4b50f433967a41757bb0d319cb5c (395 passed, 11 skipped, 52 subtests) | All 11 checkpoints PASS; optional Ruff lint N/A; PostgreSQL DSN tests remain skipped; PR #72 DRAFT, no merge |
-| 20.7 Notebook inventory, create, read ও execute | NOT STARTED | 0 | 12 | Initial planning baseline only | Complete in order; see unit register |
+| 20.7 Notebook inventory, create, read ও execute | COMPLETE | 12 | 12 | Phase 20.7 report; dedicated runner 46116960061 and main CI 46116960117 SUCCESS on exact SHA e7201feecc43789c195f702e95212f2b39e2fb2d; 418 passed, 11 PostgreSQL DSN skips, 52 subtests | All 12 checkpoints PASS; production allow-list remains empty by default; no Drive mount, secrets, network or merge |
 | 20.8 SQLite, backup ও recovery safety | NOT STARTED | 0 | 10 | Initial planning baseline only | Complete in order; see unit register |
 | 20.9 Streamlit ও browser acceptance | NOT STARTED | 0 | 11 | Initial planning baseline only | Complete in order; see unit register |
 | 20.10 Recovery, idempotency ও resumability | NOT STARTED | 0 | 10 | Initial planning baseline only | Complete in order; see unit register |
@@ -26,11 +26,11 @@
 ## Global counters
 
 - Total atomic checkpoints: 142
-- PASS: 63 (20.0: 7; 20.1: 8; 20.2: 7; 20.3: 9; 20.4: 10; 20.5: 11; 20.6: 11)
+- PASS: 75 (20.0: 7; 20.1: 8; 20.2: 7; 20.3: 9; 20.4: 10; 20.5: 11; 20.6: 11; 20.7: 12)
 - FAIL: 0
 - BLOCKED: 0
 - UNAVAILABLE: 6 (20.1: 4; 20.2: 2)
-- NOT STARTED: 73
+- NOT STARTED: 61
 - Phase 20.0 exit gate: COMPLETE
 - Phase 20.1 capability audit: COMPLETE WITH 4 UNAVAILABLE LIMITATIONS; all 12 units have explicit evidence-backed dispositions.
 - Phase 20.2 progress: 7/9 PASS; U20-2-06 and U20-2-08 remain UNAVAILABLE with reasons in the review/follow-up reports. User explicitly approved proceeding with these limitations on 2026-11-28; this is an accepted-limitation disposition, not a full PASS.
@@ -38,6 +38,7 @@
 - Phase 20.4 progress: 10/10 PASS. Dedicated runner workflow `46110154120` and main CI `46110154179` both passed on exact SHA `29a06b4f12bc61054af45e196f036ea480d82da1`; runner suite 6 passed, dispatcher suite 53 passed, full suite 369 passed/11 PostgreSQL skipped, 34 subtests; coverage 79%. Artifact ID `15249342536`.
 - Phase 20.5 progress: 11/11 PASS. Main CI `46111096455` and dedicated runner `46111096475` passed on code SHA `cf6e342badd589f572ae05afecb64af2253ba58e`; 385 passed, 11 PostgreSQL skips, 52 subtests; coverage 79%. Artifact `15249911064`. Draft PR #71 opened; no merge or main-branch mutation.
 - Phase 20.6 progress: 11/11 PASS. Dedicated runner 46112817942, main CI 46112817976 and PR CI 46112838101 all SUCCESS on exact SHA 014703741d2c4b50f433967a41757bb0d319cb5c; Python 3.11.18; focused 85 passed, full regression 395 passed/11 PostgreSQL DSN skips/52 subtests; failure probe detected; retry exhaustion maps to BLOCKED. Optional Ruff lint explicitly SKIPPED; see dated Phase 20.6 report. Draft PR #72 stacked on PR #71; no merge or main-branch mutation.
+- Phase 20.7 progress: 12/12 PASS. Exact tested SHA e7201feecc43789c195f702e95212f2b39e2fb2d; dedicated runner 46116960061 and main CI 46116960117 SUCCESS. Notebook safety suite 35 passed; focused dispatcher suite 85 passed/52 subtests; full regression 418 passed/11 PostgreSQL DSN skips/52 subtests. Real isolated Docker notebook E2E confirmed output read-back, network denied, no GITHUB_TOKEN, timeout and kernel-crash artifacts retained. Runtime image ID sha256:26e1dc2d290b9be33650860ebd0419c14e673929de9f0b7a6a409613c515716f. Production allow-list remains empty; see dated report. Draft PR #73 stacked on PR #72; no merge or main mutation.
 
 ## Update rules
 
