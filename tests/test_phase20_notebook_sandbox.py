@@ -22,7 +22,7 @@ def test_execution_rejects_unpinned_image_before_docker(tmp_path, monkeypatch):
 def test_execution_rejects_commit_mismatch_before_docker(tmp_path, monkeypatch):
     def fake_run(args, **kwargs):
         if args[:3] == ["git", "rev-parse", "HEAD"]:
-            return subprocess.CompletedProcess(args, 0, stdout="a"*40 + "\\n", stderr="")
+            return subprocess.CompletedProcess(args, 0, stdout="a"*40 + "\n", stderr="")
         raise AssertionError("docker must not be called")
     monkeypatch.setattr(subprocess, "run", fake_run)
     notebook = tmp_path / "x.ipynb"
