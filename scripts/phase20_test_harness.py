@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 TIMEOUT_SECONDS = 600
 MAX_STREAM_BYTES = 32 * 1024
 MAX_RETRIES = 1
-SUMMARY = re.compile(r"(?P<passed>\d+) passed|(?P<failed>\d+) failed|(?P<skipped>\d+) skipped|(?P<errors>\d+) errors")
+SUMMARY = re.compile(r"(?P<passed>\d+) passed|(?P<failed>\d+) failed|(?P<skipped>\d+) skipped|(?P<errors>\d+) errors?")
 SECRET_PATTERNS = (
     re.compile(r"(?i)(token|password|secret|api[_-]?key)(\s*[=:]\s*)[^\s,;]+"),
     re.compile(r"gh[pousr]_[A-Za-z0-9_]{20,}"),
