@@ -38,6 +38,13 @@ def execute_notebook_sandbox(
         raise PermissionError("sandbox image must be pinned by immutable image ID")
     if not isinstance(timeout_seconds, int) or isinstance(timeout_seconds, bool) or not 1 <= timeout_seconds <= _MAX_TIMEOUT:
         raise ValueError("execution timeout must be between 1 and 120 seconds")
+    repo_root = Path(__file__).resolve().parents[1]
+    verified_commit = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=repo_root,
+        capture_output=True, text=True, timeout=10, check=False,
+    )
+    if verified_commit.returncode != 0 or verified_commit.stdout.strip() != current_commit:
+        raise PermissionError("current repository commit could not be verified")
     authorization = authorize_notebook(
         notebook_root, notebook_name, current_commit=current_commit,
         requested_commit=requested_commit, approval_id=approval_id,
@@ -57,6 +64,8 @@ def execute_notebook_sandbox(
     with tempfile.TemporaryDirectory(prefix="pc-notebook-") as temp:
         staged_input = Path(temp) / "input.ipynb"
         staged_input.write_text(json.dumps(source_document, ensure_ascii=False), encoding="utf-8")
+        staged_input.chmod(0o444)
+        Path(temp).chmod(0o755)
         # The only bind mount is a sanitized, read-only notebook. Output and /tmp
         # are bounded tmpfs mounts. No host environment variables are forwarded.
         create = [
@@ -114,5 +123,8 @@ def execute_notebook_sandbox(
         except subprocess.TimeoutExpired as exc:
             raise NotebookExecutionError("sandbox execution timed out") from exc
         finally:
-            subprocess.run([docker_bin, "rm", "-f", container_name],
-                           capture_output=True, text=True, timeout=20, check=False)
+            try:
+                subprocess.run([docker_bin, "rm", "-f", container_name],
+                               capture_output=True, text=True, timeout=20, check=False)
+            except (OSError, subprocess.TimeoutExpired):
+                pass
