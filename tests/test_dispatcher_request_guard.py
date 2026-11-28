@@ -1,4 +1,4 @@
-"""Deterministic tests for request validation and durable replay storage."""
+"""Deterministic tests for canonical request validation and durable replay storage."""
 import tempfile
 import unittest
 from datetime import datetime, timedelta, timezone
@@ -14,15 +14,15 @@ class RequestGuardTests(unittest.TestCase):
     def setUp(self):
         self.now = datetime.now(timezone.utc).replace(microsecond=0)
         self.envelope = {
-            "schema_version": "1",
+            "schema_version": "1.0",
             "request_id": str(uuid4()),
             "nonce": str(uuid4()),
+            "idempotency_key": "retry-key-12345678",
             "issued_at": self.now.isoformat(),
             "expires_at": (self.now + timedelta(seconds=120)).isoformat(),
             "actor": {"id": "354281323", "type": "user"},
-            "repository": {"id": 1463557248, "full_name": "glad4u7-crypto/project-continue"},
-            "commit_sha": "a" * 40,
-            "task": "repo.read_file",
+            "repository": {"id": 1463557248, "full_name": "glad4u7-crypto/project-continue", "commit_sha": "a" * 40},
+            "task": {"task_id": "repo.read_file", "arguments": {"path": "README.md"}},
         }
         self.claimed = set()
 
@@ -52,13 +52,10 @@ class RequestGuardTests(unittest.TestCase):
         with self.assertRaises(RequestRejected):
             self.validate(dict(self.envelope, unexpected=True))
 
-    def test_malformed_timestamp_rejected(self):
-        with self.assertRaises(RequestRejected):
-            self.validate(dict(self.envelope, issued_at="yesterday"))
-
-    def test_naive_timestamp_rejected(self):
-        with self.assertRaises(RequestRejected):
-            self.validate(dict(self.envelope, issued_at=self.now.replace(tzinfo=None).isoformat()))
+    def test_malformed_and_naive_timestamps_rejected(self):
+        for value in ("yesterday", self.now.replace(tzinfo=None).isoformat()):
+            with self.subTest(value=value), self.assertRaises(RequestRejected):
+                self.validate(dict(self.envelope, issued_at=value))
 
     def test_future_expired_and_excessive_ttl_rejected(self):
         cases = (
@@ -70,16 +67,17 @@ class RequestGuardTests(unittest.TestCase):
             with self.subTest(change=change), self.assertRaises(RequestRejected):
                 self.validate(dict(self.envelope, **change))
 
-    def test_invalid_actor_repository_sha_and_task_rejected(self):
+    def test_invalid_actor_repository_commit_task_and_idempotency_rejected(self):
         cases = (
-            ("actor", {"id": "x", "type": "user"}),
-            ("repository", {"id": 0, "full_name": "owner/repo"}),
-            ("commit_sha", "bad"),
-            ("task", "repo.delete_file"),
+            {"actor": {"id": "x", "type": "user"}},
+            {"repository": {"id": 0, "full_name": "owner/repo", "commit_sha": "a" * 40}},
+            {"repository": dict(self.envelope["repository"], commit_sha="bad")},
+            {"task": {"task_id": "repo.delete", "arguments": {}}},
+            {"idempotency_key": "short"},
         )
-        for key, value in cases:
-            with self.subTest(key=key), self.assertRaises(RequestRejected):
-                self.validate(dict(self.envelope, **{key: value}))
+        for change in cases:
+            with self.subTest(change=change), self.assertRaises(RequestRejected):
+                self.validate(dict(self.envelope, **change))
 
     def test_duplicate_pair_rejected(self):
         self.validate()
@@ -110,23 +108,23 @@ class SQLiteReplayStoreTests(unittest.TestCase):
         self.db.close()
         self.tempdir.cleanup()
 
-    def test_guard_validates_through_durable_store_before_handler_use(self):
+    def test_guard_validates_through_durable_store(self):
         guard = RequestGuard(self.store)
-        now = datetime.now(timezone.utc).replace(microsecond=0)
-        envelope = {
-            "schema_version": "1",
-            "request_id": str(uuid4()),
-            "nonce": str(uuid4()),
-            "issued_at": now.isoformat(),
-            "expires_at": (now + timedelta(seconds=90)).isoformat(),
-            "actor": {"id": "354281323", "type": "user"},
-            "repository": {"id": 1463557248, "full_name": "glad4u7-crypto/project-continue"},
-            "commit_sha": "b" * 40,
-            "task": "repo.read_file",
-        }
-        guard.validate(envelope, now=now)
+        guard.validate(self.envelope_for_guard(), now=datetime.now(timezone.utc))
         with self.assertRaises(RequestRejected):
-            guard.validate(envelope, now=now)
+            guard.validate(self.last_envelope, now=datetime.now(timezone.utc))
+
+    def envelope_for_guard(self):
+        now = datetime.now(timezone.utc).replace(microsecond=0)
+        self.last_envelope = {
+            "schema_version": "1.0", "request_id": str(uuid4()), "nonce": str(uuid4()),
+            "idempotency_key": "retry-key-12345678",
+            "actor": {"id": "354281323", "type": "user"},
+            "repository": {"id": 1463557248, "full_name": "glad4u7-crypto/project-continue", "commit_sha": "b" * 40},
+            "task": {"task_id": "repo.read_file", "arguments": {"path": "README.md"}},
+            "issued_at": now.isoformat(), "expires_at": (now + timedelta(seconds=90)).isoformat(),
+        }
+        return self.last_envelope
 
     def test_pair_claim_is_durable_across_store_instances(self):
         expiry = datetime.now(timezone.utc) + timedelta(minutes=2)
