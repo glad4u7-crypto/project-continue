@@ -1,6 +1,7 @@
 """Execute one already-authorized notebook inside the isolated Docker image."""
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import os
@@ -104,7 +105,9 @@ def main(argv: list[str] | None = None) -> int:
         target_type = type(getattr(exc, "obj", None)).__name__ if isinstance(exc, AttributeError) else None
         print(f"NOTEBOOK_RUNNER_ERROR={type(exc).__name__};ATTRIBUTE={attribute};TARGET_TYPE={target_type};TRACE={trace}", file=sys.stderr)
         return 2
+    artifact_payload = Path(args[1]).read_bytes()
     print(json.dumps(summary, sort_keys=True))
+    print("NOTEBOOK_ARTIFACT_BASE64=" + base64.b64encode(artifact_payload).decode("ascii"))
     return 0
 
 
