@@ -213,3 +213,66 @@ def test_restore_verification_failure_rolls_back_restored_file(tmp_path, monkeyp
     assert not (tmp_path / "rollback").exists()
     assert repository.get_project("rollback-project")["name"] == "Keep live data"
     db.close()
+
+
+
+def test_idempotent_restore_replay_returns_identical_copy_without_duplicate_rows(tmp_path):
+    live_db = Database(tmp_path / "live" / "db.sqlite3")
+    source_repository = ProjectRepository(live_db)
+    source_repository.initialize()
+    source_repository.create_project("stable-project", "Backup source")
+    source_repository.create_task("stable-task", "stable-project", "One task")
+    ops = BackupOperations(live_db, tmp_path / "backups")
+    backup = ops.create_backup()
+    destination = tmp_path / "idempotent" / "nested" / "restored.sqlite3"
+
+    first = ops.restore_drill_idempotent(backup, destination)
+    first_digest = sha256_file(first)
+    second = ops.restore_drill_idempotent(backup, destination)
+
+    assert first == second
+    assert sha256_file(second) == first_digest
+    restored_db = Database(second)
+    restored_repository = ProjectRepository(restored_db)
+    assert [item["id"] for item in restored_repository.list_projects()] == ["stable-project"]
+    assert [item["id"] for item in restored_repository.list_tasks("stable-project")] == ["stable-task"]
+    restored_db.close()
+    live_db.close()
+
+
+def test_idempotent_restore_never_overwrites_existing_rows(tmp_path):
+    live_db = Database(tmp_path / "live" / "db.sqlite3")
+    source_repository = ProjectRepository(live_db)
+    source_repository.initialize()
+    source_repository.create_project("same-project", "Backup version")
+    ops = BackupOperations(live_db, tmp_path / "backups")
+    backup = ops.create_backup()
+
+    destination = tmp_path / "existing" / "restored.sqlite3"
+    existing_db = Database(destination)
+    existing_repository = ProjectRepository(existing_db)
+    existing_repository.initialize()
+    existing_repository.create_project("same-project", "Existing destination row")
+    existing_db.close()
+    before = sha256_file(destination)
+
+    with pytest.raises(FileExistsError, match="different data"):
+        ops.restore_drill_idempotent(backup, destination)
+
+    assert sha256_file(destination) == before
+    reopened = Database(destination)
+    assert ProjectRepository(reopened).get_project("same-project")["name"] == "Existing destination row"
+    reopened.close()
+    live_db.close()
+
+
+def test_idempotent_restore_still_rejects_live_database_target(tmp_path):
+    live_db = Database(tmp_path / "live" / "db.sqlite3")
+    ProjectRepository(live_db).initialize()
+    ops = BackupOperations(live_db, tmp_path / "backups")
+    backup = ops.create_backup()
+
+    with pytest.raises(ValueError, match="live database"):
+        ops.restore_drill_idempotent(backup, live_db.path)
+    assert Database.verify_backup(backup) is True
+    live_db.close()
