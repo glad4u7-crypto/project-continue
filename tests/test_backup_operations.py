@@ -322,15 +322,16 @@ def test_delete_approval_cannot_be_replayed_or_used_for_another_target(tmp_path)
     os.utime(first, (old.timestamp(), old.timestamp()))
     os.utime(second, (old.timestamp(), old.timestamp()))
     preview = ops.preview_retention(keep_days=30)
+    single_target_preview = dict(preview, candidates=[str(first.resolve())], candidate_count=1)
     approval = ops.issue_delete_approval(
-        preview, first, approved_by="operator",
+        single_target_preview, first, approved_by="operator",
         confirmation=f"APPROVE DELETE {first.name}",
     )
     with pytest.raises(PermissionError):
-        ops.apply_retention(preview, approvals={str(second): approval})
+        ops.apply_retention(single_target_preview, approvals={str(second): approval})
     assert first.exists() and second.exists()
-    assert ops.apply_retention(preview, approvals={str(first): approval}) == [str(first)]
+    assert ops.apply_retention(single_target_preview, approvals={str(first): approval}) == [str(first)]
     with pytest.raises(PermissionError):
-        ops.apply_retention(preview, approvals={str(first): approval})
+        ops.apply_retention(single_target_preview, approvals={str(first): approval})
     assert second.exists()
     db.close()

@@ -170,30 +170,35 @@ class BackupOperations:
     def apply_retention(
         self, preview: dict, *, approvals: dict[str, DestructiveApproval] | None = None, confirm=False,
     ) -> list[str]:
+        if not isinstance(preview, dict) or not isinstance(preview.get("candidates"), list):
+            raise ValueError("A valid retention preview is required")
+        paths = [Path(raw) for raw in preview["candidates"]]
+        for path in paths:
+            if path.parent.resolve() != self.root or not path.name.startswith(self.PREFIX) or not path.name.endswith(self.SUFFIX):
+                raise ValueError("Retention candidate is outside the managed backup namespace")
         # The legacy boolean is deliberately never accepted as authorization.
         if confirm is True:
             raise PermissionError("Boolean confirmation is not an approval; use a scoped one-time approval")
-        if not isinstance(preview, dict) or not isinstance(preview.get("candidates"), list):
-            raise ValueError("A valid retention preview is required")
         approvals = approvals or {}
         digest = self._preview_digest(preview)
-        deleted = []
-        for raw in preview["candidates"]:
-            path = Path(raw)
-            if path.parent.resolve() != self.root or not path.name.startswith(self.PREFIX) or not path.name.endswith(self.SUFFIX):
-                raise ValueError("Retention candidate is outside the managed backup namespace")
-            if path.is_symlink() or not path.is_file():
-                continue
-            approval = approvals.get(str(path))
-            if not isinstance(approval, DestructiveApproval):
-                raise PermissionError("Every deletion requires a target-specific approval")
-            issued_scope = self._issued_approvals.get(approval.token)
-            if (approval.token in self._consumed_approvals or issued_scope is None
-                    or issued_scope != ("delete", str(path), digest)
-                    or approval.action != "delete" or approval.target != str(path)
+        # Preflight every candidate before deleting anything: partial retention
+        # must not occur when even one item lacks a valid approval.
+        for path in paths:
+            approval = approvals.get(str(path.resolve()))
+            issued_scope = self._issued_approvals.get(approval.token) if isinstance(approval, DestructiveApproval) else None
+            if (not isinstance(approval, DestructiveApproval)
+                    or approval.token in self._consumed_approvals
+                    or issued_scope != ("delete", str(path.resolve()), digest)
+                    or approval.action != "delete" or approval.target != str(path.resolve())
                     or approval.preview_sha256 != digest):
                 raise PermissionError("Approval is invalid, mismatched, or already consumed")
-            # Consume before the filesystem mutation so retries cannot replay it.
+        deleted = []
+        for path in paths:
+            if path.is_symlink():
+                raise ValueError("Retention candidate must not be a symbolic link")
+            if not path.is_file():
+                raise FileNotFoundError("Retention candidate disappeared after preview")
+            approval = approvals[str(path.resolve())]
             self._consumed_approvals.add(approval.token)
             self._approval_audit.append({
                 "event": "approval_consumed", "action": "delete", "target": path.name,
@@ -201,7 +206,7 @@ class BackupOperations:
                 "consumed_at": self.clock().astimezone(timezone.utc).isoformat(),
             })
             path.unlink()
-            deleted.append(str(path))
+            deleted.append(str(path.resolve()))
         return deleted
 
     def restore_drill(self, backup_path: str | Path, destination: str | Path) -> Path:
