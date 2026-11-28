@@ -51,6 +51,8 @@ class BackupOperations:
             try:
                 digest = sha256_file(item)
                 integrity_verified = Database.verify_backup(item)
+                if not integrity_verified:
+                    raise sqlite3.DatabaseError("Backup failed integrity verification")
             except (OSError, sqlite3.DatabaseError) as exc:
                 error_type = type(exc).__name__
             entries.append({
