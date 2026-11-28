@@ -20,6 +20,8 @@ on:
       - "scripts/phase20_runner.py"
       - "tests/test_dispatcher_*.py"
       - "tests/test_phase20_runner.py"
+      - "scripts/phase20_test_harness.py"
+      - "tests/test_phase20_test_harness.py"
       - ".github/workflows/phase20-ephemeral-runner.yml"
 
 permissions:
