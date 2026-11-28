@@ -41,12 +41,12 @@ The connector action inventory does NOT expose a workflow-dispatch action, Codes
 - Job log excerpt reports GITHUB_TOKEN permissions Contents: read and Metadata: read. This describes that run's token, not the connector's overall repository permission.
 - Artifact: https://github.com/glad4u7-crypto/project-continue/actions/runs/46021825415
 - Artifact ID 15207999445; digest and ZIP read-back recorded above.
-- Run 46093587157 was automatically started by the repository's pull_request workflow after Draft PR #70 was created. It was still in progress at the time of the initial audit; it is not evidence of workflow_dispatch capability.
+- Run 46093587157 was automatically started by the repository's pull_request workflow after Draft PR #70 was created. It completed successfully on exact head SHA f6362e75842c24337499bbc2e769c4dd2341f690; job 140819820015 completed successfully and the job log records `321 passed in 14.56s`. This is PR-triggered CI evidence, not evidence of workflow_dispatch capability.
 
 ## Safety and disposition
 
 - main branch was not modified by this audit.
 - Production database, Streamlit service, Colab runtime, notebook contents, Google Drive backup and secret values were not touched.
-- Audit branch and Draft PR #70 are intentionally retained as evidence; PR #70 is explicitly marked DO NOT MERGE. No merge was performed.
+- Audit branch `audit/phase20-1-capability-20261128` and its marker file are retained as evidence. Draft PR #70 was created, updated, read back, and then closed without merging. No merge was performed.
 - The four UNAVAILABLE items are limitations of the connected tool surface, not proof that the underlying GitHub account lacks those permissions.
 - Phase 20.1 audit disposition: all 12 checkpoints classified; 8 PASS and 4 UNAVAILABLE. The audit matrix is complete, but the unavailable execution/security-management capabilities remain blockers for later implementation phases.
