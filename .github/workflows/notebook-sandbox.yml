@@ -7,6 +7,7 @@ on:
       - "notebook-sandbox/**"
       - "scripts/notebook_sandbox.py"
       - "scripts/notebook_sandbox_e2e.py"
+      - "scripts/notebook_sandbox_failure_modes.py"
       - "scripts/notebook_container_runner.py"
       - "tests/fixtures/notebooks/**"
       - "scripts/notebook_read.py"
@@ -84,6 +85,8 @@ jobs:
           pip-audit -r notebook-sandbox/requirements.txt
       - name: Run harmless notebook end-to-end
         run: python -m scripts.notebook_sandbox_e2e --output-dir "$RUNNER_TEMP/notebook-artifacts"
+      - name: Verify kernel crash and wall-clock timeout fail closed
+        run: python -m scripts.notebook_sandbox_failure_modes --output-dir "$RUNNER_TEMP/notebook-failure-modes"
       - name: Upload redacted harmless notebook artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
