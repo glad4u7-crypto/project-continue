@@ -53,3 +53,24 @@ Dashboard Browser Acceptance `46138614914` and Cloud Acceptance `46138614952` we
 - These failures are preserved in Actions history. The corrected exact SHA above passes the complete suite.
 
 **Disposition:** U20-8-05 PASS. Next required unit: U20-8-06 — reject corrupt/truncated backup tests. PR #71 remains draft and unmerged; `main` and live database state are untouched.
+
+
+## Latest exact-head verification addendum
+
+**Retest timestamp:** 2026-11-28 16:42 Asia/Kolkata  
+**Latest exact code SHA:** `e5f60887d544940e4fcb74958499842f7c34209a`
+
+The above implementation and its original evidence were revalidated on the current feature-branch head. The latest patch additionally provides `BackupOperations.inventory_backups()` and `BackupOperations.preview_restore()` for managed backup roots, including preflight rejection of symlink/unmanaged sources, the live database target, existing destinations and source/destination identity. A successful destination preview records `actions_performed=()` and does not create the destination or its parent.
+
+All following workflows checked out the exact SHA above and succeeded:
+
+- Main CI [run 46138628921](https://github.com/glad4u7-crypto/project-continue/actions/runs/46138628921): **455 passed, 11 skipped, 52 subtests passed**; compile, secret scan, dependency audit, container build, Compose validation, smoke test, focused tests and full regression passed. Artifact ID `15260911078`, 329,900 bytes, SHA-256 `2557c83c2e2e5b03ce037c179aca67b2bf439bebb8ea9b4fc7a8384da27b115c`.
+- Fixed-task runner [run 46138628969](https://github.com/glad4u7-crypto/project-continue/actions/runs/46138628969): SUCCESS; **455 passed, 11 skipped, 52 subtests passed**.
+- PostgreSQL integration [run 46138628917](https://github.com/glad4u7-crypto/project-continue/actions/runs/46138628917): SUCCESS; **466 passed, 52 subtests passed**.
+- Notebook sandbox [run 46138628936](https://github.com/glad4u7-crypto/project-continue/actions/runs/46138628936): SUCCESS.
+- Dashboard Browser Acceptance [run 46138629069](https://github.com/glad4u7-crypto/project-continue/actions/runs/46138629069): SUCCESS.
+- Cloud Acceptance Lab [run 46138628981](https://github.com/glad4u7-crypto/project-continue/actions/runs/46138628981): SUCCESS on Python 3.11 and 3.13.
+- Phase 13 [run 46138628988](https://github.com/glad4u7-crypto/project-continue/actions/runs/46138628988): SUCCESS.
+- Phase 14 [run 46138628918](https://github.com/glad4u7-crypto/project-continue/actions/runs/46138628918): SUCCESS.
+
+The 11 main-CI skips are opt-in PostgreSQL DSN tests; the isolated PostgreSQL integration run passed independently. The earlier failed run `46138492898` on SHA `835de52a3c38076e3a16148bddd7ea1575992663` remains preserved; its two failures were corrected and the current exact-head full suite passes.
