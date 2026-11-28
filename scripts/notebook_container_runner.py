@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 import sys
+import traceback
 from pathlib import Path
 from typing import Any
 
@@ -81,7 +82,9 @@ def main(argv: list[str] | None = None) -> int:
     try:
         summary = execute_notebook(args[0], args[1])
     except Exception as exc:
-        print(f"NOTEBOOK_RUNNER_ERROR={type(exc).__name__}", file=sys.stderr)
+        frames = traceback.extract_tb(exc.__traceback__)[-5:]
+        trace = ";".join(f"{Path(frame.filename).name}:{frame.lineno}:{frame.name}" for frame in frames)
+        print(f"NOTEBOOK_RUNNER_ERROR={type(exc).__name__};TRACE={trace}", file=sys.stderr)
         return 2
     print(json.dumps(summary, sort_keys=True))
     return 0
