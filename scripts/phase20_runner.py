@@ -51,23 +51,22 @@ def _read_bounded(path: Path) -> tuple[str, int]:
 
 
 def parse_test_counts(output: str) -> dict[str, int]:
-    """Parse both pytest -q and verbose terminal summary formats."""
-    summary_line = None
-    for line in output.splitlines():
-        if re.search(r"\bin\s+[0-9.]+s\s*$", line) and re.search(
-            r"\d+\s+(?:subtests passed|passed|failed|errors?|skipped|xfailed|xpassed|deselected)\b",
-            line,
-        ):
-            summary_line = line
-    if summary_line is None:
-        return {}
+    """Parse pytest quiet and verbose summaries, including separator padding."""
     counts: dict[str, int] = {}
     pattern = r"(\d+)\s+(subtests passed|passed|failed|errors?|skipped|xfailed|xpassed|deselected)"
-    for count, label in re.findall(pattern, summary_line):
-        key = "subtests_passed" if label == "subtests passed" else (
-            "errors" if label in ("error", "errors") else label
-        )
-        counts[key] = counts.get(key, 0) + int(count)
+    for line in output.splitlines():
+        # Pytest's verbose terminal reporter surrounds its summary with '='
+        # characters; quiet mode does not. Normalize both before parsing.
+        candidate = line.strip().strip("=").strip()
+        if not re.search(r"\bin\s+[0-9.]+s\s*$", candidate):
+            continue
+        if not re.search(pattern, candidate):
+            continue
+        for count, label in re.findall(pattern, candidate):
+            key = "subtests_passed" if label == "subtests passed" else (
+                "errors" if label in ("error", "errors") else label
+            )
+            counts[key] = counts.get(key, 0) + int(count)
     return counts
 
 
