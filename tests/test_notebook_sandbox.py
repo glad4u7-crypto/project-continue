@@ -180,3 +180,45 @@ def test_artifact_writer_is_exclusive_and_size_bounded(tmp_path):
         write_artifact_exclusive(output / "another.ipynb", b"{}", output_root=output)
     with pytest.raises(ValueError):
         write_artifact_exclusive(output / "executed.ipynb", b"x" * (64 * 1024 + 1), output_root=output)
+
+def test_successful_runner_copies_and_persists_redacted_execution_artifact(tmp_path, monkeypatch):
+    import hashlib
+
+    output = tmp_path / "output"
+    output.mkdir()
+    document = {
+        "cells": [{
+            "cell_type": "code", "id": "cell-01", "metadata": {},
+            "execution_count": 1, "source": "print('hello')",
+            "outputs": [{"output_type": "stream", "name": "stdout", "text": "hello\\n"}],
+        }],
+        "metadata": {"kernelspec": {"name": "python3", "display_name": "Python 3", "language": "python"}},
+        "nbformat": 4, "nbformat_minor": 5,
+    }
+    payload = json.dumps(document, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    summary = summarize_notebook(document, "completed", len(payload), hashlib.sha256(payload).hexdigest())
+
+    process = SimpleNamespace(pid=1234, wait=Mock(return_value=0))
+    def fake_popen(command, **kwargs):
+        kwargs["stdout"].write(json.dumps(summary).encode("utf-8"))
+        kwargs["stdout"].flush()
+        return process
+
+    def fake_run(command, **kwargs):
+        if command[1] == "cp":
+            Path(command[-1]).write_bytes(payload)
+        return SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
+
+    monkeypatch.setattr(notebook_sandbox.subprocess, "Popen", fake_popen)
+    monkeypatch.setattr(notebook_sandbox.subprocess, "run", fake_run)
+    result = run_sandbox(
+        _recovery_file(), output, request=_request(),
+        checked_out_commit_sha=COMMIT, resolved_notebook_path=RECOVERY_PATH,
+        resolved_blob_sha=RECOVERY_BLOB,
+    )
+    assert result.exit_code == 0
+    assert result.execution_status == "completed"
+    assert result.artifact_path is not None
+    saved = json.loads(Path(result.artifact_path).read_text(encoding="utf-8"))
+    assert saved["cells"][0]["execution_count"] == 1
+    assert saved["cells"][0]["outputs"][0]["text"] == "hello\\n"
