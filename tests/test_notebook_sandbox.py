@@ -7,7 +7,7 @@ from unittest.mock import Mock
 import pytest
 
 from scripts import notebook_sandbox
-from scripts.notebook_container_runner import summarize_notebook, write_artifact_exclusive
+from scripts.notebook_container_runner import normalize_notebook_text_fields, summarize_notebook, write_artifact_exclusive
 from scripts.notebook_sandbox import (
     EXECUTION_TIMEOUT_SECONDS, SANDBOX_IMAGE, SANDBOX_UID,
     build_sandbox_command, git_blob_sha1, run_sandbox,
@@ -232,3 +232,19 @@ def test_successful_runner_copies_and_persists_redacted_execution_artifact(tmp_p
     saved = json.loads(Path(result.artifact_path).read_text(encoding="utf-8"))
     assert saved["cells"][0]["execution_count"] == 1
     assert saved["cells"][0]["outputs"][0]["text"] == "hello\\n"
+
+def test_runner_normalizes_legacy_source_and_output_text_arrays():
+    document = {
+        "cells": [{
+            "cell_type": "code",
+            "source": ["answer = 42\\n", "print(answer)"],
+            "outputs": [
+                {"output_type": "stream", "text": ["42", "\\n"]},
+                {"output_type": "display_data", "data": {"text/plain": ["42", "\\n"]}},
+            ],
+        }],
+    }
+    normalized = normalize_notebook_text_fields(document)
+    assert normalized["cells"][0]["source"] == "answer = 42\\nprint(answer)"
+    assert normalized["cells"][0]["outputs"][0]["text"] == "42\\n"
+    assert normalized["cells"][0]["outputs"][1]["data"]["text/plain"] == "42\\n"
