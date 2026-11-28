@@ -146,7 +146,7 @@
 
 | Unit ID | Checkpoint | Status | Evidence / run reference |
 |---|---|---|---|
-| U20-8-01 | Automated tests-এ temporary SQLite DB বাধ্যতামূলক | NOT STARTED | — |
+| U20-8-01 | Automated tests-এ temporary SQLite DB বাধ্যতামূলক | PASS | Added autouse tests/conftest.py guard: per-test pytest tmp_path default, temporary session fallback, system tempfile paths for tempfile.TemporaryDirectory tests and :memory: allowed; repository .data/production /var/lib paths rejected before SQLite opens; runtime caches cleared per test. tests/test_database_test_isolation.py verifies allow/reject cases. Exact-SHA full CI `46130732459` SUCCESS on `b00d705981d0a2ff1446917a6552bb031d08fb07`: 431 passed, 11 PostgreSQL DSN-gated skips, 52 subtests; compile, secret scan, audit, container build, Compose and smoke tests PASS. Report `2026-11-28-U20-8-01-Temporary-SQLite-Test-Isolation.md`. |
 | U20-8-02 | Live database path শনাক্ত করে test runner-এ block | NOT STARTED | — |
 | U20-8-03 | Schema version, integrity_check ও foreign_key_check চালানো | NOT STARTED | — |
 | U20-8-04 | Backup create এবং SHA-256 checksum যাচাই | NOT STARTED | — |
