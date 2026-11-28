@@ -43,14 +43,14 @@
 | Unit ID | Checkpoint | Status | Evidence / run reference |
 |---|---|---|---|
 | U20-2-01 | GitHub App/বর্তমান connector-ই যথেষ্ট কি না নির্ধারণ | PASS | `reports/Phase-20/2026-11-28-U20-2-01-GitHub-App-Connector-Sufficiency.md` — evidence-backed qualified NO for full end-to-end; current connector retained for supported GitHub subset; no PAT requested. |
-| U20-2-02 | প্রয়োজনীয় প্রতিটি action-এর permission map তৈরি | NOT STARTED | — |
-| U20-2-03 | Contents, Issues, Pull Requests, Actions ও Codespaces permission আলাদা করা | NOT STARTED | — |
-| U20-2-04 | PAT একান্ত দরকার হলে fine-grained repository-only scope প্রস্তাব | NOT STARTED | — |
-| U20-2-05 | Token owner, expiry, rotation ও revocation runbook তৈরি | NOT STARTED | — |
-| U20-2-06 | Token কেবল GitHub/Actions Secret Store-এ রাখার ব্যবস্থা যাচাই | NOT STARTED | — |
-| U20-2-07 | Chat, issue, PR, logs, notebook ও artifacts-এ secret redaction test | NOT STARTED | — |
-| U20-2-08 | Unauthorized actor এবং revoked credential fail-closed test | NOT STARTED | — |
-| U20-2-09 | কোনো credential value ChatGPT-তে না চাওয়া এবং না দেখানোর নিশ্চয়তা | NOT STARTED | — |
+| U20-2-02 | প্রয়োজনীয় প্রতিটি action-এর permission map তৈরি | PASS | `reports/Phase-20/2026-11-28-Phase20-2-Authentication-Least-Privilege-Review.md` — documented action-to-minimum-permission map; unknown installed App grants explicitly separated. |
+| U20-2-03 | Contents, Issues, Pull Requests, Actions ও Codespaces permission আলাদা করা | PASS | Same report — Contents, Issues, Pull Requests, Actions, Codespaces and Metadata separated with least-privilege boundaries. |
+| U20-2-04 | PAT একান্ত দরকার হলে fine-grained repository-only scope প্রস্তাব | PASS | Same report — conditional fine-grained single-repository PAT proposal; no PAT requested or created. |
+| U20-2-05 | Token owner, expiry, rotation ও revocation runbook তৈরি | PASS | Same report — owner, short expiry, 14-day rotation window, revocation and evidence runbook. |
+| U20-2-06 | Token কেবল GitHub/Actions Secret Store-এ রাখার ব্যবস্থা যাচাই | UNAVAILABLE | Same report — current connector has no Actions Secrets/Variables write/read-back capability; no secret accessed. |
+| U20-2-07 | Chat, issue, PR, logs, notebook ও artifacts-এ secret redaction test | PASS | Same report — inspected `core/security.py`, `tests/test_security_logging.py`, `tests/test_security_hygiene.py`; existing CI run `46093587157`, job `140819820015`, SHA `f6362e75842c24337499bbc2e769c4dd2341f690`, 321 passed. |
+| U20-2-08 | Unauthorized actor এবং revoked credential fail-closed test | UNAVAILABLE | Same report — no disposable secondary identity/credential lifecycle interface; live credential revocation test unsafe and unavailable. |
+| U20-2-09 | কোনো credential value ChatGPT-তে না চাওয়া এবং না দেখানোর নিশ্চয়তা | PASS | Same report — no credential value requested/read/displayed; chat credential-handling rule recorded. |
 
 **20.2 exit gate:** 9 of 9 unit checkpoints must have evidence-backed PASS, or an explicitly approved limitation recorded in the final report. No silent skips.
 
