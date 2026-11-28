@@ -60,7 +60,7 @@
 |---|---|---|---|
 | U20-3-01 | Versioned JSON request envelope schema তৈরি | PASS | Schema Draft 2020-12; JSON.parse syntax check + GitHub read-back PASS; commit `263da3f6e60c48720abb23a4e86891a030c5096f`; report `reports/Phase-20/2026-11-28-U20-3-01-Request-Envelope-Schema.md`; read-back blob `4a79379eaee81b400d11d88dcb174a49489c4025`. |
 | U20-3-02 | Unique request ID, idempotency key, actor, repo, SHA ও expiry বাধ্যতামূলক করা | PASS | Required fields enforced in schema; 12/12 deterministic contract checks PASS; schema commit `11960b76ce8d4a087e29798458b687b6ee8d432d`; report `reports/Phase-20/2026-11-28-U20-3-02-Mandatory-Envelope-Fields.md`; runtime cross-request uniqueness/idempotency persistence not claimed. |
-| U20-3-03 | Fixed task registry এবং strict argument schema তৈরি | NOT STARTED | — |
+| U20-3-03 | Fixed task registry এবং strict argument schema তৈরি | PASS | `schemas/dispatcher/task-registry.v1.json` + `schemas/dispatcher/task-registry.v1.schema.json`; 3 fixed task IDs; 16/16 deterministic contract checks PASS; read-back blob SHAs `4336220c3002e81a6f440c6152d0ffe534d564c6` / `2b8b79377e44099866047329edfa285e6d197012`; report `reports/Phase-20/2026-11-28-U20-3-03-Fixed-Task-Registry.md`. Declarative only; no handlers/runtime dispatch claimed. |
 | U20-3-04 | Natural language-কে সরাসরি shell/Python/SQL হিসেবে চালানো নিষিদ্ধ করা | NOT STARTED | — |
 | U20-3-05 | Authenticated actor ও allowed repository যাচাই | NOT STARTED | — |
 | U20-3-06 | Malformed, expired, duplicate ও replayed request reject করা | NOT STARTED | — |
