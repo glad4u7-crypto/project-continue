@@ -3,7 +3,7 @@
 - Repository: `glad4u7-crypto/project-continue`
 - Branch: `phase20/secure-dispatcher-u20-3-01`
 - Date: 2026-11-28 (Asia/Kolkata)
-- Status: IMPLEMENTED — FINAL CI RUN PENDING; NOT PASS UNTIL GREEN
+- Status: PASS — corrected full CI and final repository read-back verified
 
 ## Implemented artifacts
 
@@ -28,14 +28,16 @@
 
 ## CI evidence
 
+- Corrected final CI run: https://github.com/glad4u7-crypto/project-continue/actions/runs/46105212163 — SUCCESS; all workflow steps passed. Full suite: 333 passed, 11 skipped, 10 subtests passed; coverage 79%; focused unit/integration/API/database categories also passed. PostgreSQL integration tests were skipped because opt-in DSNs were not configured.
+
 - Earlier 11-test version full CI: https://github.com/glad4u7-crypto/project-continue/actions/runs/46098486057 — SUCCESS.
 - Finalized 13-test guard-only version full CI: https://github.com/glad4u7-crypto/project-continue/actions/runs/46098670631 — SUCCESS.
 - First canonical-envelope migration run: https://github.com/glad4u7-crypto/project-continue/actions/runs/46105007656 — FAILED because an older replay-store integration test still used the superseded flat envelope (4 failures; 319 passed; 11 skipped). Failure logs were inspected and the stale test was rewritten to the canonical v1.0 envelope.
 - Runtime-integrated CI run 46105092157: FAILED one test (332 passed, 11 skipped). The failing test correctly exposed that the runtime treated a non-GitHub permission label `read` as equivalent to the policy's required `pull`. The permission map was tightened to accept only GitHub repository permission levels (`pull`, `triage`, `write`, `maintain`, `admin`) at or above the policy minimum.
-- Corrected final CI run: https://github.com/glad4u7-crypto/project-continue/actions/runs/46105212163 — queued/in progress at the time of this update. This run includes the corrected permission rule, all dispatcher tests, full compile, production container, compose validation, smoke test, focused test categories, and full suite.
+- This run includes the corrected permission rule, all dispatcher tests, full compile, production container, compose validation, smoke test, focused test categories, and full suite.
 
 ## Acceptance
 
-- Do not mark PASS until corrected run 46105212163 completes successfully and final files are read back from this branch.
-- If the run fails, inspect its job logs, fix and rerun.
+- Corrected CI run 46105212163 completed successfully; job `140856312496` confirms all workflow steps green.
+- Final source, schema, test and report files were fetched from this branch after the CI run; no missing-file or read-back error occurred.
 - No merge to main, no production credentials, and no live service/data modification.
