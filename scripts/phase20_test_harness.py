@@ -89,7 +89,7 @@ def classify(exit_code: int, stdout: str, stderr: str, timed_out: bool = False) 
         return "infrastructure", True
     if "syntaxerror" in combined or "assertionerror" in combined or "failed" in combined:
         return "code", False
-    return "environment", False
+    # Unknown non-zero exits are environment failures and are never retried.\n    return "environment", False
 
 
 def _counts(stdout: str, stderr: str) -> tuple[int, int, int, int]:
