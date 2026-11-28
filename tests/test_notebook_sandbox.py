@@ -57,7 +57,7 @@ def test_sandbox_uses_nonroot_readonly_and_bounded_container(tmp_path):
 
 def test_sandbox_does_not_forward_host_secrets_or_production_mounts(tmp_path):
     notebook, output = _fixtures(tmp_path)
-    rendered = " ".join(build_sandbox_command(notebook, output)).lower()
+    rendered = " ".join(build_sandbox_command(notebook)).lower()
     for forbidden in ("github_token", "actions_runtime_token", "google_application_credentials",
                       "/content/drive", "mydrive", "--privileged", "--env"):
         assert forbidden not in rendered
