@@ -117,16 +117,25 @@ class Database:
 
     @staticmethod
     def verify_backup(path: str | Path) -> bool:
-        """Verify SQLite integrity and foreign-key consistency in read-only mode."""
+        """Verify a non-empty SQLite file's integrity and foreign keys read-only."""
         target = Path(path).expanduser()
         if not target.is_file():
             raise FileNotFoundError(target)
+        # SQLite treats a zero-byte file as a valid empty database. It is not
+        # an acceptable backup artifact and must fail closed.
+        if target.stat().st_size == 0:
+            return False
         uri = f"file:{quote(str(target.resolve()), safe='/:')}?mode=ro"
-        connection = sqlite3.connect(uri, uri=True)
+        try:
+            connection = sqlite3.connect(uri, uri=True)
+        except sqlite3.DatabaseError:
+            return False
         try:
             integrity = connection.execute("PRAGMA integrity_check").fetchone()
             foreign_key_errors = connection.execute("PRAGMA foreign_key_check").fetchall()
             return integrity is not None and integrity[0] == "ok" and not foreign_key_errors
+        except sqlite3.DatabaseError:
+            return False
         finally:
             connection.close()
 

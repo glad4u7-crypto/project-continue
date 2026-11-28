@@ -208,7 +208,11 @@ def main() -> int:
                         has_text="Automated self-check"
                     )
                     self_check_expander.locator("summary").click()
-                    page.get_by_role("button", name="Run self-check").click()
+                    self_check_button = page.get_by_role("button", name="Run self-check")
+                    self_check_button.wait_for(state="visible", timeout=15000)
+                    # Avoid Playwright's scroll-into-view click path here: Streamlit
+                    # may detach and replace this widget during the scroll-triggered rerender.
+                    self_check_button.dispatch_event("click")
                     page.get_by_text("Overall result", exact=False).wait_for(timeout=30000)
                     result_text = page.locator("body").inner_text()
                     for diagnostic in ("Database connection", "SQLite integrity"):

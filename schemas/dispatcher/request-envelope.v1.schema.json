@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://project-continue.invalid/schemas/dispatcher/request-envelope.v1.schema.json",
+  "title": "Project Continue Dispatcher Request Envelope v1",
+  "description": "Transport-neutral request contract. All fields are untrusted claims; runtime authorization uses the authenticated GitHub connector identity.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"type": "string", "const": "1.0"},
+    "request_id": {"type": "string", "format": "uuid"},
+    "nonce": {"type": "string", "format": "uuid"},
+    "idempotency_key": {"type": "string", "minLength": 16, "maxLength": 128, "pattern": "^[A-Za-z0-9._:-]+$"},
+    "actor": {
+      "type": "object", "additionalProperties": false,
+      "properties": {"id": {"type": "string", "pattern": "^[0-9]+$"}, "type": {"const": "user"}},
+      "required": ["id", "type"]
+    },
+    "repository": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "id": {"type": "integer", "minimum": 1},
+        "full_name": {"type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$", "maxLength": 200},
+        "commit_sha": {"type": "string", "pattern": "^[a-f0-9]{40}$"}
+      },
+      "required": ["id", "full_name", "commit_sha"]
+    },
+    "task": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "task_id": {"type": "string", "enum": ["repo.read_file", "repo.list_tree", "tests.run_pytest"]},
+        "arguments": {"type": "object", "additionalProperties": true}
+      },
+      "required": ["task_id", "arguments"]
+    },
+    "issued_at": {"type": "string", "format": "date-time"},
+    "expires_at": {"type": "string", "format": "date-time"},
+    "trace_id": {"type": "string", "minLength": 1, "maxLength": 128}
+  },
+  "required": ["schema_version", "request_id", "nonce", "idempotency_key", "actor", "repository", "task", "issued_at", "expires_at"]
+}

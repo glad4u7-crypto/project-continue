@@ -1,0 +1,111 @@
+{
+  "registry_version": "1.0",
+  "tasks": [
+    {
+      "task_id": "repo.read_file",
+      "handler_ref": "repo.read_file.v1",
+      "description": "Read one repository file at the envelope-bound immutable commit SHA.",
+      "risk": "read_only",
+      "arguments_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 240,
+            "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\)[A-Za-z0-9_.@/-]+$"
+          }
+        },
+        "required": [
+          "path"
+        ]
+      }
+    },
+    {
+      "task_id": "repo.list_tree",
+      "handler_ref": "repo.list_tree.v1",
+      "description": "List repository paths beneath an optional safe relative directory at the envelope-bound immutable commit SHA.",
+      "risk": "read_only",
+      "arguments_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\)[A-Za-z0-9_.@/-]+$"
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "task_id": "tests.run_pytest",
+      "handler_ref": "tests.run_pytest.v1",
+      "description": "Run the repository's preconfigured pytest suite or one allow-listed tests/ path; no caller-supplied command or pytest flags.",
+      "risk": "test_only",
+      "arguments_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "scope": {
+            "type": "string",
+            "enum": [
+              "full",
+              "focused"
+            ]
+          },
+          "test_path": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160,
+            "pattern": "^tests/test_[A-Za-z0-9_]+\\.py$"
+          }
+        },
+        "required": [
+          "scope"
+        ],
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "scope": {
+                  "const": "focused"
+                }
+              },
+              "required": [
+                "scope"
+              ]
+            },
+            "then": {
+              "required": [
+                "test_path"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "scope": {
+                  "const": "full"
+                }
+              },
+              "required": [
+                "scope"
+              ]
+            },
+            "then": {
+              "not": {
+                "required": [
+                  "test_path"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

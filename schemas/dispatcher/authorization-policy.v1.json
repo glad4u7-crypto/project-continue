@@ -1,0 +1,54 @@
+{
+  "policy_version": "1.0",
+  "purpose": "Bind every dispatcher request to the authenticated GitHub identity and one exact allow-listed repository.",
+  "default_decision": "reject",
+  "identity_source": {
+    "provider": "GitHub",
+    "required_lookup": "Authenticated-user endpoint through the connected GitHub credential; never accept identity from request body, prompt text, issue, PR, notebook, or repository content.",
+    "canonical_actor_fields": {
+      "id": "GitHub numeric user ID as a decimal string",
+      "login": "GitHub login"
+    },
+    "envelope_binding": "The envelope actor.id and actor.type must exactly match the verified identity (type=user); caller-supplied actor fields are claims only and are not authentication."
+  },
+  "allowed_actors": [
+    {
+      "id": "354281323",
+      "login": "glad4u7-crypto",
+      "type": "user",
+      "minimum_repository_permission": "pull"
+    }
+  ],
+  "repository_allowlist": [
+    {
+      "id": 1463557248,
+      "full_name": "glad4u7-crypto/project-continue",
+      "owner_id": 354281323,
+      "visibility": "public"
+    }
+  ],
+  "authorization_sequence": [
+    "Resolve authenticated GitHub user from the connector credential.",
+    "Reject if identity lookup fails, ID/login are missing, or identity does not match an allowed_actors entry.",
+    "Compare envelope actor.id and actor.type to the verified identity; ignore any caller-provided actor login or role.",
+    "Resolve repository by exact numeric repository ID and exact canonical full_name; reject aliases, forks, owner/name substitutions, and unlisted repositories.",
+    "Verify the authenticated actor has at least the task's required repository permission using GitHub's permission result; missing/unknown permission fails closed.",
+    "Bind the request to the exact repository commit SHA and verify that SHA belongs to the allow-listed repository before handler lookup."
+  ],
+  "task_permission_map": {
+    "repo.read_file": "pull",
+    "repo.list_tree": "pull",
+    "tests.run_pytest": "pull"
+  },
+  "deny_conditions": [
+    "Missing or failed authenticated-user lookup",
+    "Actor ID or login not in allow-list",
+    "Envelope actor mismatch or actor.type other than user",
+    "Missing/unknown repository identity, repository ID mismatch, or canonical full_name mismatch",
+    "Repository not allow-listed",
+    "Insufficient, missing, or unknown repository permission",
+    "Commit SHA missing, malformed, or not reachable from the allow-listed repository",
+    "Any identity or repository verification service error"
+  ],
+  "runtime_status": "Versioned authorization contract and live connector identity/repository permission evidence only; enforcement inside a dispatcher runtime is not implemented or claimed."
+}
