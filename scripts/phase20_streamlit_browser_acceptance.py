@@ -236,7 +236,8 @@ def main() -> int:
             "browser": "Chromium",
             "health_http_200": True,
             "project_create_read_update": True,
-            "task_create_update_complete": True,\n            "task_dependency_service_tests": True,
+            "task_create_update_complete": True,
+            "task_dependency_service_tests": True,
             "github_panel_empty_state": True,
             "restart_persistence": True,
             "production_login_gate": True,
@@ -250,7 +251,8 @@ def main() -> int:
         print("health_endpoint=HTTP_200")
         print("browser=Chromium")
         print("project_create_read_update=PASS")
-        print("task_create_update_complete=PASS")\n        print("task_dependency_service_tests=PASS")
+        print("task_create_update_complete=PASS")
+        print("task_dependency_service_tests=PASS")
         print("github_panel_empty_state=PASS")
         print("browser_evidence=reports/phase20-streamlit-browser")
         print("restart_persistence=PASS")
