@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://project-continue.invalid/schemas/dispatcher/request-envelope.v1.schema.json",
+  "title": "Project Continue Dispatcher Request Envelope v1",
+  "description": "Transport-neutral, versioned request envelope. This schema validates structure only; it does not authorize or execute a task. The dispatcher must treat all supplied values as untrusted input.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Protocol envelope version."
+    },
+    "request_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier for correlating one request and its result. Mandatory enforcement is specified in U20-3-02."
+    },
+    "idempotency_key": {
+      "type": "string",
+      "minLength": 16,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9._:-]+$",
+      "description": "Stable retry key. Mandatory enforcement is specified in U20-3-02."
+    },
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "type": { "type": "string", "enum": ["user", "service"] }
+      },
+      "required": ["id", "type"]
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "full_name": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$",
+          "maxLength": 200
+        },
+        "commit_sha": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{40}$",
+          "description": "Immutable 40-character Git commit SHA."
+        }
+      },
+      "required": ["full_name", "commit_sha"]
+    },
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
+        },
+        "arguments": {
+          "type": "object",
+          "description": "Task-specific data; a fixed task registry and per-task argument schemas must validate this before any handler is called.",
+          "additionalProperties": true
+        }
+      },
+      "required": ["task_id", "arguments"]
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "trace_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    }
+  },
+  "required": ["schema_version"]
+}
