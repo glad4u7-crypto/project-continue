@@ -41,7 +41,7 @@ def run_acceptance(output_dir: str | Path) -> dict[str, object]:
         resolved_blob_sha=blob_sha,
     )
     if result.exit_code != 0 or result.timed_out or result.execution_status != "completed" or not result.artifact_path:
-        raise RuntimeError(f"harmless notebook sandbox failed: exit={result.exit_code}, timeout={result.timed_out}, status={result.execution_status}")
+        raise RuntimeError(f"harmless notebook sandbox failed: exit={result.exit_code}, timeout={result.timed_out}, status={result.execution_status}, runner_stdout={result.stdout!r}, runner_stderr={result.stderr!r}")
     artifact = Path(result.artifact_path)
     document = json.loads(artifact.read_text(encoding="utf-8"))
     code_cells = [cell for cell in document["cells"] if cell["cell_type"] == "code"]
