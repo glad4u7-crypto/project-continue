@@ -3,6 +3,7 @@ name: Project Continue CI
 on:
   push:
     branches: [main, "maintenance/**", "feature/**", "foundation/**", "phase20/**"]
+    paths-ignore: ["reports/**"]
   pull_request:
 
 permissions:
