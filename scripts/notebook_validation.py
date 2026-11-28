@@ -41,7 +41,11 @@ def validate_notebook_payload(payload: bytes) -> tuple[bool, tuple[str, ...]]:
     if document.get("nbformat") != SUPPORTED_NBFORMAT_MAJOR:
         errors.append("unsupported nbformat major version")
     minor = document.get("nbformat_minor")
-    if isinstance(minor, bool) or not isinstance(minor, int) or not 0 <= minor <= MAX_NBFORMAT_MINOR:
+    valid_minor = (
+        isinstance(minor, int) and not isinstance(minor, bool)
+        and 0 <= minor <= MAX_NBFORMAT_MINOR
+    )
+    if not valid_minor:
         errors.append("unsupported or invalid nbformat minor version")
     if not isinstance(document.get("metadata"), dict):
         errors.append("notebook metadata must be an object")
@@ -60,24 +64,29 @@ def validate_notebook_payload(payload: bytes) -> tuple[bool, tuple[str, ...]]:
             errors.append(f"{prefix} must be an object")
             continue
         cell_type = cell.get("cell_type")
-        if cell_type not in {"markdown", "code", "raw"}:
+        if not isinstance(cell_type, str) or cell_type not in {"markdown", "code", "raw"}:
             errors.append(f"{prefix} has an unsupported cell type")
         cell_metadata = cell.get("metadata", {})
         if not isinstance(cell_metadata, dict):
             errors.append(f"{prefix} metadata must be an object")
         source = cell.get("source")
         if isinstance(source, str):
-            source_bytes = len(source.encode("utf-8"))
+            source_parts = [source]
         elif isinstance(source, list) and all(isinstance(part, str) for part in source):
-            source_bytes = sum(len(part.encode("utf-8")) for part in source)
+            source_parts = source
         else:
-            source_bytes = MAX_CELL_SOURCE_BYTES + 1
+            source_parts = []
             errors.append(f"{prefix} source must be a string or an array of strings")
+        try:
+            source_bytes = sum(len(part.encode("utf-8", errors="strict")) for part in source_parts)
+        except UnicodeEncodeError:
+            source_bytes = MAX_CELL_SOURCE_BYTES + 1
+            errors.append(f"{prefix} source contains invalid Unicode")
         if source_bytes > MAX_CELL_SOURCE_BYTES:
             errors.append(f"{prefix} source exceeds the 32 KiB limit")
 
         cell_id = cell.get("id")
-        if minor >= 5:
+        if valid_minor and minor >= 5:
             if not isinstance(cell_id, str) or not _CELL_ID_RE.fullmatch(cell_id):
                 errors.append(f"{prefix} requires a valid nbformat 4.5 cell id")
             elif cell_id in seen_ids:
@@ -101,10 +110,13 @@ def validate_notebook_payload(payload: bytes) -> tuple[bool, tuple[str, ...]]:
                 errors.append(f"{prefix} exceeds the 100-output limit")
             for output_index, output in enumerate(outputs[:MAX_OUTPUTS_PER_CELL]):
                 op = f"{prefix} output {output_index}"
-                if not isinstance(output, dict) or output.get("output_type") not in _OUTPUT_TYPES:
+                if not isinstance(output, dict):
                     errors.append(f"{op} has an invalid output type")
                     continue
-                kind = output["output_type"]
+                kind = output.get("output_type")
+                if not isinstance(kind, str) or kind not in _OUTPUT_TYPES:
+                    errors.append(f"{op} has an invalid output type")
+                    continue
                 if kind == "stream":
                     text_value = output.get("text")
                     if not isinstance(text_value, (str, list)) or (
