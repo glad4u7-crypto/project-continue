@@ -238,28 +238,25 @@ def _redact(text: str) -> str:
     return value
 
 
+def _redact_tree(value: Any, key: str = "") -> Any:
+    if re.search(r"(?i)(token|password|secret|api[_-]?key|private[_-]?key)", key):
+        return "[REDACTED]"
+    if isinstance(value, str):
+        return _redact(value)
+    if isinstance(value, list):
+        return [_redact_tree(item) for item in value]
+    if isinstance(value, dict):
+        return {str(item_key): _redact_tree(item_value, str(item_key))
+                for item_key, item_value in value.items()}
+    return value
+
+
 def read_notebook(root: str | Path, name: str) -> dict[str, Any]:
     base = _safe_root(root)
     path = _target(base, name, must_exist=True)
     document, raw = _bounded_json(path)
     summary = validate_notebook_document(document)
-    safe_document = json.loads(json.dumps(document))
-    for cell in safe_document["cells"]:
-        source = cell.get("source", "")
-        if isinstance(source, list):
-            cell["source"] = [_redact(part) for part in source]
-        else:
-            cell["source"] = _redact(source)
-        for output in cell.get("outputs", []):
-            if isinstance(output.get("text"), list):
-                output["text"] = [_redact(part) for part in output["text"]]
-            elif isinstance(output.get("text"), str):
-                output["text"] = _redact(output["text"])
-            for mime, payload in output.get("data", {}).items():
-                if isinstance(payload, list) and all(isinstance(x, str) for x in payload):
-                    output["data"][mime] = [_redact(x) for x in payload]
-                elif isinstance(payload, str):
-                    output["data"][mime] = _redact(payload)
+    safe_document = _redact_tree(json.loads(json.dumps(document)))
     return {"notebook": safe_document, "summary": summary,
             "sha256": hashlib.sha256(raw).hexdigest()}
 
