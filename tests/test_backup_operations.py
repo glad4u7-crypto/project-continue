@@ -183,7 +183,7 @@ def test_interrupted_restore_removes_partial_file_and_new_parent_directories(tmp
         nonlocal readonly_calls
         if isinstance(database, str) and database.startswith("file:") and "mode=ro" in database:
             readonly_calls += 1
-            if readonly_calls == 2:
+            if readonly_calls == 3:
                 return InterruptedSource()
         return original_connect(database, *args, **kwargs)
 
@@ -215,7 +215,7 @@ def test_restore_verification_failure_rolls_back_restored_file(tmp_path, monkeyp
     def fail_after_copy(path):
         nonlocal verification_calls
         verification_calls += 1
-        if verification_calls == 2:
+        if verification_calls == 3:
             return False
         return original_verify(path)
 
