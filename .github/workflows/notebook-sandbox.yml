@@ -6,6 +6,11 @@ on:
     paths:
       - "notebook-sandbox/**"
       - "scripts/notebook_sandbox.py"
+      - "scripts/notebook_container_runner.py"
+      - "scripts/notebook_read.py"
+      - "scripts/notebook_validation.py"
+      - "scripts/notebook_execution_policy.py"
+      - "core/security.py"
       - "tests/test_notebook_sandbox.py"
       - ".github/workflows/notebook-sandbox.yml"
   pull_request:
@@ -13,6 +18,11 @@ on:
     paths:
       - "notebook-sandbox/**"
       - "scripts/notebook_sandbox.py"
+      - "scripts/notebook_container_runner.py"
+      - "scripts/notebook_read.py"
+      - "scripts/notebook_validation.py"
+      - "scripts/notebook_execution_policy.py"
+      - "core/security.py"
       - "tests/test_notebook_sandbox.py"
       - ".github/workflows/notebook-sandbox.yml"
 
