@@ -24,11 +24,7 @@ class BackupOperations:
             raise ValueError("Backup directory must differ from the live database directory")
 
     def _is_managed_backup(self, item: Path) -> bool:
-        return (
-            item.parent.resolve() == self.root
-            and item.name.startswith(self.PREFIX)
-            and item.name.endswith(self.SUFFIX)
-        )
+        return item.parent.resolve() == self.root and item.name.startswith(self.PREFIX) and item.name.endswith(self.SUFFIX)
 
     def create_backup(self) -> Path:
         self.root.mkdir(parents=True, exist_ok=True)
@@ -44,8 +40,7 @@ class BackupOperations:
         """Return metadata-only inventory; ignore symlinks and unmanaged files."""
         entries = []
         if not self.root.is_dir():
-            return {"backup_root": str(self.root), "entry_count": 0,
-                    "entries": (), "preview_only": True}
+            return {"backup_root": str(self.root), "entry_count": 0, "entries": (), "preview_only": True}
         for item in sorted(self.root.iterdir(), key=lambda candidate: candidate.name):
             if item.is_symlink() or not item.is_file() or not self._is_managed_backup(item):
                 continue
@@ -59,24 +54,29 @@ class BackupOperations:
             except (OSError, sqlite3.DatabaseError) as exc:
                 error_type = type(exc).__name__
             entries.append({
-                "name": item.name,
-                "size_bytes": stat.st_size,
+                "name": item.name, "size_bytes": stat.st_size,
                 "modified_at": datetime.fromtimestamp(stat.st_mtime, timezone.utc).isoformat(),
-                "sha256": digest,
-                "integrity_verified": integrity_verified,
+                "sha256": digest, "integrity_verified": integrity_verified,
                 "eligible_for_restore": integrity_verified and digest is not None,
                 "error_type": error_type,
             })
-        return {"backup_root": str(self.root), "entry_count": len(entries),
-                "entries": tuple(entries), "preview_only": True}
+        return {"backup_root": str(self.root), "entry_count": len(entries), "entries": tuple(entries), "preview_only": True}
 
     def preview_restore(self, backup_path: str | Path, destination: str | Path) -> dict:
         """Validate a prospective restore without creating or changing any file."""
         raw_source = Path(backup_path).expanduser()
         if raw_source.is_symlink():
             raise ValueError("Restore source must not be a symbolic link")
+        # Validate the managed namespace before strict resolution so an unknown,
+        # nonexistent path is rejected as untrusted rather than leaking path errors.
+        if not raw_source.name.startswith(self.PREFIX) or not raw_source.name.endswith(self.SUFFIX):
+            raise ValueError("Restore source must be a managed backup")
+        if raw_source.parent.resolve() != self.root:
+            raise ValueError("Restore source must be a managed backup")
+        if not raw_source.is_file():
+            raise FileNotFoundError(raw_source)
         source = raw_source.resolve(strict=True)
-        if not self._is_managed_backup(source) or not source.is_file():
+        if not self._is_managed_backup(source):
             raise ValueError("Restore source must be a managed backup")
         target = Path(destination).expanduser().resolve()
         live = Path(self.database.path).expanduser().resolve()
