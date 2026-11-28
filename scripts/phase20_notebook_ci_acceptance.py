@@ -64,8 +64,8 @@ def main() -> int:
     # Exercise both bounded timeout and kernel-crash paths. Failed runs must
     # retain a validated, sanitized notebook artifact for diagnosis.
     for probe_name, source, timeout in (
-        ("phase20_timeout_probe.ipynb", "while True: pass\\n", 2),
-        ("phase20_kernel_crash_probe.ipynb", "import os; os._exit(23)\\n", 5),
+        ("phase20_timeout_probe.ipynb", "while True: pass\n", 2),
+        ("phase20_kernel_crash_probe.ipynb", "import os; os._exit(23)\n", 5),
     ):
         probe = fixture.parent / probe_name
         probe_doc = {
