@@ -3,7 +3,7 @@
 - Repository: glad4u7-crypto/project-continue
 - Branch: phase20/secure-dispatcher-u20-3-01
 - Date: 2026-11-28 (Asia/Kolkata)
-- Status: IMPLEMENTED — dedicated runner PASS; main CI for exact latest SHA pending.
+- Status: PASS — U20-5-01..05 implementation and acceptance tests verified on exact SHA `4a4f2a772f791cd5a11fad988b5b4073e4860958`.
 
 ## Artifacts
 - src/dispatcher/repository_guard.py
@@ -25,7 +25,10 @@
 - Final dedicated runner run 46110628198 — SUCCESS on exact SHA 4a4f2a772f791cd5a11fad988b5b4073e4860958.
 - Fixed dispatcher/repository-guard suite: 64 passed, 45 subtests passed.
 - Runner full suite: 380 passed, 11 PostgreSQL tests skipped, 50 subtests passed in 9.61s.
-- Main repository CI run 46110628207 is still running; do not mark the units PASS until it finishes green and final read-back completes.
+- Main repository CI run `46110628207` — SUCCESS on the same exact SHA; job `140873125915`.
+- Final main CI full suite: 380 passed, 11 PostgreSQL tests skipped, 50 subtests passed in 13.49s; coverage 79% (2,575 statements, 544 missed).
+- Dedicated runner run `46110628198` — SUCCESS; job `140873125935`; fixed dispatcher/repository suite 64 passed, 45 subtests passed; runner full suite 380 passed, 11 skipped, 50 subtests.
+- Main CI artifact ID `15249089758` (283,666 bytes; SHA-256 `8192bdabf4115ce2ecadf478818f4e8619535e75152a1162c12ce843d1ce81cc`): https://github.com/glad4u7-crypto/project-continue/actions/runs/46110628207/artifacts/15249089758.
 
 ## Integration boundary
 - This is a host-injected local checkout/snapshot guard, not a live GitHub Contents API adapter. The host must bind the checkout to the verified immutable SHA before constructing RepositorySnapshot.
