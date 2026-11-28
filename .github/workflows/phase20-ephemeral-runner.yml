@@ -19,6 +19,14 @@ on:
       - "tests/fixtures/phase20_safe_notebook.ipynb"
       - "docker/phase20-notebook-runner/**"
       - "scripts/phase20_notebook_ci_acceptance.py"
+      - "tests/conftest.py"
+      - "tests/test_project_dashboard.py"
+      - "tests/test_ui_smoke.py"
+      - "tests/test_phase20_sqlite_safety.py"
+      - "tests/test_phase20_sqlite_backup_recovery.py"
+      - "services/backup_operations.py"
+      - "database/connection.py"
+      - "database/schema.py"
       - "scripts/phase20_notebook_sandbox.py"
       - ".github/workflows/phase20-ephemeral-runner.yml"
   pull_request:
@@ -38,6 +46,14 @@ on:
       - "tests/fixtures/phase20_safe_notebook.ipynb"
       - "docker/phase20-notebook-runner/**"
       - "scripts/phase20_notebook_ci_acceptance.py"
+      - "tests/conftest.py"
+      - "tests/test_project_dashboard.py"
+      - "tests/test_ui_smoke.py"
+      - "tests/test_phase20_sqlite_safety.py"
+      - "tests/test_phase20_sqlite_backup_recovery.py"
+      - "services/backup_operations.py"
+      - "database/connection.py"
+      - "database/schema.py"
       - "scripts/phase20_notebook_sandbox.py"
       - ".github/workflows/phase20-ephemeral-runner.yml"
 
@@ -87,5 +103,7 @@ jobs:
         run: docker build --pull=false -t phase20-notebook-runner:ci -f docker/phase20-notebook-runner/Dockerfile .
       - name: Execute harmless notebook with network disabled
         run: python scripts/phase20_notebook_ci_acceptance.py --image-id "$(docker image inspect --format='{{.Id}}' phase20-notebook-runner:ci)" --commit "$GITHUB_SHA"
+      - name: Run Phase 20.8 SQLite backup and recovery safety
+        run: python -m pytest -q tests/test_phase20_sqlite_safety.py tests/test_phase20_sqlite_backup_recovery.py tests/test_database_connection.py tests/test_backup_operations.py
       - name: Run full regression and collect result
         run: python scripts/phase20_test_harness.py full

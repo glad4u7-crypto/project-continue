@@ -3,6 +3,9 @@ from pathlib import Path
 
 from streamlit.testing.v1 import AppTest
 
+import config
+from config import Settings
+
 
 def test_streamlit_dashboard_starts_with_isolated_database(tmp_path, monkeypatch):
     project_root = Path(__file__).resolve().parents[1]
@@ -10,6 +13,9 @@ def test_streamlit_dashboard_starts_with_isolated_database(tmp_path, monkeypatch
     monkeypatch.setenv("PROJECT_CONTINUE_DB", str(tmp_path / "ui-smoke.sqlite3"))
     monkeypatch.delenv("GITHUB_REPOSITORY", raising=False)
     monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+    monkeypatch.setattr(config, "settings", Settings.from_env({
+        "APP_ENV": "test", "PROJECT_CONTINUE_DB": str(tmp_path / "ui-smoke.sqlite3")
+    }))
 
     app = AppTest.from_file(str(project_root / "app.py"), default_timeout=20).run()
 

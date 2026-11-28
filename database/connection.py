@@ -119,6 +119,8 @@ class Database:
     def verify_backup(path: str | Path) -> bool:
         """Verify SQLite integrity and foreign-key consistency in read-only mode."""
         target = Path(path).expanduser()
+        if target.is_symlink():
+            raise ValueError("Backup must not be a symbolic link")
         if not target.is_file():
             raise FileNotFoundError(target)
         uri = f"file:{quote(str(target.resolve()), safe='/:')}?mode=ro"
