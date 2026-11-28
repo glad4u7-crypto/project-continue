@@ -1,5 +1,4 @@
 from pathlib import Path
-import tempfile
 import subprocess
 from types import SimpleNamespace
 from unittest.mock import Mock
@@ -7,10 +6,15 @@ from unittest.mock import Mock
 import pytest
 
 from scripts import notebook_sandbox
+from scripts.notebook_container_runner import summarize_notebook, write_artifact_exclusive
 from scripts.notebook_sandbox import (
     EXECUTION_TIMEOUT_SECONDS, SANDBOX_IMAGE, SANDBOX_UID,
-    build_sandbox_command, run_sandbox,
+    build_sandbox_command, git_blob_sha1, run_sandbox,
 )
+
+RECOVERY_PATH = "notebooks/ProjectContinue-Recovery.ipynb"
+RECOVERY_BLOB = "544c131c97101485c4f328f83de1f96e65162dad"
+COMMIT = "a" * 40
 
 
 def _fixtures(tmp_path):
@@ -19,6 +23,14 @@ def _fixtures(tmp_path):
     output = tmp_path / "output"
     output.mkdir()
     return notebook, output
+
+
+def _recovery_file():
+    return Path(__file__).resolve().parents[1] / "notebooks" / "ProjectContinue-Recovery.ipynb"
+
+
+def _request():
+    return {"notebook_path": RECOVERY_PATH, "commit_sha": COMMIT, "blob_sha": RECOVERY_BLOB}
 
 
 def test_sandbox_uses_nonroot_readonly_and_bounded_container(tmp_path):
@@ -35,6 +47,7 @@ def test_sandbox_uses_nonroot_readonly_and_bounded_container(tmp_path):
     assert "--memory=512m" in command
     assert "--cpus=1" in command
     assert SANDBOX_IMAGE in command
+    assert "scripts.notebook_container_runner" in command
     mounts = [command[index + 1] for index, value in enumerate(command[:-1]) if value == "--mount"]
     assert len(mounts) == 2 and mounts[0].endswith(",readonly")
     assert "/workspace/output" in mounts[1]
@@ -43,7 +56,8 @@ def test_sandbox_uses_nonroot_readonly_and_bounded_container(tmp_path):
 def test_sandbox_does_not_forward_host_secrets_or_production_mounts(tmp_path):
     notebook, output = _fixtures(tmp_path)
     rendered = " ".join(build_sandbox_command(notebook, output)).lower()
-    for forbidden in ("github_token", "actions_runtime_token", "google_application_credentials", "/content/drive", "mydrive", "--privileged", "--env"):
+    for forbidden in ("github_token", "actions_runtime_token", "google_application_credentials",
+                      "/content/drive", "mydrive", "--privileged", "--env"):
         assert forbidden not in rendered
 
 
@@ -58,12 +72,6 @@ def test_sandbox_rejects_non_notebook_and_missing_paths(tmp_path):
         build_sandbox_command(tmp_path / "missing.ipynb", output)
 
 
-def test_sandbox_rejects_container_name_injection(tmp_path):
-    notebook, output = _fixtures(tmp_path)
-    with pytest.raises(ValueError):
-        build_sandbox_command(notebook, output, container_name="--privileged")
-
-
 def test_sandbox_rejects_non_directory_output(tmp_path):
     notebook = tmp_path / "safe.ipynb"
     notebook.write_text("{}", encoding="utf-8")
@@ -73,15 +81,29 @@ def test_sandbox_rejects_non_directory_output(tmp_path):
         build_sandbox_command(notebook, output)
 
 
-def test_timeout_is_bounded_and_rejects_invalid_values(tmp_path):
+def test_sandbox_rejects_container_name_injection(tmp_path):
     notebook, output = _fixtures(tmp_path)
+    with pytest.raises(ValueError):
+        build_sandbox_command(notebook, output, container_name="--privileged")
+
+
+def test_git_blob_sha_matches_reviewed_notebook_blob():
+    assert git_blob_sha1(_recovery_file().read_bytes()) == RECOVERY_BLOB
+
+
+def test_timeout_is_bounded_and_rejects_invalid_values(tmp_path):
     for invalid in (0, -1, EXECUTION_TIMEOUT_SECONDS + 1, True, 1.5):
         with pytest.raises(ValueError):
-            run_sandbox(notebook, output, timeout_seconds=invalid)
+            run_sandbox(
+                _recovery_file(), tmp_path, request=_request(),
+                checked_out_commit_sha=COMMIT, resolved_notebook_path=RECOVERY_PATH,
+                resolved_blob_sha=RECOVERY_BLOB, timeout_seconds=invalid,
+            )
 
 
 def test_sandbox_timeout_kills_process_group_and_container(tmp_path, monkeypatch):
-    notebook, output = _fixtures(tmp_path)
+    output = tmp_path / "output"
+    output.mkdir()
     process = SimpleNamespace(pid=4321, wait=Mock(side_effect=[
         subprocess.TimeoutExpired(cmd="docker run", timeout=1), -9,
     ]))
@@ -89,7 +111,11 @@ def test_sandbox_timeout_kills_process_group_and_container(tmp_path, monkeypatch
     monkeypatch.setattr(notebook_sandbox.subprocess, "Popen", popen)
     monkeypatch.setattr(notebook_sandbox.os, "killpg", killpg)
     monkeypatch.setattr(notebook_sandbox, "_cleanup_container", cleanup)
-    result = run_sandbox(notebook, output, timeout_seconds=1)
+    result = run_sandbox(
+        _recovery_file(), output, request=_request(),
+        checked_out_commit_sha=COMMIT, resolved_notebook_path=RECOVERY_PATH,
+        resolved_blob_sha=RECOVERY_BLOB, timeout_seconds=1,
+    )
     assert result.timed_out and result.exit_code == 124
     killpg.assert_called_once()
     cleanup.assert_called_once()
@@ -97,9 +123,60 @@ def test_sandbox_timeout_kills_process_group_and_container(tmp_path, monkeypatch
     assert popen.call_args.kwargs["start_new_session"] is True
 
 
-def test_sandbox_output_reader_caps_and_marks_truncation():
-    with tempfile.TemporaryFile() as stream:
-        stream.write(b"x" * (notebook_sandbox.MAX_OUTPUT_BYTES + 1))
-        text, truncated = notebook_sandbox._read_bounded(stream)
-    assert len(text) == notebook_sandbox.MAX_OUTPUT_BYTES
-    assert truncated
+def test_sandbox_rejects_unapproved_identity_before_launch(tmp_path, monkeypatch):
+    output = tmp_path / "output"
+    output.mkdir()
+    popen = Mock()
+    monkeypatch.setattr(notebook_sandbox.subprocess, "Popen", popen)
+    result = run_sandbox(
+        _recovery_file(), output, request={"notebook_path": "notebooks/other.ipynb"},
+        checked_out_commit_sha=COMMIT, resolved_notebook_path=RECOVERY_PATH,
+        resolved_blob_sha=RECOVERY_BLOB,
+    )
+    assert result.exit_code == 3 and "not authorized" in result.stderr
+    popen.assert_not_called()
+
+
+def test_sandbox_rejects_changed_input_bytes_before_launch(tmp_path, monkeypatch):
+    output = tmp_path / "output"
+    output.mkdir()
+    popen = Mock()
+    monkeypatch.setattr(notebook_sandbox.subprocess, "Popen", popen)
+    result = run_sandbox(
+        _recovery_file(), output, request=_request(),
+        checked_out_commit_sha=COMMIT, resolved_notebook_path=RECOVERY_PATH,
+        resolved_blob_sha="b" * 40,
+    )
+    assert result.exit_code == 3 and "blob" in result.stderr
+    popen.assert_not_called()
+
+
+def test_artifact_summary_counts_execution_and_traceback_cells():
+    document = {
+        "cells": [
+            {"cell_type": "code", "execution_count": 1, "outputs":[
+                {"output_type": "stream", "text": "hello"}]},
+            {"cell_type": "code", "execution_count": 2, "outputs":[
+                {"output_type": "error", "ename": "ValueError", "evalue": "bad",
+                 "traceback": ["ValueError: bad"]}]},
+            {"cell_type": "markdown", "source": "text"},
+        ],
+    }
+    summary = summarize_notebook(document, "cell_error", 123, "f" * 64)
+    assert summary["executed_code_cells"] == 2
+    assert summary["error_cells"] == 1
+    assert summary["status"] == "cell_error"
+
+
+def test_artifact_writer_is_exclusive_and_size_bounded(tmp_path):
+    output = tmp_path / "output"
+    output.mkdir()
+    path = output / "executed.ipynb"
+    write_artifact_exclusive(path, b"{}", output_root=output)
+    assert path.read_bytes() == b"{}"
+    with pytest.raises(FileExistsError):
+        write_artifact_exclusive(path, b'{"changed":true}', output_root=output)
+    with pytest.raises(ValueError):
+        write_artifact_exclusive(output / "another.ipynb", b"{}", output_root=output)
+    with pytest.raises(ValueError):
+        write_artifact_exclusive(output / "executed.ipynb", b"x" * (64 * 1024 + 1), output_root=output)
