@@ -27,11 +27,11 @@ def summarize_notebook(document: dict[str, Any], status: str, artifact_bytes: in
     }
 
 
-def write_artifact_exclusive(path: str | Path, payload: bytes) -> None:
+def write_artifact_exclusive(path: str | Path, payload: bytes, *, output_root: str | Path = "/workspace/output") -> None:
     if not isinstance(payload, bytes) or len(payload) > MAX_NOTEBOOK_BYTES:
         raise ValueError("notebook artifact exceeds the 64 KiB limit")
     destination = Path(path)
-    if destination.name != "executed.ipynb" or destination.parent != Path("/workspace/output"):
+    if destination.name != "executed.ipynb" or destination.parent != Path(output_root):
         raise ValueError("artifact path is not the fixed sandbox output path")
     flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
     fd = os.open(destination, flags, 0o644)
