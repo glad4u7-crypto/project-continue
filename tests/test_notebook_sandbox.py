@@ -15,7 +15,7 @@ from scripts.notebook_sandbox import (
 
 RECOVERY_PATH = "notebooks/ProjectContinue-Recovery.ipynb"
 RECOVERY_BLOB = "544c131c97101485c4f328f83de1f96e65162dad"
-COMMIT = "a" * 40
+COMMIT = subprocess.run(("git", "rev-parse", "HEAD"), cwd=Path(__file__).resolve().parents[1], capture_output=True, text=True, check=True).stdout.strip()
 
 
 def _fixtures(tmp_path):
@@ -81,7 +81,11 @@ def test_sandbox_rejects_container_name_injection(tmp_path):
 
 
 def test_git_blob_sha_matches_reviewed_notebook_blob():
-    assert git_blob_sha1(_recovery_file().read_bytes()) == RECOVERY_BLOB
+    payload = notebook_sandbox._load_trusted_blob(
+        _recovery_file(), checked_out_commit_sha=COMMIT,
+        resolved_notebook_path=RECOVERY_PATH, resolved_blob_sha=RECOVERY_BLOB,
+    )
+    assert git_blob_sha1(payload) == RECOVERY_BLOB
 
 
 def test_timeout_is_bounded_and_rejects_invalid_values(tmp_path):
@@ -101,6 +105,7 @@ def test_sandbox_timeout_kills_process_group_and_container(tmp_path, monkeypatch
         subprocess.TimeoutExpired(cmd="docker run", timeout=1), -9,
     ]))
     popen, killpg, cleanup = Mock(return_value=process), Mock(), Mock()
+    monkeypatch.setattr(notebook_sandbox, "_load_trusted_blob", lambda *args, **kwargs: _recovery_file().read_bytes())
     monkeypatch.setattr(notebook_sandbox.subprocess, "Popen", popen)
     monkeypatch.setattr(notebook_sandbox.os, "killpg", killpg)
     monkeypatch.setattr(notebook_sandbox, "_cleanup_container", cleanup)
@@ -140,7 +145,7 @@ def test_sandbox_rejects_changed_input_bytes_before_launch(tmp_path, monkeypatch
         checked_out_commit_sha=COMMIT, resolved_notebook_path=RECOVERY_PATH,
         resolved_blob_sha="b" * 40,
     )
-    assert result.exit_code == 3 and "blob" in result.stderr
+    assert result.exit_code == 3 and "not authorized" in result.stderr
     popen.assert_not_called()
 
 
@@ -209,6 +214,7 @@ def test_successful_runner_copies_and_persists_redacted_execution_artifact(tmp_p
             Path(command[-1]).write_bytes(payload)
         return SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
 
+    monkeypatch.setattr(notebook_sandbox, "_load_trusted_blob", lambda *args, **kwargs: _recovery_file().read_bytes())
     monkeypatch.setattr(notebook_sandbox.subprocess, "Popen", fake_popen)
     monkeypatch.setattr(notebook_sandbox.subprocess, "run", fake_run)
     result = run_sandbox(
