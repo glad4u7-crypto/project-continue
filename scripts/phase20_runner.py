@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import resource
 import signal
 import subprocess
 import sys
@@ -52,6 +53,12 @@ def _emit_bounded_output(output: bytearray, total_bytes: int) -> None:
     sys.stdout.flush()
 
 
+def _apply_child_limits() -> None:
+    """Apply Linux child-process CPU/core limits on the GitHub-hosted runner."""
+    resource.setrlimit(resource.RLIMIT_CPU, (TASK_TIMEOUT_SECONDS, TASK_TIMEOUT_SECONDS + 10))
+    resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
+
+
 def run_task(task: str) -> int:
     """Run a fixed task in a disposable HOME, bounded output and no credentials."""
     command = build_command(task)
@@ -70,6 +77,7 @@ def run_task(task: str) -> int:
             stderr=subprocess.STDOUT,
             shell=False,
             start_new_session=True,
+            preexec_fn=_apply_child_limits,
         )
         output = bytearray()
         total_bytes = 0
