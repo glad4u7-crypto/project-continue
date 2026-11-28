@@ -47,7 +47,7 @@ def run_acceptance(output_dir: str | Path) -> dict[str, object]:
     code_cells = [cell for cell in document["cells"] if cell["cell_type"] == "code"]
     if [cell["execution_count"] for cell in code_cells] != [1, 2]:
         raise RuntimeError("notebook execution counts did not persist as expected")
-    output_text = "\\n".join(
+    output_text = "\n".join(
         str(output_item.get("text", ""))
         for cell in code_cells
         for output_item in cell.get("outputs", [])
