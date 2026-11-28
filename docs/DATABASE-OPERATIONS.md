@@ -90,3 +90,14 @@ A restore preview requires a matching SHA-256, supported schema version, success
 does not copy or replace any file, and always reports `restore_performed=False`.
 Eligibility means only that a candidate may proceed to a separate human review; it is
 not permission to restore, overwrite, delete, or change a live database.
+
+
+## Idempotent restore drill and no-overwrite behavior
+
+For a disposable recovery drill, `BackupOperations.restore_drill_idempotent(backup, destination)`
+creates the destination only when it does not exist. Repeating the same request against an
+existing, integrity-verified destination with an identical SHA-256 is an idempotent no-op.
+If the destination contains different bytes or is not a verified database, the operation
+raises `FileExistsError` and preserves the existing file and rows unchanged. The live
+database path is always rejected. This helper is a recovery drill, not a production restore
+or authorization to replace live data.
