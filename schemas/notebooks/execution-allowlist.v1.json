@@ -1,0 +1,5 @@
+{
+  "schema_version": 1,
+  "description": "Default-deny notebook execution allow-list. Entries require exact notebook path, content SHA-256, human approval ID, and explicit isolation restrictions.",
+  "entries": []
+}
