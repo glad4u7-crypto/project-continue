@@ -106,3 +106,29 @@ def test_non_code_cells_cannot_contain_execution_fields():
     document = _document()
     document["cells"][0]["outputs"] = []
     assert not validate_notebook_payload(_payload(document))[0]
+
+def test_untrusted_unhashable_schema_values_fail_closed():
+    document = _document()
+    document["cells"][0]["cell_type"] = []
+    passed, errors = validate_notebook_payload(_payload(document))
+    assert not passed
+    assert errors
+
+    document = _document()
+    document["nbformat_minor"] = "5"
+    passed, errors = validate_notebook_payload(_payload(document))
+    assert not passed
+    assert errors
+
+    document = _document()
+    document["cells"][1]["outputs"] = [{"output_type": []}]
+    passed, errors = validate_notebook_payload(_payload(document))
+    assert not passed
+    assert errors
+
+
+def test_invalid_unicode_in_source_is_rejected_without_exception():
+    payload = b'{"nbformat":4,"nbformat_minor":5,"metadata":{},"cells":[{"cell_type":"raw","id":"raw-01","metadata":{},"source":"\\\\ud800"}]}'
+    passed, errors = validate_notebook_payload(payload)
+    assert not passed
+    assert errors
