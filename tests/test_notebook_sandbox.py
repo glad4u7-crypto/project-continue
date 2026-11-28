@@ -205,6 +205,10 @@ def test_successful_runner_copies_and_persists_redacted_execution_artifact(tmp_p
 
     process = SimpleNamespace(pid=1234, wait=Mock(return_value=0))
     def fake_popen(command, **kwargs):
+        mount = command[command.index("--mount") + 1]
+        staged_path = Path(mount.split(",dst=", 1)[0].removeprefix("type=bind,src="))
+        assert staged_path.read_bytes() == _recovery_file().read_bytes()
+        assert staged_path.stat().st_mode & 0o777 == 0o644
         kwargs["stdout"].write(json.dumps(summary).encode("utf-8"))
         kwargs["stdout"].flush()
         return process
