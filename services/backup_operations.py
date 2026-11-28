@@ -235,9 +235,14 @@ class BackupOperations:
                         continue
                     stat_result = item.stat()
                     if datetime.fromtimestamp(stat_result.st_mtime, timezone.utc) < cutoff:
+                        manifest = self._manifest_path(item)
+                        manifest_stat = manifest.stat()
                         candidates.append({
                             "name": item.name, "sha256": verified["sha256"],
                             "size_bytes": stat_result.st_size, "mtime_ns": stat_result.st_mtime_ns,
+                            "manifest_sha256": self._sha256(manifest),
+                            "manifest_size_bytes": manifest_stat.st_size,
+                            "manifest_mtime_ns": manifest_stat.st_mtime_ns,
                         })
         preview_id = uuid.uuid4().hex
         self._retention_previews[preview_id] = candidates
@@ -268,6 +273,11 @@ class BackupOperations:
             manifest = self._manifest_path(path)
             if manifest.is_symlink() or not manifest.is_file():
                 raise ValueError("Retention manifest changed after preview")
+            manifest_stat = manifest.stat()
+            if (manifest_stat.st_size != item["manifest_size_bytes"]
+                    or manifest_stat.st_mtime_ns != item["manifest_mtime_ns"]
+                    or self._sha256(manifest) != item["manifest_sha256"]):
+                raise ValueError("Retention manifest changed after preview")
             path.unlink()
             manifest.unlink()
             deleted.append(str(path))
@@ -289,7 +299,7 @@ class BackupOperations:
         if not _SHA256.fullmatch(expected_sha256 or "") or actual != expected_sha256:
             raise PermissionError("Destructive target SHA-256 changed or does not match approval")
         if operation == "delete_backup":
-            self._managed_backup(raw)
+            self.verify_backup(raw)
         elif operation in {"restore_live", "overwrite_database"}:
             live = Path(self.database.path).expanduser().resolve()
             if self.database.path == ":memory:" or raw.resolve() != live:
