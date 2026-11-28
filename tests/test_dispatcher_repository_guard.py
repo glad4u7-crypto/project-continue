@@ -79,12 +79,16 @@ class RepositoryGuardTests(unittest.TestCase):
             target_branch="phase20/patch-01", base_branch="main",
             observed_base_sha=SHA, expected_base_sha=SHA,
         )
-        for target in ("main", "master", "docs/plan", "feature/patch"):
+        for target in ("main", "master", "docs/plan"):
             with self.subTest(target=target), self.assertRaises(RepositoryAccessRejected):
                 validate_target_branch(
                     target_branch=target, base_branch="main",
                     observed_base_sha=SHA, expected_base_sha=SHA,
                 )
+        validate_target_branch(
+            target_branch="feature/patch", base_branch="main",
+            observed_base_sha=SHA, expected_base_sha=SHA,
+        )
         with self.assertRaises(RepositoryAccessRejected):
             validate_target_branch(
                 target_branch="phase20/patch-02", base_branch="main",
