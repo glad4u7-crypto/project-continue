@@ -139,6 +139,16 @@ def validate_notebook_document(document: dict[str, Any]) -> dict[str, Any]:
             for output in outputs:
                 if not isinstance(output, dict):
                     raise ValueError("invalid code cell output")
+                output_type = output.get("output_type")
+                if output_type not in {"stream", "display_data", "execute_result", "error"}:
+                    raise ValueError("unsupported notebook output type")
+                text_payload = output.get("text", "")
+                if isinstance(text_payload, list):
+                    if not all(isinstance(part, str) for part in text_payload):
+                        raise ValueError("output text list must contain strings")
+                    text_payload = "".join(text_payload)
+                if not isinstance(text_payload, str) or len(text_payload) > MAX_OUTPUT_TEXT_CHARS:
+                    raise ValueError("output text exceeds the limit")
                 data = output.get("data", {})
                 if not isinstance(data, dict):
                     raise ValueError("output data must be an object")
@@ -220,9 +230,9 @@ def _redact(text: str) -> str:
     value = text
     for pattern in _SECRET_PATTERNS:
         if pattern.groups >= 3:
-            value = pattern.sub(r"\\1\\2[REDACTED]", value)
+            value = pattern.sub(r"\1\2[REDACTED]", value)
         elif pattern.groups == 2:
-            value = pattern.sub(r"\\1[REDACTED]", value)
+            value = pattern.sub(r"\1[REDACTED]", value)
         else:
             value = pattern.sub("[REDACTED]", value)
     return value
