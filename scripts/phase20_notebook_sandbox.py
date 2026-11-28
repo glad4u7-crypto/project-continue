@@ -1,6 +1,7 @@
 """Commit-bound notebook execution in a disposable, networkless Docker sandbox."""
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import os
@@ -89,15 +90,19 @@ def execute_notebook_sandbox(
                 capture_output=True, text=True, timeout=timeout_seconds + 20, check=False,
             )
             execution_failed = started.returncode != 0
-            staged_output = Path(temp) / "executed.ipynb"
-            copied = subprocess.run(
-                [docker_bin, "cp", f"{container_name}:/output/executed.ipynb", str(staged_output)],
-                capture_output=True, text=True, timeout=20, check=False,
-            )
-            if copied.returncode != 0 or not staged_output.is_file():
+            marker = "PC_NOTEBOOK_RESULT:"
+            encoded_lines = [line[len(marker):] for line in started.stdout.splitlines()
+                             if line.startswith(marker)]
+            if not encoded_lines:
                 raise NotebookExecutionError("sandbox output artifact is unavailable")
-            if staged_output.stat().st_size > MAX_NOTEBOOK_BYTES:
+            try:
+                artifact_bytes = base64.b64decode(encoded_lines[-1], validate=True)
+            except (ValueError, base64.binascii.Error) as exc:
+                raise NotebookExecutionError("sandbox output artifact encoding is invalid") from exc
+            if len(artifact_bytes) > MAX_NOTEBOOK_BYTES:
                 raise NotebookExecutionError("sandbox output artifact exceeds size limit")
+            staged_output = Path(temp) / "executed.ipynb"
+            staged_output.write_bytes(artifact_bytes)
             executed_doc = json.loads(staged_output.read_text(encoding="utf-8"))
             validate_notebook_document(executed_doc)
             # Recursively sanitize secrets before persisting the artifact.
