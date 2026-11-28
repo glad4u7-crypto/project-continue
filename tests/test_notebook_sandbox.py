@@ -211,10 +211,10 @@ def test_successful_runner_copies_and_persists_redacted_execution_artifact(tmp_p
         assert staged_path.read_bytes() == _recovery_file().read_bytes()
         assert staged_path.stat().st_mode & 0o777 == 0o644
         output = (
-            json.dumps(summary) + "\\nNOTEBOOK_ARTIFACT_BASE64="
-            + base64.b64encode(payload).decode("ascii") + "\\n"
+            json.dumps(summary).encode("utf-8") + bytes([10])
+            + b"NOTEBOOK_ARTIFACT_BASE64=" + base64.b64encode(payload) + bytes([10])
         )
-        kwargs["stdout"].write(output.encode("utf-8"))
+        kwargs["stdout"].write(output)
         kwargs["stdout"].flush()
         return process
 
