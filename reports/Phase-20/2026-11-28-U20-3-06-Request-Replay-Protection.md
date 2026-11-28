@@ -31,7 +31,8 @@
 - Earlier 11-test version full CI: https://github.com/glad4u7-crypto/project-continue/actions/runs/46098486057 — SUCCESS.
 - Finalized 13-test guard-only version full CI: https://github.com/glad4u7-crypto/project-continue/actions/runs/46098670631 — SUCCESS.
 - First canonical-envelope migration run: https://github.com/glad4u7-crypto/project-continue/actions/runs/46105007656 — FAILED because an older replay-store integration test still used the superseded flat envelope (4 failures; 319 passed; 11 skipped). Failure logs were inspected and the stale test was rewritten to the canonical v1.0 envelope.
-- Final runtime-integrated CI: https://github.com/glad4u7-crypto/project-continue/actions/runs/46105092157 — pending at report update time. This run includes the canonical guard tests, dispatcher runtime tests, full compile, production container, compose validation, smoke test, focused test categories, and full suite.
+- Runtime-integrated CI run 46105092157: FAILED one test (332 passed, 11 skipped). The failing test correctly exposed that the runtime treated a non-GitHub permission label `read` as equivalent to the policy's required `pull`. The permission map was tightened to accept only GitHub repository permission levels (`pull`, `triage`, `write`, `maintain`, `admin`) at or above the policy minimum.
+- Corrected final CI run: https://github.com/glad4u7-crypto/project-continue/actions/runs/46105212163 — queued/in progress at the time of this update. This run includes the corrected permission rule, all dispatcher tests, full compile, production container, compose validation, smoke test, focused test categories, and full suite.
 
 ## Acceptance
 
