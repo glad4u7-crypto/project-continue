@@ -23,12 +23,19 @@ def main():
         allow_errors=False,
         record_timing=True,
     )
-    executed = client.execute()
+    execution_error = None
+    try:
+        executed = client.execute()
+    except Exception as exc:
+        execution_error = exc
+        executed = notebook
     nbformat.validate(executed)
     destination.parent.mkdir(parents=True, exist_ok=True)
     nbformat.write(executed, destination)
     if destination.stat().st_size > 256 * 1024:
         raise RuntimeError("executed notebook output exceeds the 256 KiB artifact limit")
+    if execution_error is not None:
+        raise RuntimeError("notebook execution failed; sanitized traceback artifact was retained") from execution_error
 
 
 if __name__ == "__main__":
