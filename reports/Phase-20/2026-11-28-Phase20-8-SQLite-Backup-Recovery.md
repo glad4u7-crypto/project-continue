@@ -5,7 +5,7 @@
 - Branch: `phase20/u20-8-sqlite-backup-recovery`
 - Final tested commit: `068b7d5230f4a1dd0102ee9363460effc3ff6fd6`
 - Dedicated fixed-task runner: [46118338614](https://github.com/glad4u7-crypto/project-continue/actions/runs/46118338614) — SUCCESS
-- Main CI: [46118338594](https://github.com/glad4u7-crypto/project-continue/actions/runs/46118338594) — pending final confirmation at report creation
+- Main CI: [46118338594](https://github.com/glad4u7-crypto/project-continue/actions/runs/46118338594) — SUCCESS on exact tested code SHA `068b7d5230f4a1dd0102ee9363460effc3ff6fd6`
 - Dedicated SQLite safety acceptance: 33 passed
 - Full regression: 435 passed, 11 skipped (PostgreSQL DSN-dependent), 52 subtests passed
 - No merge; no main-branch mutation; no live database or Drive mount was touched.
