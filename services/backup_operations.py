@@ -171,3 +171,28 @@ class BackupOperations:
             raise
         finally:
             destination_db.close()
+
+    def restore_drill_idempotent(self, backup_path: str | Path, destination: str | Path) -> Path:
+        """Restore once; an identical existing destination is an idempotent no-op."""
+        raw_source = Path(backup_path).expanduser()
+        raw_target = Path(destination).expanduser()
+        if raw_source.is_symlink() or raw_target.is_symlink():
+            raise ValueError("Restore source and destination must not be symbolic links")
+        source = raw_source.resolve(strict=True)
+        target = raw_target.resolve()
+        if source.parent != self.root or not source.name.startswith(self.PREFIX) or not source.name.endswith(self.SUFFIX):
+            raise ValueError("Restore source must be a managed backup")
+        live = Path(self.database.path).expanduser().resolve()
+        if self.database.path != ":memory:" and target == live:
+            raise ValueError("Idempotent restore cannot target the live database")
+        if not Database.verify_backup(source):
+            raise sqlite3.DatabaseError("Restore source failed integrity verification")
+
+        if target.exists():
+            if not target.is_file() or not Database.verify_backup(target):
+                raise FileExistsError("Restore destination exists and is not a verified database")
+            if sha256_file(target) != sha256_file(source):
+                raise FileExistsError("Restore destination contains different data; no overwrite performed")
+            return target
+
+        return self.restore_drill(source, target)
