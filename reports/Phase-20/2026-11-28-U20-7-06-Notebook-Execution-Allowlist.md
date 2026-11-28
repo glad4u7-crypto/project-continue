@@ -44,3 +44,5 @@ Exact code SHA `df891cdc960b360b40e9b61da1bbd0af375830f9`:
 ## Subsequent test-only allow-list extension
 
 For U20-7-10, the policy was extended with one additional exact path/blob pair for the harmless arithmetic-only fixture at tests/fixtures/notebooks/harmless_execution.ipynb. It is separately pinned to Git blob b62de83fd65d7faa0713ce52b8c87b4741ed9832 and covered by the execution-policy test. No other notebook path was added. The real recovery notebook remains unexecuted.
+
+The final U20-7-12 acceptance added two more separately pinned test-only identities: tests/fixtures/notebooks/kernel_crash.ipynb and tests/fixtures/notebooks/timeout.ipynb. They are used only to verify fail-closed kernel-crash and timeout behavior inside the disposable sandbox. The allow-list now consists of the reviewed recovery notebook plus three exact test fixtures; no arbitrary notebook path or modified blob is accepted.
