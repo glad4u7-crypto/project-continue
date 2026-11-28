@@ -1,14 +1,14 @@
 # Phase 20 — Live Progress Tracker
 
-**Overall:** PHASE 20.0 COMPLETE WITH APPROVED LIMITATION / PHASE 20.1 NOT STARTED  
-**Last updated:** 2026-11-27 (Asia/Kolkata)  
+**Overall:** PHASE 20.0 COMPLETE / PHASE 20.1 NOT STARTED  
+**Last updated:** 2026-11-28 06:47 (Asia/Kolkata)  
 **Plan branch:** docs/phase-20-master-checklist
 
 ## Parent phase status
 
 | Phase | Status | Passed units | Total units | Latest evidence | Next action |
 |---|---|---:|---:|---|---|
-| 20.0 Phase 19 handoff ও entry gate | COMPLETE WITH APPROVED LIMITATION | 6 | 7 | GitHub Actions CI run 46021825415; 2026-11-27 Colab-free entry-gate report | U20-0-04 remains a documented approved limitation: no independent Drive notebook read-back; proceed to 20.1 without Colab/Codespaces |
+| 20.0 Phase 19 handoff ও entry gate | COMPLETE | 7 | 7 | GitHub Actions CI run 46021825415; 2026-11-28 U20-0-04 notebook read-back addendum | All 7 units PASS; uploaded notebook matches reported 714-byte size and SHA-256; proceed to 20.1 without Colab/Codespaces |
 | 20.1 GitHub capability ও permission audit | NOT STARTED | 0 | 12 | Initial planning baseline only | Start only after Phase 20.0 disposition; audit GitHub Actions capabilities and permissions |
 | 20.2 Authentication ও least-privilege security | NOT STARTED | 0 | 9 | Initial planning baseline only | Complete in order; see unit register |
 | 20.3 Secure dispatcher ও command protocol | NOT STARTED | 0 | 9 | Initial planning baseline only | Complete in order; see unit register |
@@ -26,11 +26,11 @@
 ## Global counters
 
 - Total atomic checkpoints: 142
-- PASS: 6 (Phase 20.0 only)
+- PASS: 7 (Phase 20.0 only)
 - FAIL: 0
-- BLOCKED: 1 (approved limitation in Phase 20.0)
+- BLOCKED: 0
 - NOT STARTED: 135
-- Phase 20.0 exit gate: COMPLETE WITH APPROVED LIMITATION
+- Phase 20.0 exit gate: COMPLETE
 
 ## Update rules
 
