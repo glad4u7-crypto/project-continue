@@ -88,8 +88,7 @@ def execute_notebook_sandbox(
                 [docker_bin, "start", "--attach", container_name],
                 capture_output=True, text=True, timeout=timeout_seconds + 20, check=False,
             )
-            if started.returncode != 0:
-                raise NotebookExecutionError("notebook execution failed or sandbox kernel crashed")
+            execution_failed = started.returncode != 0
             staged_output = Path(temp) / "executed.ipynb"
             copied = subprocess.run(
                 [docker_bin, "cp", f"{container_name}:/output/executed.ipynb", str(staged_output)],
@@ -113,13 +112,19 @@ def execute_notebook_sandbox(
                 stream.write(payload)
                 stream.flush()
                 os.fsync(stream.fileno())
-            return {
-                "status": "PASS", "path": output_name, "bytes": len(payload),
+            result = {
+                "status": "FAIL" if execution_failed else "PASS",
+                "path": output_name, "bytes": len(payload),
                 "sha256": hashlib.sha256(payload).hexdigest(),
                 "commit_sha": current_commit, "approval_id": approval_id,
                 "network_access": False, "secrets_access": False,
                 "external_mounts": False, "container_image_id": image_id,
             }
+            if execution_failed:
+                raise NotebookExecutionError(
+                    "notebook execution failed; sanitized traceback artifact saved as " + output_name
+                )
+            return result
         except subprocess.TimeoutExpired as exc:
             raise NotebookExecutionError("sandbox execution timed out") from exc
         finally:
