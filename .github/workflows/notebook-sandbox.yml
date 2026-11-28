@@ -53,7 +53,12 @@ jobs:
       - name: Verify default-deny network policy
         shell: bash
         run: |
-          if docker run --rm --network none --entrypoint python project-continue-notebook-sandbox:ci -c "import urllib.request; urllib.request.urlopen('https://example.com', timeout=2)"; then
+          set +e
+          docker run --rm --network none --entrypoint python project-continue-notebook-sandbox:ci -c "import socket; socket.create_connection(('1.1.1.1', 443), timeout=2)" >/tmp/notebook-network-check.log 2>&1
+          status=$?
+          set -e
+          if [ "$status" -ne 1 ] || ! grep -Eiq "Network is unreachable|No route to host|timed out" /tmp/notebook-network-check.log; then
+            cat /tmp/notebook-network-check.log
             echo "NETWORK_DENIAL: FAIL"
             exit 1
           fi
