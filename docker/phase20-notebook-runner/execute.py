@@ -1,5 +1,6 @@
 """In-container nbclient entrypoint. Runs only inside the networkless sandbox."""
 import argparse
+import base64
 from pathlib import Path
 import nbformat
 from nbclient import NotebookClient
@@ -34,6 +35,8 @@ def main():
     nbformat.write(executed, destination)
     if destination.stat().st_size > 256 * 1024:
         raise RuntimeError("executed notebook output exceeds the 256 KiB artifact limit")
+    encoded = base64.b64encode(destination.read_bytes()).decode("ascii")
+    print("PC_NOTEBOOK_RESULT:" + encoded, flush=True)
     if execution_error is not None:
         raise RuntimeError("notebook execution failed; sanitized traceback artifact was retained") from execution_error
 
