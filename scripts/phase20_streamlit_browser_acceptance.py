@@ -1,12 +1,14 @@
 """Real Chromium acceptance for an isolated Streamlit app instance."""
 from __future__ import annotations
 
+import json
 import os
 import socket
 import subprocess
 import sys
 import tempfile
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 from urllib.error import URLError
 from urllib.request import urlopen
@@ -91,7 +93,7 @@ def stop_app(process: subprocess.Popen) -> None:
         process.wait(timeout=5)
 
 
-def browser_round_trip(base_url: str, *, expect_existing: bool) -> None:
+def browser_round_trip(base_url: str, *, expect_existing: bool, screenshot_path: Path) -> None:
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True)
         page = browser.new_page()
@@ -104,9 +106,10 @@ def browser_round_trip(base_url: str, *, expect_existing: bool) -> None:
             page.get_by_text("Project Continue", exact=False).first.wait_for(timeout=20000)
             page.get_by_text("Project registry", exact=True).wait_for(timeout=10000)
             if expect_existing:
-                page.get_by_text("Browser acceptance project", exact=True).wait_for(timeout=15000)
+                page.get_by_text("Browser acceptance project updated", exact=True).wait_for(timeout=15000)
                 page.get_by_role("button", name="Open details").click()
-                page.get_by_text("Browser acceptance task", exact=True).wait_for(timeout=15000)
+                page.get_by_text("Browser acceptance task updated", exact=True).wait_for(timeout=15000)
+                page.screenshot(path=str(screenshot_path), full_page=True)
                 return
 
             page.locator("summary").filter(has_text="Register a project").click()
@@ -116,14 +119,39 @@ def browser_round_trip(base_url: str, *, expect_existing: bool) -> None:
             page.get_by_text("Browser acceptance project", exact=True).wait_for(timeout=15000)
 
             page.get_by_role("button", name="Open details").click()
+            page.locator("summary").filter(has_text="Edit project details").click()
+            page.get_by_label("Name").fill("Browser acceptance project updated")
+            page.get_by_label("Description").last.fill("Updated by Chromium browser acceptance")
+            page.get_by_role("button", name="Save changes").click()
+            page.get_by_text("Browser acceptance project updated", exact=True).wait_for(timeout=15000)
             page.locator("summary").filter(has_text="Create task").first.click()
             page.get_by_label("Task title").fill("Browser acceptance task")
             page.get_by_label("Description").last.fill("Persist across app restart")
             page.get_by_role("button", name="Create task").click()
             page.get_by_text("Browser acceptance task", exact=True).wait_for(timeout=15000)
+            page.locator("summary").filter(has_text="Edit task").first.click()
+            page.get_by_label("Title").fill("Browser acceptance task updated")
+            page.get_by_role("button", name="Save task changes").click()
+            page.get_by_text("Browser acceptance task updated", exact=True).wait_for(timeout=15000)
 
-            page.get_by_role("button", name="Mark complete").click()
+            page.locator("summary").filter(has_text="Create task").first.click()
+            page.get_by_label("Task title").fill("Browser acceptance dependent task")
+            page.get_by_label("Description").last.fill("Dependency flow validation")
+            page.get_by_role("button", name="Create task").click()
+            page.get_by_text("Browser acceptance dependent task", exact=True).wait_for(timeout=15000)
+
+            page.locator("summary").filter(has_text="Dependencies").last.click()
+            page.get_by_role("combobox", name="This task depends on").click()
+            page.get_by_text("Browser acceptance task updated", exact=True).last.click()
+            page.get_by_role("button", name="Add dependency").click()
+            page.get_by_text("Depends on: Browser acceptance task updated", exact=False).wait_for(timeout=15000)
+
+            page.get_by_role("button", name="Mark complete").first.click()
             page.get_by_text("Done", exact=True).first.wait_for(timeout=15000)
+            page.get_by_role("button", name="Mark complete").last.click()
+            page.get_by_text("GitHub integration", exact=True).wait_for(timeout=10000)
+            page.get_by_text("GitHub repository is not configured", exact=False).wait_for(timeout=10000)
+            page.screenshot(path=str(screenshot_path), full_page=True)
             if page_errors:
                 raise AssertionError(f"Browser page errors: {page_errors}")
         except PlaywrightTimeoutError as exc:
@@ -132,7 +160,7 @@ def browser_round_trip(base_url: str, *, expect_existing: bool) -> None:
             browser.close()
 
 
-def browser_login_round_trip(base_url: str) -> None:
+def browser_login_round_trip(base_url: str, screenshot_path: Path) -> None:
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True)
         page = browser.new_page()
@@ -152,6 +180,7 @@ def browser_login_round_trip(base_url: str) -> None:
             page.get_by_role("button", name="Sign in").click()
             page.get_by_text("Authenticated production operator", exact=True).wait_for(timeout=20000)
             page.get_by_text("Project registry", exact=True).wait_for(timeout=15000)
+            page.screenshot(path=str(screenshot_path), full_page=True)
         finally:
             browser.close()
 
@@ -164,18 +193,20 @@ def main() -> int:
         port = free_port()
         base_url = f"http://127.0.0.1:{port}"
         health_url = f"{base_url}/_stcore/health"
+        evidence_dir = ROOT / "reports" / "phase20-streamlit-browser"
+        evidence_dir.mkdir(parents=True, exist_ok=True)
 
         first = start_app(database_path, log_path, port)
         try:
             wait_for_health(health_url, first, log_path)
-            browser_round_trip(base_url, expect_existing=False)
+            browser_round_trip(base_url, expect_existing=False, screenshot_path=evidence_dir / "project-task-flow.png")
         finally:
             stop_app(first)
 
         second = start_app(database_path, log_path, port)
         try:
             wait_for_health(health_url, second, log_path)
-            browser_round_trip(base_url, expect_existing=True)
+            browser_round_trip(base_url, expect_existing=True, screenshot_path=evidence_dir / "restart-persistence.png")
         finally:
             stop_app(second)
 
@@ -191,7 +222,7 @@ def main() -> int:
             production_url = "http://127.0.0.1:" + str(production_port)
             wait_for_health(production_url + "/_stcore/health", production, log_path)
             try:
-                browser_login_round_trip(production_url)
+                browser_login_round_trip(production_url, evidence_dir / "production-login.png")
             except Exception:
                 print("PRODUCTION_STREAMLIT_LOG_TAIL=" + log_path.read_text(errors="replace")[-5000:])
                 raise
@@ -200,11 +231,29 @@ def main() -> int:
         if production.poll() is None:
             raise AssertionError("Production-auth test process was not stopped")
 
+        evidence = {
+            "commit": os.environ.get("GITHUB_SHA", "local-unpinned"),
+            "captured_at": datetime.now(timezone.utc).isoformat(),
+            "browser": "Chromium",
+            "health_http_200": True,
+            "project_create_read_update": True,
+            "task_create_update_complete_dependency": True,
+            "github_panel_empty_state": True,
+            "restart_persistence": True,
+            "production_login_gate": True,
+            "process_cleanup": True,
+            "live_data_touched": False,
+        }
+        (evidence_dir / "acceptance.json").write_text(
+            json.dumps(evidence, sort_keys=True, indent=2) + "\\n", encoding="utf-8"
+        )
         print("PHASE20_STREAMLIT_BROWSER_ACCEPTANCE=PASS")
         print("health_endpoint=HTTP_200")
         print("browser=Chromium")
-        print("project_create=PASS")
-        print("task_create_and_complete=PASS")
+        print("project_create_read_update=PASS")
+        print("task_create_update_complete_dependency=PASS")
+        print("github_panel_empty_state=PASS")
+        print("browser_evidence=reports/phase20-streamlit-browser")
         print("restart_persistence=PASS")
         print("production_login_gate=PASS")
         print("isolated_process_cleanup=PASS")
