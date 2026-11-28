@@ -15,7 +15,7 @@
    - SQLite replay claims through the repository's existing transaction manager. Atomic paired claims, duplicate rollback, expiry cleanup, and fail-closed storage errors.
 4. `src/dispatcher/runtime.py`
    - `SecureDispatcher` orchestrates trusted authenticated-identity lookup, actor claim comparison, exact repository allow-list + live metadata check, minimum permission check, commit membership verifier, fixed task registry, closed task-argument validation, replay claim, then fixed handler lookup/invocation. Request-supplied actor fields are never authentication.
-5. Tests:
+5. Tests (23 test methods total):
    - `tests/test_dispatcher_request_guard.py`: canonical envelope, malformed/expired/future requests, replay store durability, rollback, and storage failure tests.
    - `tests/test_dispatcher_runtime.py`: allow-listed dispatch, numeric/string GitHub ID normalization, actor spoof rejection, repository mismatch, insufficient permission, invalid commit, unknown task, unsafe arguments, replay rejection, and identity lookup failure.
 
@@ -36,6 +36,6 @@
 
 ## Acceptance
 
-- Do not mark PASS until run 46105092157 is completed successfully and final files are read back from this branch.
+- Do not mark PASS until corrected run 46105212163 completes successfully and final files are read back from this branch.
 - If the run fails, inspect its job logs, fix and rerun.
 - No merge to main, no production credentials, and no live service/data modification.
