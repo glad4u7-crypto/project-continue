@@ -148,7 +148,7 @@ def browser_login_round_trip(base_url: str) -> None:
             if page.get_by_text("Project registry", exact=True).count():
                 raise AssertionError("Production dashboard rendered before authentication")
             page.get_by_label("Email").fill("browser-admin@example.invalid")
-            page.get_by_label("Password").fill("Browser-Test-Only-Password-123!")
+            page.get_by_role("textbox", name="Password").fill("Browser-Test-Only-Password-123!")
             page.get_by_role("button", name="Sign in").click()
             page.get_by_text("Authenticated production operator", exact=True).wait_for(timeout=20000)
             page.get_by_text("Project registry", exact=True).wait_for(timeout=15000)
