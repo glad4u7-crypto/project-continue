@@ -109,7 +109,7 @@
 
 | Unit ID | Checkpoint | Status | Evidence / run reference |
 |---|---|---|---|
-| U20-6-01 | Python version ও dependency lock/baseline যাচাই | NOT STARTED | — |
+| U20-6-01 | Python version ও dependency lock/baseline যাচাই | PASS | CPython 3.11 verified in main CI and Phase 20 runner; requirements ranges and pytest.ini inspected; no full transitive lockfile exists and is explicitly disclosed; report `reports/Phase-20/2026-11-28-U20-6-01-Python-Dependency-Baseline.md`; report commit `c1abe818b20284655559e270a85fa48a49a87899` |
 | U20-6-02 | Compile-only task handler তৈরি | NOT STARTED | — |
 | U20-6-03 | Focused pytest task handler তৈরি | NOT STARTED | — |
 | U20-6-04 | Full pytest suite task handler তৈরি | NOT STARTED | — |
