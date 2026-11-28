@@ -124,7 +124,7 @@ def browser_round_trip(base_url: str, *, expect_existing: bool, screenshot_path:
             page.get_by_role("textbox", name="Name", exact=True).fill("Browser acceptance project updated")
             page.get_by_label("Description").last.fill("Updated by Chromium browser acceptance")
             page.get_by_role("button", name="Save changes").click()
-            page.get_by_text("Browser acceptance project updated", exact=True).wait_for(timeout=15000)
+            page.get_by_text("Browser acceptance project updated", exact=True).first.wait_for(timeout=15000)
             page.locator("summary").filter(has_text="Create task").first.click()
             page.get_by_label("Task title").fill("Browser acceptance task")
             page.get_by_label("Description").last.fill("Persist across app restart")
@@ -133,7 +133,7 @@ def browser_round_trip(base_url: str, *, expect_existing: bool, screenshot_path:
             page.locator("summary").filter(has_text="Edit task").first.click()
             page.get_by_label("Title").fill("Browser acceptance task updated")
             page.get_by_role("button", name="Save task changes").click()
-            page.get_by_text("Browser acceptance task updated", exact=True).wait_for(timeout=15000)
+            page.get_by_text("Browser acceptance task updated", exact=True).first.wait_for(timeout=15000)
 
             page.locator("summary").filter(has_text="Create task").first.click()
             page.get_by_label("Task title").fill("Browser acceptance dependent task")
