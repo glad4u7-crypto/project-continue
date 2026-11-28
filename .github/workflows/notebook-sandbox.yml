@@ -83,7 +83,7 @@ jobs:
           python -m pip install --disable-pip-version-check pip-audit==2.10.1
           pip-audit -r notebook-sandbox/requirements.txt
       - name: Run harmless notebook end-to-end
-        run: python scripts/notebook_sandbox_e2e.py --output-dir "$RUNNER_TEMP/notebook-artifacts"
+        run: python -m scripts.notebook_sandbox_e2e --output-dir "$RUNNER_TEMP/notebook-artifacts"
       - name: Upload redacted harmless notebook artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
