@@ -43,13 +43,21 @@ jobs:
           python-version: "3.11"
       - name: Install project test dependencies
         run: python -m pip install --disable-pip-version-check -r requirements.txt
-      - name: Test sandbox command contract
+      - name: Test sandbox network and timeout contract
         run: python -m pytest -q tests/test_notebook_sandbox.py
       - name: Build isolated notebook kernel image
         run: docker build --pull --file notebook-sandbox/Dockerfile --tag project-continue-notebook-sandbox:ci .
       - name: Verify non-root kernel runtime and pinned packages
         run: |
           docker run --rm --entrypoint python project-continue-notebook-sandbox:ci -c "import os, ipykernel, nbclient, nbformat; assert os.getuid() == 10001; print('NONROOT_KERNEL_IMAGE: PASS')"
+      - name: Verify default-deny network policy
+        shell: bash
+        run: |
+          if docker run --rm --network none --entrypoint python project-continue-notebook-sandbox:ci -c "import urllib.request; urllib.request.urlopen('https://example.com', timeout=2)"; then
+            echo "NETWORK_DENIAL: FAIL"
+            exit 1
+          fi
+          echo "NETWORK_DENIAL: PASS"
       - name: Audit notebook runtime dependencies
         run: |
           python -m pip install --disable-pip-version-check pip-audit==2.10.1
