@@ -140,7 +140,7 @@ def run_task(task: str, retries: int = 0) -> TaskResult:
     duration = round(time.monotonic() - started, 3)
     passed, failed, skipped, errors = _counts(stdout, stderr)
     expected_probe = task == "failure-probe" and failure_class == "code" and code != 0
-    status = "EXPECTED_FAILURE_DETECTED" if expected_probe else ("PASS" if code == 0 else "FAIL")
+    status = "EXPECTED_FAILURE_DETECTED" if expected_probe else ("PASS" if code == 0 else ("BLOCKED" if retryable and attempts > retries else "FAIL"))
     if expected_probe:
         failure_class = "intentional-code-failure"
     return TaskResult(task, status, failure_class, 0 if expected_probe else code, duration,
