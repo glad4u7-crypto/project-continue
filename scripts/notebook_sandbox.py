@@ -1,5 +1,6 @@
 """Build and supervise a constrained, identity-bound Docker notebook runner."""
 from __future__ import annotations
+import base64
 import hashlib
 import json
 import os
@@ -18,9 +19,10 @@ from scripts.notebook_read import read_notebook_redacted
 SANDBOX_IMAGE = "project-continue-notebook-sandbox:ci"
 SANDBOX_UID = 10001
 EXECUTION_TIMEOUT_SECONDS = 120
-MAX_OUTPUT_BYTES = 64 * 1024
+MAX_OUTPUT_BYTES = 128 * 1024
 MAX_NOTEBOOK_BYTES = 64 * 1024
 _CONTAINER_NAME_RE = re.compile(r"^pc-notebook-[0-9a-f]{32}$")
+REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 
 
 @dataclass(frozen=True)
@@ -33,9 +35,6 @@ class SandboxResult:
     stderr_truncated: bool
     artifact_path: str | None = None
     execution_status: str | None = None
-
-
-REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 
 
 def git_blob_sha1(payload: bytes) -> str:
@@ -77,7 +76,7 @@ def _load_trusted_blob(
 
 def _mount_path(path: Path) -> str:
     value = str(path)
-    if any(character in value for character in (",", "\\n", "\\r")):
+    if any(character in value for character in (",", "\n", "\r")):
         raise ValueError("sandbox mount path contains unsupported characters")
     return value
 
@@ -94,7 +93,7 @@ def build_sandbox_command(notebook_path: str | Path, *, container_name: str | No
     if not isinstance(name, str) or not _CONTAINER_NAME_RE.fullmatch(name):
         raise ValueError("sandbox container name is invalid")
     return (
-        "docker", "run", "--name", name, "--network=none", "--stop-timeout=5",
+        "docker", "run", "--rm", "--name", name, "--network=none", "--stop-timeout=5",
         "--user", f"{SANDBOX_UID}:{SANDBOX_UID}", "--read-only", "--cap-drop=ALL",
         "--security-opt=no-new-privileges", "--pids-limit=64", "--memory=512m", "--cpus=1",
         "--tmpfs", "/tmp:rw,noexec,nosuid,nodev,size=64m",
@@ -117,21 +116,12 @@ def _read_bounded(stream) -> tuple[str, bool]:
     return data[:MAX_OUTPUT_BYTES].decode("utf-8", errors="replace"), len(data) > MAX_OUTPUT_BYTES
 
 
-def _remove_container(container_name: str) -> None:
-    try:
-        subprocess.run(("docker", "rm", "--force", container_name), shell=False,
-            check=False, capture_output=True, timeout=5)
-    except (OSError, subprocess.TimeoutExpired):
-        pass
-
-
 def _cleanup_container(container_name: str) -> None:
-    try:
-        subprocess.run(("docker", "kill", container_name), shell=False,
-            check=False, capture_output=True, timeout=5)
-    except (OSError, subprocess.TimeoutExpired):
-        pass
-    _remove_container(container_name)
+    for command in (("docker", "kill", container_name), ("docker", "rm", "--force", container_name)):
+        try:
+            subprocess.run(command, shell=False, check=False, capture_output=True, timeout=5)
+        except (OSError, subprocess.TimeoutExpired):
+            pass
 
 
 def _write_exclusive(path: Path, payload: bytes, *, mode: int = 0o600) -> None:
@@ -178,25 +168,28 @@ def run_sandbox(
         )
     except (OSError, ValueError, subprocess.TimeoutExpired):
         return SandboxResult(3, False, "", "could not resolve the exact authorized notebook blob", False, False)
-    if len(payload) > MAX_NOTEBOOK_BYTES:
-        return SandboxResult(3, False, "", "notebook exceeds the 64 KiB input limit", False, False)
-    if git_blob_sha1(payload) != resolved_blob_sha:
-        return SandboxResult(3, False, "", "resolved notebook blob does not match Git object bytes", False, False)
+    if len(payload) > MAX_NOTEBOOK_BYTES or git_blob_sha1(payload) != resolved_blob_sha:
+        return SandboxResult(3, False, "", "authorized notebook blob failed size or identity checks", False, False)
     valid, _, _ = read_notebook_redacted(payload)
     if not valid:
         return SandboxResult(3, False, "", "notebook failed structural validation", False, False)
 
     container_name = f"pc-notebook-{uuid.uuid4().hex}"
-    with tempfile.TemporaryDirectory(prefix="pc-notebook-input-") as temp_input, tempfile.TemporaryDirectory(prefix="pc-notebook-output-") as temp_output:
-        input_dir, temp_dir = Path(temp_input), Path(temp_output)
+    with tempfile.TemporaryDirectory(prefix="pc-notebook-input-") as temp_input:
+        input_dir = Path(temp_input)
         os.chmod(input_dir, 0o755)
         staged_input = input_dir / "input.ipynb"
-        _write_exclusive(staged_input, payload, mode=0o644)
+        try:
+            _write_exclusive(staged_input, payload, mode=0o644)
+        except OSError:
+            return SandboxResult(3, False, "", "could not stage exact notebook blob", False, False)
         command = build_sandbox_command(staged_input, container_name=container_name)
         with tempfile.TemporaryFile() as stdout_file, tempfile.TemporaryFile() as stderr_file:
             try:
-                process = subprocess.Popen(command, stdout=stdout_file, stderr=stderr_file,
-                    shell=False, start_new_session=True, preexec_fn=_apply_output_limits)
+                process = subprocess.Popen(
+                    command, stdout=stdout_file, stderr=stderr_file, shell=False,
+                    start_new_session=True, preexec_fn=_apply_output_limits,
+                )
             except OSError as exc:
                 return SandboxResult(127, False, "", f"{type(exc).__name__}: sandbox launch failed", False, False)
             timed_out = False
@@ -211,53 +204,38 @@ def run_sandbox(
                 process.wait()
                 _cleanup_container(container_name)
                 return_code = 124
-            stdout, stdout_truncated = _read_bounded(stdout_file)
+            raw_stdout, stdout_truncated = _read_bounded(stdout_file)
             stderr, stderr_truncated = _read_bounded(stderr_file)
 
-        raw_artifact = temp_dir / "executed.ipynb"
-        if timed_out:
-            # _cleanup_container already killed and removed the timed-out container.
-            pass
-        elif return_code == 0:
-            try:
-                copied = subprocess.run(
-                    ("docker", "cp", f"{container_name}:/workspace/output/executed.ipynb", str(raw_artifact)),
-                    shell=False, check=False, capture_output=True, timeout=10,
-                )
-            except (OSError, subprocess.TimeoutExpired):
-                copied = None
-            _remove_container(container_name)
-            if copied is None or copied.returncode != 0 or not raw_artifact.is_file():
-                return SandboxResult(3, False, stdout, "sandbox did not produce a retrievable notebook artifact", stdout_truncated, stderr_truncated)
-        else:
-            _remove_container(container_name)
-
-        artifact_path = None
-        execution_status = None
-        if return_code == 0 and raw_artifact.is_file():
-            if raw_artifact.stat().st_size > MAX_NOTEBOOK_BYTES:
-                return SandboxResult(3, timed_out, stdout, "executed notebook artifact exceeds 64 KiB", stdout_truncated, stderr_truncated)
-            artifact_valid, artifact_doc, _ = read_notebook_redacted(raw_artifact.read_bytes())
-            if not artifact_valid or artifact_doc is None:
-                return SandboxResult(3, timed_out, stdout, "executed notebook artifact failed validation", stdout_truncated, stderr_truncated)
-            try:
-                summary = json.loads(stdout)
-            except (json.JSONDecodeError, TypeError):
-                summary = {}
-            sanitized = json.dumps(artifact_doc, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
-            if len(sanitized) > MAX_NOTEBOOK_BYTES:
-                return SandboxResult(3, timed_out, stdout, "redacted notebook artifact exceeds 64 KiB", stdout_truncated, stderr_truncated)
-            execution_status = summary.get("status") if isinstance(summary, dict) else None
-            if (
-                execution_status not in {"completed", "cell_error"}
-                or summary.get("artifact_bytes") != len(sanitized)
-                or summary.get("artifact_sha256") != hashlib.sha256(sanitized).hexdigest()
-            ):
-                return SandboxResult(3, timed_out, stdout, "notebook artifact summary does not match persisted bytes", stdout_truncated, stderr_truncated)
-            final_path = destination / f"executed-{uuid.uuid4().hex}.ipynb"
-            try:
-                _write_exclusive(final_path, sanitized)
-            except OSError:
-                return SandboxResult(3, timed_out, stdout, "could not persist notebook artifact exclusively", stdout_truncated, stderr_truncated)
-            artifact_path = str(final_path)
-    return SandboxResult(return_code, timed_out, stdout, stderr, stdout_truncated, stderr_truncated, artifact_path, execution_status)
+    if return_code != 0 or timed_out:
+        return SandboxResult(return_code, timed_out, raw_stdout, stderr, stdout_truncated, stderr_truncated)
+    if stdout_truncated:
+        return SandboxResult(3, False, "", "sandbox runner output exceeded 128 KiB", True, stderr_truncated)
+    lines = [line for line in raw_stdout.splitlines() if line]
+    if len(lines) != 2 or not lines[1].startswith("NOTEBOOK_ARTIFACT_BASE64="):
+        return SandboxResult(3, False, lines[0] if lines else "", "sandbox runner did not stream the expected artifact", False, stderr_truncated)
+    try:
+        summary = json.loads(lines[0])
+        artifact_payload = base64.b64decode(lines[1].split("=", 1)[1], validate=True)
+    except (json.JSONDecodeError, ValueError):
+        return SandboxResult(3, False, lines[0], "sandbox runner artifact stream was malformed", False, stderr_truncated)
+    if len(artifact_payload) > MAX_NOTEBOOK_BYTES:
+        return SandboxResult(3, False, lines[0], "executed notebook artifact exceeds 64 KiB", False, stderr_truncated)
+    artifact_valid, artifact_doc, _ = read_notebook_redacted(artifact_payload)
+    if not artifact_valid or artifact_doc is None:
+        return SandboxResult(3, False, lines[0], "executed notebook artifact failed validation", False, stderr_truncated)
+    sanitized = json.dumps(artifact_doc, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    execution_status = summary.get("status") if isinstance(summary, dict) else None
+    if (
+        len(sanitized) > MAX_NOTEBOOK_BYTES
+        or execution_status not in {"completed", "cell_error"}
+        or summary.get("artifact_bytes") != len(sanitized)
+        or summary.get("artifact_sha256") != hashlib.sha256(sanitized).hexdigest()
+    ):
+        return SandboxResult(3, False, lines[0], "notebook artifact summary does not match validated bytes", False, stderr_truncated)
+    final_path = destination / f"executed-{uuid.uuid4().hex}.ipynb"
+    try:
+        _write_exclusive(final_path, sanitized)
+    except OSError:
+        return SandboxResult(3, False, lines[0], "could not persist notebook artifact exclusively", False, stderr_truncated)
+    return SandboxResult(return_code, False, lines[0], stderr, False, stderr_truncated, str(final_path), execution_status)
