@@ -40,6 +40,15 @@ class RepositoryGuardTests(unittest.TestCase):
         self.assertIn("config.json", entries)
         self.assertNotIn(".env", entries)
 
+    def test_subdirectory_tree_listing_is_supported(self):
+        nested = self.root / "src" / "dispatcher"
+        nested.mkdir(parents=True)
+        (nested / "runtime.py").write_text("pass", encoding="utf-8")
+        self.assertEqual(
+            self.snapshot.list_tree(expected_commit_sha=SHA, path="src/dispatcher"),
+            ("src/dispatcher/runtime.py",),
+        )
+
     def test_path_traversal_absolute_hidden_and_backslash_rejected(self):
         for path in ("../README.md", "/etc/passwd", ".env", "folder/.secret", "a\\b.py"):
             with self.subTest(path=path), self.assertRaises(RepositoryAccessRejected):
