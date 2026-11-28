@@ -134,9 +134,9 @@ def _cleanup_container(container_name: str) -> None:
     _remove_container(container_name)
 
 
-def _write_exclusive(path: Path, payload: bytes) -> None:
+def _write_exclusive(path: Path, payload: bytes, *, mode: int = 0o600) -> None:
     flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
-    fd = os.open(path, flags, 0o600)
+    fd = os.open(path, flags, mode)
     with os.fdopen(fd, "wb") as stream:
         stream.write(payload)
         stream.flush()
@@ -187,9 +187,12 @@ def run_sandbox(
         return SandboxResult(3, False, "", "notebook failed structural validation", False, False)
 
     container_name = f"pc-notebook-{uuid.uuid4().hex}"
-    with tempfile.TemporaryDirectory(prefix="pc-notebook-output-") as temp_output:
-        temp_dir = Path(temp_output)
-        command = build_sandbox_command(notebook, container_name=container_name)
+    with tempfile.TemporaryDirectory(prefix="pc-notebook-input-") as temp_input, tempfile.TemporaryDirectory(prefix="pc-notebook-output-") as temp_output:
+        input_dir, temp_dir = Path(temp_input), Path(temp_output)
+        os.chmod(input_dir, 0o755)
+        staged_input = input_dir / "input.ipynb"
+        _write_exclusive(staged_input, payload, mode=0o644)
+        command = build_sandbox_command(staged_input, container_name=container_name)
         with tempfile.TemporaryFile() as stdout_file, tempfile.TemporaryFile() as stderr_file:
             try:
                 process = subprocess.Popen(command, stdout=stdout_file, stderr=stderr_file,
