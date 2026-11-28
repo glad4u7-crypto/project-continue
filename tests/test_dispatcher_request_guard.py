@@ -6,7 +6,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from database.connection import Database
-from src.dispatcher.request_guard import RequestRejected, validate_and_claim
+from src.dispatcher.request_guard import RequestGuard, RequestRejected, validate_and_claim
 from src.dispatcher.replay_store import SQLiteReplayStore
 
 
@@ -86,6 +86,12 @@ class RequestGuardTests(unittest.TestCase):
         with self.assertRaisesRegex(RequestRejected, "duplicate or replay"):
             self.validate()
 
+    def test_request_guard_requires_replay_store_contract(self):
+        with self.assertRaises(TypeError):
+            RequestGuard(object())
+        with self.assertRaises(ValueError):
+            RequestGuard(type("Store", (), {"claim_pair": lambda *args: True})(), max_ttl_seconds=0)
+
     def test_store_error_propagates_fail_closed(self):
         def unavailable(*args):
             raise RuntimeError("store unavailable")
@@ -103,6 +109,24 @@ class SQLiteReplayStoreTests(unittest.TestCase):
     def tearDown(self):
         self.db.close()
         self.tempdir.cleanup()
+
+    def test_guard_validates_through_durable_store_before_handler_use(self):
+        guard = RequestGuard(self.store)
+        now = datetime.now(timezone.utc).replace(microsecond=0)
+        envelope = {
+            "schema_version": "1",
+            "request_id": str(uuid4()),
+            "nonce": str(uuid4()),
+            "issued_at": now.isoformat(),
+            "expires_at": (now + timedelta(seconds=90)).isoformat(),
+            "actor": {"id": "354281323", "type": "user"},
+            "repository": {"id": 1463557248, "full_name": "glad4u7-crypto/project-continue"},
+            "commit_sha": "b" * 40,
+            "task": "repo.read_file",
+        }
+        guard.validate(envelope, now=now)
+        with self.assertRaises(RequestRejected):
+            guard.validate(envelope, now=now)
 
     def test_pair_claim_is_durable_across_store_instances(self):
         expiry = datetime.now(timezone.utc) + timedelta(minutes=2)
