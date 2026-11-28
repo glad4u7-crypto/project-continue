@@ -3,7 +3,7 @@
 - Repository: `glad4u7-crypto/project-continue`
 - Branch: `phase20/secure-dispatcher-u20-3-01`
 - Date: 2026-11-28 (Asia/Kolkata)
-- Status: IMPLEMENTED — CI PENDING; NOT PASS UNTIL GREEN
+- Status: PASS — implementation and test commit CI verified
 
 ## Implemented artifacts
 
@@ -29,9 +29,11 @@
 ## CI evidence
 
 - U20-3-06 baseline green CI: https://github.com/glad4u7-crypto/project-continue/actions/runs/46105212163 — 333 passed, 11 skipped, 10 subtests passed; 79% repository coverage.
-- CI for this unit's two new files is pending. Record its run and final test counts here after completion.
+- Implementation commit CI: https://github.com/glad4u7-crypto/project-continue/actions/runs/46108626716 — SUCCESS.
+- Test commit CI: https://github.com/glad4u7-crypto/project-continue/actions/runs/46108629396 — SUCCESS; full suite 344 passed, 11 skipped, 23 subtests passed; coverage 79%; focused categories 74 unit, 28 integration (11 PostgreSQL skips), 21 API, 23 database tests passed.
+- The successful test commit contains both state machine implementation and test file; compile, secret scan, dependency audit, container build, Compose validation, smoke test, focused suites and full suite all passed.
 
 ## Acceptance
 
-- Require a green workflow covering compile, focused dispatcher tests and the full test suite.
-- Read back both implementation and test files from this branch before marking PASS.
+- Green workflow covering compile, focused tests and full suite verified in run 46108629396.
+- Both implementation and test files were read back from this branch; exact read-back SHA values recorded in the work log.
