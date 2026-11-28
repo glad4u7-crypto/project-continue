@@ -51,8 +51,8 @@ jobs:
       - name: Validate runner safety contract
         run: python -m pytest -q tests/test_phase20_runner.py
       - name: Compile fixed repository scope
-        run: python scripts/phase20_runner.py compile
+        run: python scripts/phase20_runner.py compile --retry-transient
       - name: Run dispatcher acceptance suite
-        run: python scripts/phase20_runner.py dispatcher-tests
+        run: python scripts/phase20_runner.py dispatcher-tests --retry-transient
       - name: Run full regression suite
-        run: python scripts/phase20_runner.py full-tests
+        run: python scripts/phase20_runner.py full-tests --retry-transient
