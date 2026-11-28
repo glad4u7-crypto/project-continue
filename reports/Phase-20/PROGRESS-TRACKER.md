@@ -1,7 +1,7 @@
 # Phase 20 — Live Progress Tracker
 
-**Overall:** PHASE 20.0 COMPLETE / PHASE 20.1 AUDIT COMPLETE WITH 4 UNAVAILABLE LIMITATIONS / PHASE 20.2 IN PROGRESS (U20-2-01 PASS)  
-**Last updated:** 2026-11-28 07:23 (Asia/Kolkata)  
+**Overall:** PHASE 20.0 COMPLETE / PHASE 20.1 AUDIT COMPLETE WITH 4 UNAVAILABLE LIMITATIONS / PHASE 20.2 REVIEW COMPLETE WITH 2 UNAVAILABLE LIMITATIONS  
+**Last updated:** 2026-11-28 (Asia/Kolkata)  
 **Plan branch:** docs/phase-20-master-checklist
 
 ## Parent phase status
@@ -10,7 +10,7 @@
 |---|---|---:|---:|---|---|
 | 20.0 Phase 19 handoff ও entry gate | COMPLETE | 7 | 7 | GitHub Actions CI run 46021825415; 2026-11-28 U20-0-04 notebook read-back addendum | All 7 units PASS; uploaded notebook matches reported 714-byte size and SHA-256; proceed to 20.1 without Colab/Codespaces |
 | 20.1 GitHub capability ও permission audit | AUDIT COMPLETE — 4 UNAVAILABLE | 8 | 12 | `reports/Phase-20/2026-11-28-Phase20-1-GitHub-Capability-Audit.md`; PR #70 CI run `46093587157` PASS (321 tests) | 8 PASS; 4 connector capabilities UNAVAILABLE (workflow dispatch, Codespaces lifecycle, Secrets/Variables write, direct Colab execution); proceed to 20.2 with these hard constraints |
-| 20.2 Authentication ও least-privilege security | IN PROGRESS | 1 | 9 | `reports/Phase-20/2026-11-28-U20-2-01-GitHub-App-Connector-Sufficiency.md` | U20-2-01 PASS: current connector is sufficient for supported GitHub subset, not full end-to-end; no PAT requested. Next: U20-2-02 permission map |
+| 20.2 Authentication ও least-privilege security | REVIEW COMPLETE — 2 UNAVAILABLE | 7 | 9 | `reports/Phase-20/2026-11-28-Phase20-2-Authentication-Least-Privilege-Review.md` | 7 PASS; U20-2-06 Secret Store verification and U20-2-08 revoked-credential fail-closed test UNAVAILABLE; parent exit gate remains open |
 | 20.3 Secure dispatcher ও command protocol | NOT STARTED | 0 | 9 | Initial planning baseline only | Complete in order; see unit register |
 | 20.4 Ephemeral execution runner | NOT STARTED | 0 | 10 | Initial planning baseline only | Complete in order; see unit register |
 | 20.5 Repository read/write ও patch workflow | NOT STARTED | 0 | 11 | Initial planning baseline only | Complete in order; see unit register |
@@ -26,14 +26,14 @@
 ## Global counters
 
 - Total atomic checkpoints: 142
-- PASS: 16 (20.0: 7; 20.1: 8; 20.2: 1)
+- PASS: 22 (20.0: 7; 20.1: 8; 20.2: 7)
 - FAIL: 0
 - BLOCKED: 0
-- UNAVAILABLE: 4 (20.1: 4)
-- NOT STARTED: 122
+- UNAVAILABLE: 6 (20.1: 4; 20.2: 2)
+- NOT STARTED: 114
 - Phase 20.0 exit gate: COMPLETE
 - Phase 20.1 capability audit: COMPLETE WITH 4 UNAVAILABLE LIMITATIONS; all 12 units have explicit evidence-backed dispositions.
-- Phase 20.2 progress: 1/9 PASS; next sequential checkpoint U20-2-02.
+- Phase 20.2 progress: 7/9 PASS; U20-2-06 and U20-2-08 are UNAVAILABLE with reasons in the review report. Parent exit gate is not complete.
 
 ## Update rules
 
@@ -58,4 +58,4 @@
 - No unsafe request was posted to Issue #59: the legacy agent can default a missing cursor to 0 and replay historical commands; prior state-file absence was reported.
 - Existing Phase 20 decision already excludes Colab and Codespaces and prefers GitHub-hosted Actions runners. PR-triggered Actions CI is a tested substitute for suitable tasks, not proof of workflow_dispatch.
 - Detailed evidence and safe alternatives: `reports/Phase-20/2026-11-28-Phase20-1-Four-Unavailable-Capabilities-Resolution-Attempt.md`.
-- Counts unchanged: PASS 15; UNAVAILABLE 4; NOT STARTED 123. The four capability units are not marked PASS.
+- Phase 20.1 counts remain: 8 PASS and 4 UNAVAILABLE. No capability gap was marked PASS.
