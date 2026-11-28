@@ -3,7 +3,7 @@
 - Repository: `glad4u7-crypto/project-continue`
 - Branch: `phase20/secure-dispatcher-u20-3-01`
 - Date: 2026-11-28 (Asia/Kolkata)
-- Status: PASS — implementation, focused tests, full CI, container checks and read-back verified
+- Status: PASS — final transaction fix, focused tests, full CI, container checks and read-back verified
 
 ## Policy defaults
 
@@ -35,10 +35,13 @@
 ## CI evidence
 
 - U20-3-07 state-machine baseline CI: https://github.com/glad4u7-crypto/project-continue/actions/runs/46108629396 — SUCCESS.
-- U20-3-08 CI run: https://github.com/glad4u7-crypto/project-continue/actions/runs/46108860907 — SUCCESS (run 822; all 13 workflow steps successful).
-- Full suite: 344 passed, 11 skipped, 23 subtests passed; coverage 79%.
-- Focused admission tests: 11 tests are included in the full suite; focused dispatcher categories and all security/container checks passed.
-- Test/coverage artifact: https://github.com/glad4u7-crypto/project-continue/actions/runs/46108860907/artifacts/15248647645.
+- Earlier run `46108860907` exposed a transaction persistence defect in the explicit `BEGIN IMMEDIATE` path; later run `46109449835` exposed the remaining test isolation issue. Both failures are preserved as historical evidence.
+- Corrective commit: `a029c3e09351fe70838b319acfee4430dbb9a010` — admission test now releases each queue lease while retaining rate events, so global rate-limit behavior is tested independently from queue capacity.
+- Final CI run: https://github.com/glad4u7-crypto/project-continue/actions/runs/46109666102 — SUCCESS; all workflow steps completed.
+- Full suite: 363 passed, 11 skipped, 29 subtests passed in 13.38s; coverage 79% (2,575 statements, 544 missed).
+- Focused categories: unit 74 passed; integration 28 passed / 11 skipped (PostgreSQL DSNs unavailable); API 21 passed; database 23 passed.
+- Admission suite contains 11 tests; audit suite contains 8 tests, both included in the successful full suite.
+- Test/coverage artifact (279,692 bytes; SHA-256 `107655929c09fbf5a2e7d94daf36e5e799d84f60d366935d6d64ff131c62a4e4`): https://github.com/glad4u7-crypto/project-continue/actions/runs/46109666102/artifacts/15248872135.
 
 ## Acceptance
 
