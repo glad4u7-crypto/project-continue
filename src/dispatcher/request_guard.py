@@ -1,9 +1,4 @@
-"""Fail-closed request envelope validation for the Phase 20 dispatcher.
-
-Replay state is deliberately injected through an atomic claim_once callback.
-A process-local set is not an acceptable replay store because it is lost on restart
-and is unsafe across concurrent workers.
-"""
+"""Fail-closed request envelope validation for the Phase 20 dispatcher."""
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -35,14 +30,14 @@ def validate_and_claim(
     envelope: Mapping[str, Any],
     *,
     now: datetime,
-    claim_once: Callable[[str, str, datetime], bool],
+    claim_pair: Callable[[str, str, datetime], bool],
     max_ttl_seconds: int = 300,
 ) -> None:
-    """Validate envelope structure, expiry, and atomically consume ID + nonce.
+    """Validate request and atomically consume request ID + nonce.
 
-    claim_once(namespace, value, expires_at) must be backed by durable shared
-    storage and perform an atomic insert-if-absent. It must return False when
-    the key was already consumed. Storage errors must propagate (fail closed).
+    claim_pair must durably and atomically claim both values in shared storage.
+    It must return False if either value has already been consumed. Storage
+    errors propagate so the caller can fail closed.
     """
     if not isinstance(envelope, Mapping):
         raise RequestRejected("request: object required")
@@ -94,9 +89,5 @@ def validate_and_claim(
     if (expires - issued).total_seconds() > max_ttl_seconds:
         raise RequestRejected("expires_at: TTL exceeds policy")
 
-    # Separate namespaces prevent an ID from colliding with a nonce.
-    # Both claims must be durable, atomic, and fail closed on backend errors.
-    if not claim_once("request_id", request_id, expires):
-        raise RequestRejected("request_id: duplicate request")
-    if not claim_once("nonce", nonce, expires):
-        raise RequestRejected("nonce: replay detected")
+    if not claim_pair(request_id, nonce, expires):
+        raise RequestRejected("request_id/nonce: duplicate or replay detected")
