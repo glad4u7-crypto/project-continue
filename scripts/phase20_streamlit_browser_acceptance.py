@@ -46,7 +46,7 @@ def wait_for_health(url: str, process: subprocess.Popen, log_path: Path) -> None
     )
 
 
-def start_app(database_path: Path, log_path: Path, port: int) -> subprocess.Popen:
+def start_app(database_path: Path, log_path: Path, port: int, *, production: bool = False) -> subprocess.Popen:
     env = os.environ.copy()
     for key in (
         "GITHUB_TOKEN", "GITHUB_APP_PRIVATE_KEY", "SESSION_SIGNING_KEY",
@@ -54,7 +54,7 @@ def start_app(database_path: Path, log_path: Path, port: int) -> subprocess.Pope
     ):
         env.pop(key, None)
     env.update({
-        "APP_ENV": "test",
+        "APP_ENV": "production" if production else "test",
         "LOG_LEVEL": "INFO",
         "PROJECT_CONTINUE_DB": str(database_path),
         "GITHUB_REPOSITORY": "",
@@ -126,6 +126,26 @@ def browser_round_trip(base_url: str, *, expect_existing: bool) -> None:
             browser.close()
 
 
+def browser_login_round_trip(base_url: str) -> None:
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        page = browser.new_page()
+        try:
+            response = page.goto(base_url, wait_until="domcontentloaded", timeout=30000)
+            if response is None or response.status != 200:
+                raise AssertionError("Production login page did not return HTTP 200")
+            page.get_by_text("Project Continue — Sign in", exact=True).wait_for(timeout=20000)
+            if page.get_by_text("Project registry", exact=True).count():
+                raise AssertionError("Production dashboard rendered before authentication")
+            page.get_by_label("Email").fill("browser-admin@example.invalid")
+            page.get_by_label("Password").fill("Browser-Test-Only-Password-123!")
+            page.get_by_role("button", name="Sign in").click()
+            page.get_by_text("Authenticated production operator", exact=True).wait_for(timeout=20000)
+            page.get_by_text("Project registry", exact=True).wait_for(timeout=15000)
+        finally:
+            browser.close()
+
+
 def main() -> int:
     with tempfile.TemporaryDirectory(prefix="phase20-streamlit-") as temporary:
         root = Path(temporary)
@@ -153,12 +173,26 @@ def main() -> int:
             raise AssertionError("Isolated Streamlit process was not stopped")
         if not database_path.is_file():
             raise AssertionError("Isolated SQLite database was not created")
+
+        production_database = root / "production-login" / "acceptance.sqlite3"
+        production_port = free_port()
+        production = start_app(production_database, log_path, production_port, production=True)
+        try:
+            production_url = "http://127.0.0.1:" + str(production_port)
+            wait_for_health(production_url + "/_stcore/health", production, log_path)
+            browser_login_round_trip(production_url)
+        finally:
+            stop_app(production)
+        if production.poll() is None:
+            raise AssertionError("Production-auth test process was not stopped")
+
         print("PHASE20_STREAMLIT_BROWSER_ACCEPTANCE=PASS")
         print("health_endpoint=HTTP_200")
         print("browser=Chromium")
         print("project_create=PASS")
         print("task_create_and_complete=PASS")
         print("restart_persistence=PASS")
+        print("production_login_gate=PASS")
         print("isolated_process_cleanup=PASS")
         print("external_credentials=NOT_INJECTED")
         print("live_database_or_service=NOT_TOUCHED")
