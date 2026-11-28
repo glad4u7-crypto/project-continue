@@ -3,7 +3,7 @@
 - Repository: `glad4u7-crypto/project-continue`
 - Branch: `phase20/secure-dispatcher-u20-3-01`
 - Date: 2026-11-28 (Asia/Kolkata)
-- Status: IMPLEMENTED — CI PENDING; NOT PASS UNTIL GREEN
+- Status: PASS — implementation, focused tests, full CI, container checks and read-back verified
 
 ## Policy defaults
 
@@ -35,9 +35,13 @@
 ## CI evidence
 
 - U20-3-07 state-machine baseline CI: https://github.com/glad4u7-crypto/project-continue/actions/runs/46108629396 — SUCCESS.
-- U20-3-08 source/test CI run: https://github.com/glad4u7-crypto/project-continue/actions/runs/46108860907 — in progress at report creation. Update after completion.
+- U20-3-08 CI run: https://github.com/glad4u7-crypto/project-continue/actions/runs/46108860907 — SUCCESS (run 822; all 13 workflow steps successful).
+- Full suite: 344 passed, 11 skipped, 23 subtests passed; coverage 79%.
+- Focused admission tests: 11 tests are included in the full suite; focused dispatcher categories and all security/container checks passed.
+- Test/coverage artifact: https://github.com/glad4u7-crypto/project-continue/actions/runs/46108860907/artifacts/15248647645.
 
 ## Acceptance
 
-- Require successful compile, secret/dependency checks, focused dispatcher tests, full suite and container smoke checks.
-- Read back source, tests and report from this branch before marking PASS.
+- Acceptance met: compile, secret scan, dependency audit, production container build, Compose validation, container smoke test, focused categories, full suite and artifact upload all successful.
+- PostgreSQL integration checks were skipped because dedicated TEST_POSTGRES_* DSNs are not configured; this is recorded as an environment limitation, not a pass of live PostgreSQL integration.
+- Source, tests, report and tracker were read back from this branch.
