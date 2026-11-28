@@ -2,7 +2,7 @@ name: Project Continue CI
 
 on:
   push:
-    branches: [main, "maintenance/**", "feature/**", "foundation/**"]
+    branches: [main, "maintenance/**", "feature/**", "foundation/**", "phase20/**"]
   pull_request:
 
 permissions:
