@@ -78,7 +78,12 @@ def test_create_is_exclusive_and_readback_verified(tmp_path):
 
 def test_read_redacts_credentials_from_source_and_output(tmp_path):
     doc = notebook("api_key = 'ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ123456'")
-    doc["cells"][0]["outputs"] = [{"output_type": "stream", "text": "Bearer abcdefghijklmnopqrstuvwxyz123456"}]
+    doc["cells"][0]["outputs"] = [{
+        "output_type": "display_data",
+        "data": {"text/plain": "Bearer abcdefghijklmnopqrstuvwxyz123456"},
+        "metadata": {"api_token": "metadata-secret-value"},
+    }]
+    doc["metadata"]["service_password"] = "metadata-password-value"
     (tmp_path / "secret.ipynb").write_text(json.dumps(doc), encoding="utf-8")
     result = read_notebook(tmp_path, "secret.ipynb")
     rendered = json.dumps(result["notebook"])
