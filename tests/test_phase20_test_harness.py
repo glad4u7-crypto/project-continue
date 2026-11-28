@@ -9,7 +9,7 @@ from scripts.phase20_test_harness import (
 
 class TestHarnessTests(unittest.TestCase):
     def test_only_fixed_task_ids_are_accepted(self):
-        for task in ("compile", "focused", "full", "lint", "failure-probe"):
+        for task in ("baseline", "compile", "focused", "full", "lint", "failure-probe"):
             self.assertTrue(task == "lint" or build_command(task))
         for task in ("python -c 'bad'", "../full", "shell", "--help", ""):
             with self.assertRaises(ValueError):
