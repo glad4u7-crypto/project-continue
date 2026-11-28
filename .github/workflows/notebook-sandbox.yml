@@ -20,7 +20,9 @@ on:
     paths:
       - "notebook-sandbox/**"
       - "scripts/notebook_sandbox.py"
+      - "scripts/notebook_sandbox_e2e.py"
       - "scripts/notebook_container_runner.py"
+      - "tests/fixtures/notebooks/**"
       - "scripts/notebook_read.py"
       - "scripts/notebook_validation.py"
       - "scripts/notebook_execution_policy.py"
